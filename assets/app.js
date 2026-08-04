@@ -1,120 +1,31 @@
 (function(){
-  'use strict';
-
-  var STORAGE_KEY='semideuses.characters.v1';
-  var app=document.getElementById('app');
-  var state={section:'inicio',screen:'list',editing:null,characters:loadCharacters(),message:''};
-
-  var sections=[
-    {id:'inicio',label:'Início',icon:'⌂'},
-    {id:'jogador',label:'Jogador',icon:'♙'},
-    {id:'mestre',label:'Mestre',icon:'⚑'},
-    {id:'compendio',label:'Compêndio',icon:'☷'}
-  ];
-
-  var modules={
-    jogador:[
-      {id:'personagens',icon:'♙',title:'Personagens',text:'Criar, editar, duplicar e salvar fichas.',status:'Ativo'},
-      {id:'progressao',icon:'↟',title:'Progressão',text:'Subida de nível e escolhas automáticas.',status:'Preparado'},
-      {id:'combate',icon:'⚔',title:'Modo combate',text:'PV, MP, condições, ataques e recursos.',status:'Preparado'}
-    ],
-    mestre:[
-      {id:'campanhas',icon:'⚑',title:'Campanhas',text:'Sessões, jogadores e anotações.',status:'Preparado'},
-      {id:'encontros',icon:'♜',title:'Encontros',text:'Iniciativa, criaturas e dificuldade.',status:'Preparado'},
-      {id:'profecias',icon:'✦',title:'Profecias',text:'Criação e acompanhamento de profecias.',status:'Preparado'}
-    ],
-    compendio:[
-      {id:'filiacoes',icon:'Ω',title:'Filiações',text:'Os 26 deuses e suas progressões.',status:'Banco vazio'},
-      {id:'caminhos',icon:'❖',title:'Caminhos Divinos',text:'Caminhos vinculados a cada Filiação.',status:'Banco vazio'},
-      {id:'regras',icon:'☷',title:'Regras e Bestiário',text:'Livros do Jogador e do Mestre.',status:'Banco vazio'}
-    ]
-  };
-
-  function escapeHtml(value){
-    return String(value==null?'':value).replace(/[&<>'\"]/g,function(character){
-      return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[character];
-    });
-  }
-
-  function uid(){return 'char-'+Date.now()+'-'+Math.random().toString(36).slice(2,8);}
-
-  function emptyCharacter(){
-    return {id:uid(),name:'Novo Herói',player:'',level:1,origin:'',background:'',affiliation:'',divinePath:'',notes:'',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),rules:{version:1,attributes:{FOR:10,DES:10,CON:10,INT:10,SAB:10,CAR:10},skills:[],features:[],inventory:[]}};
-  }
-
-  function loadCharacters(){
-    try{var data=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');return Array.isArray(data)?data:[];}catch(error){return [];}
-  }
-
-  function saveCharacters(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state.characters));}
-  function activeSection(){return sections.find(function(item){return item.id===state.section;})||sections[0];}
-
-  function homeView(){
-    return '<section class="hero"><span class="eyebrow">FUNDAÇÃO VALIDADA</span><h2>O universo de Semideuses pronto para crescer.</h2><p>O primeiro módulo funcional já está disponível. As fichas ficam salvas somente neste aparelho.</p></section>'+
-    '<section class="dashboard-grid"><button class="stat-card" data-open-characters><strong>'+state.characters.length+'</strong><span>Personagens</span></button><article class="stat-card"><strong>0</strong><span>Campanhas</span></article><article class="stat-card"><strong>2</strong><span>Livros-base</span></article></section>'+
-    '<section class="grid">'+sections.slice(1).map(function(item){return '<button class="card action" data-go="'+item.id+'"><span class="card-icon">'+item.icon+'</span><strong>'+escapeHtml(item.label)+'</strong><small>Abrir módulo</small></button>';}).join('')+'</section>'+
-    '<section class="panel"><span class="status ready">Etapa concluída</span><h3>Gerenciamento de personagens</h3><ul><li>Criar e editar fichas básicas</li><li>Duplicar e excluir personagens</li><li>Salvar automaticamente no navegador</li><li>Modelo preparado para regras automáticas</li></ul></section>';
-  }
-
-  function moduleView(section){
-    var list=modules[section.id]||[];
-    return '<section class="hero"><span class="eyebrow">MÓDULO '+escapeHtml(section.label.toUpperCase())+'</span><h2>'+escapeHtml(section.label)+'</h2><p>'+description(section.id)+'</p></section>'+
-      '<section class="module-list">'+list.map(function(item){return '<button class="module-row" data-module="'+escapeHtml(item.id)+'"><span class="icon">'+item.icon+'</span><span><strong>'+escapeHtml(item.title)+'</strong><small>'+escapeHtml(item.text)+'</small></span><span class="status '+(item.status==='Ativo'?'ready':'')+'">'+escapeHtml(item.status)+'</span></button>';}).join('')+'</section>'+
-      '<section class="panel"><h3>Preparação técnica</h3><p>'+technicalNote(section.id)+'</p></section>';
-  }
-
-  function charactersView(){
-    if(state.screen==='edit'&&state.editing){return characterEditorView();}
-    return '<section class="section-heading"><div><span class="eyebrow">MÓDULO JOGADOR</span><h2>Personagens</h2><p>Fichas salvas neste aparelho.</p></div><button class="primary" data-new-character>+ Nova ficha</button></section>'+
-      (state.characters.length===0?'<section class="panel empty"><span class="large-icon">♙</span><h2>Nenhuma ficha criada</h2><p>Crie seu primeiro personagem para testar o armazenamento local.</p><button class="primary" data-new-character>Criar personagem</button></section>':'<section class="character-list">'+state.characters.map(characterCard).join('')+'</section>')+
-      '<section class="panel compact"><h3>Como funciona agora</h3><p>Os dados são armazenados no navegador. Na próxima etapa adicionaremos exportação, importação e cálculos automáticos.</p></section>';
-  }
-
-  function characterCard(character){
-    var initial=(character.name||'?').trim().charAt(0).toUpperCase()||'?';
-    return '<article class="character-card"><button class="character-main" data-edit-character="'+character.id+'"><span class="avatar">'+escapeHtml(initial)+'</span><span><strong>'+escapeHtml(character.name||'Sem nome')+'</strong><small>Nível '+Number(character.level||1)+(character.affiliation?' · '+escapeHtml(character.affiliation):'')+'</small></span></button><div class="card-actions"><button data-duplicate-character="'+character.id+'">Duplicar</button><button class="danger" data-delete-character="'+character.id+'">Excluir</button></div></article>';
-  }
-
-  function characterEditorView(){
-    var c=state.editing;
-    return '<section class="section-heading"><div><span class="eyebrow">EDITOR DE FICHA</span><h2>'+escapeHtml(c.name||'Novo Herói')+'</h2><p>Campos básicos da estrutura oficial.</p></div><button class="secondary" data-cancel-edit>Voltar</button></section>'+
-      '<form class="panel form-panel" id="character-form"><div class="form-grid">'+field('name','Nome do herói',c.name,'text',true)+field('player','Jogador',c.player,'text',false)+field('level','Nível',c.level,'number',true)+field('origin','Origem / Raça',c.origin,'text',false)+field('background','Antecedente',c.background,'text',false)+field('affiliation','Filiação',c.affiliation,'text',false)+field('divinePath','Caminho Divino',c.divinePath,'text',false)+'</div><label class="full-field"><span>Notas</span><textarea name="notes" rows="7" placeholder="História, poderes, itens e observações...">'+escapeHtml(c.notes)+'</textarea></label><div class="prepared-block"><strong>Estrutura já reservada</strong><p>Atributos, perícias, habilidades, inventário e progressão já existem no modelo interno da ficha e serão ativados nas próximas etapas.</p></div><div class="editor-actions"><button type="button" class="secondary" data-cancel-edit>Cancelar</button><button type="submit" class="primary">Salvar ficha</button></div></form>';
-  }
-
-  function field(name,label,value,type,required){return '<label><span>'+escapeHtml(label)+'</span><input name="'+name+'" type="'+type+'" value="'+escapeHtml(value)+'" '+(type==='number'?'min="1" max="20" inputmode="numeric" ':'')+(required?'required ':'')+'/></label>';}
-  function description(id){if(id==='jogador')return 'Fichas, progressão, poderes, inventário e recursos do personagem.';if(id==='mestre')return 'Campanhas, encontros, criaturas, profecias e ferramentas de sessão.';return 'Banco oficial das regras dos Livros do Jogador e do Mestre.';}
-  function technicalNote(id){if(id==='jogador')return 'O módulo Personagens já está ativo. Progressão e combate serão conectados ao mesmo modelo de ficha.';if(id==='mestre')return 'A área será ligada futuramente às campanhas e ao Bestiário sem misturar dados do jogador.';return 'As regras serão carregadas de arquivos separados por categoria, permitindo atualização sem reescrever a interface.';}
-
-  function showMessage(message){state.message=message;render();window.setTimeout(function(){if(state.message===message){state.message='';render();}},2200);}
-
-  function render(){
-    var active=activeSection();
-    var inCharacters=state.screen==='characters'||state.screen==='edit';
-    var content=inCharacters?charactersView():(state.section==='inicio'?homeView():moduleView(active));
-    var title=inCharacters?'Personagens':active.label;
-    app.innerHTML='<div class="app-shell"><header class="topbar"><div><span class="eyebrow">SEMIDEUSES RPG 3E</span><h1>'+escapeHtml(title)+'</h1></div><div class="brand-mark">S3</div></header>'+(state.message?'<button class="toast" data-dismiss-message>'+escapeHtml(state.message)+'</button>':'')+'<main class="content">'+content+'</main>'+bottomNav(inCharacters)+'</div>';
-    bindEvents();
-  }
-
-  function bottomNav(inCharacters){
-    return '<nav class="bottom-nav" aria-label="Navegação principal">'+sections.map(function(item){return '<button data-go="'+item.id+'" class="'+(!inCharacters&&state.section===item.id?'active':'')+'"><span>'+item.icon+'</span><small>'+escapeHtml(item.label)+'</small></button>';}).join('')+'</nav>';
-  }
-
-  function openCharacters(){state.section='jogador';state.screen='characters';state.editing=null;render();window.scrollTo(0,0);}
-
-  function bindEvents(){
-    document.querySelectorAll('[data-go]').forEach(function(button){button.addEventListener('click',function(){state.section=button.getAttribute('data-go')||'inicio';state.screen='list';state.editing=null;render();window.scrollTo(0,0);});});
-    document.querySelectorAll('[data-open-characters]').forEach(function(button){button.addEventListener('click',openCharacters);});
-    document.querySelectorAll('[data-module]').forEach(function(button){button.addEventListener('click',function(){if(button.getAttribute('data-module')==='personagens'){openCharacters();}else{alert('Este módulo será ativado em uma etapa futura.');}});});
-    document.querySelectorAll('[data-new-character]').forEach(function(button){button.addEventListener('click',function(){state.section='jogador';state.editing=emptyCharacter();state.screen='edit';render();window.scrollTo(0,0);});});
-    document.querySelectorAll('[data-edit-character]').forEach(function(button){button.addEventListener('click',function(){var found=state.characters.find(function(c){return c.id===button.getAttribute('data-edit-character');});if(found){state.editing=JSON.parse(JSON.stringify(found));state.screen='edit';render();window.scrollTo(0,0);}});});
-    document.querySelectorAll('[data-duplicate-character]').forEach(function(button){button.addEventListener('click',function(){var found=state.characters.find(function(c){return c.id===button.getAttribute('data-duplicate-character');});if(!found)return;var copy=JSON.parse(JSON.stringify(found));copy.id=uid();copy.name=(copy.name||'Personagem')+' — cópia';copy.createdAt=new Date().toISOString();copy.updatedAt=copy.createdAt;state.characters.unshift(copy);saveCharacters();showMessage('Ficha duplicada.');});});
-    document.querySelectorAll('[data-delete-character]').forEach(function(button){button.addEventListener('click',function(){var id=button.getAttribute('data-delete-character');var found=state.characters.find(function(c){return c.id===id;});if(found&&confirm('Excluir a ficha de '+found.name+'?')){state.characters=state.characters.filter(function(c){return c.id!==id;});saveCharacters();showMessage('Ficha excluída.');}});});
-    document.querySelectorAll('[data-cancel-edit]').forEach(function(button){button.addEventListener('click',function(){state.editing=null;state.screen='characters';render();window.scrollTo(0,0);});});
-    var form=document.getElementById('character-form');
-    if(form){form.addEventListener('submit',function(event){event.preventDefault();var data=new FormData(form);var character=state.editing||emptyCharacter();character.name=String(data.get('name')||'Sem nome').trim()||'Sem nome';character.player=String(data.get('player')||'').trim();character.level=Math.max(1,Math.min(20,Number(data.get('level')||1)));character.origin=String(data.get('origin')||'').trim();character.background=String(data.get('background')||'').trim();character.affiliation=String(data.get('affiliation')||'').trim();character.divinePath=String(data.get('divinePath')||'').trim();character.notes=String(data.get('notes')||'');character.updatedAt=new Date().toISOString();var index=state.characters.findIndex(function(c){return c.id===character.id;});if(index>=0){state.characters[index]=character;}else{state.characters.unshift(character);}saveCharacters();state.editing=null;state.screen='characters';showMessage('Ficha salva neste aparelho.');});}
-    var dismiss=document.querySelector('[data-dismiss-message]');if(dismiss){dismiss.addEventListener('click',function(){state.message='';render();});}
-  }
-
-  try{render();}catch(error){app.innerHTML='<main style="padding:24px;font-family:system-ui"><h1>Falha ao iniciar</h1><pre style="white-space:pre-wrap">'+escapeHtml(error&&error.message?error.message:error)+'</pre></main>';}
+'use strict';
+var STORAGE_KEY='semideuses.characters.v1',app=document.getElementById('app');
+var state={section:'inicio',screen:'list',editing:null,wizardStep:1,characters:loadCharacters(),message:''};
+var sections=[{id:'inicio',label:'Início',icon:'⌂'},{id:'jogador',label:'Jogador',icon:'♙'},{id:'mestre',label:'Mestre',icon:'⚑'},{id:'compendio',label:'Compêndio',icon:'☷'}];
+var modules={jogador:[{id:'personagens',icon:'♙',title:'Personagens',text:'Criar, editar, duplicar e salvar fichas.',status:'Ativo'},{id:'progressao',icon:'↟',title:'Progressão',text:'Subida de nível e escolhas automáticas.',status:'Preparado'},{id:'combate',icon:'⚔',title:'Modo combate',text:'PV, MP, condições, ataques e recursos.',status:'Preparado'}],mestre:[{id:'campanhas',icon:'⚑',title:'Campanhas',text:'Sessões, jogadores e anotações.',status:'Preparado'},{id:'encontros',icon:'♜',title:'Encontros',text:'Iniciativa, criaturas e dificuldade.',status:'Preparado'},{id:'profecias',icon:'✦',title:'Profecias',text:'Criação e acompanhamento de profecias.',status:'Preparado'}],compendio:[{id:'filiacoes',icon:'Ω',title:'Filiações',text:'Deuses e suas progressões.',status:'Banco vazio'},{id:'caminhos',icon:'❖',title:'Caminhos Divinos',text:'Caminhos vinculados a cada Filiação.',status:'Banco vazio'},{id:'regras',icon:'☷',title:'Regras e Bestiário',text:'Livros do Jogador e do Mestre.',status:'Banco vazio'}]};
+function esc(v){return String(v==null?'':v).replace(/[&<>\"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c];});}
+function uid(){return 'char-'+Date.now()+'-'+Math.random().toString(36).slice(2,8);}
+function emptyCharacter(){return {id:uid(),name:'',player:'',level:1,origin:'',background:'',affiliation:'',divinePath:'',notes:'',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),rules:{version:1,attributes:{FOR:10,DES:10,CON:10,INT:10,SAB:10,CAR:10},skills:[],features:[],inventory:[],calculated:{}}};}
+function loadCharacters(){try{var d=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');return Array.isArray(d)?d:[];}catch(e){return [];}}
+function saveCharacters(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state.characters));}
+function activeSection(){return sections.find(function(x){return x.id===state.section;})||sections[0];}
+function homeView(){return '<section class="hero"><span class="eyebrow">SEMIDEUSES RPG</span><h2>Seu universo de jogo em um só lugar.</h2><p>Crie personagens, acompanhe campanhas e consulte as regras.</p></section><section class="dashboard-grid"><button class="stat-card" data-open-characters><strong>'+state.characters.length+'</strong><span>Personagens</span></button><article class="stat-card"><strong>0</strong><span>Campanhas</span></article><article class="stat-card"><strong>2</strong><span>Livros-base</span></article></section><section class="grid">'+sections.slice(1).map(function(x){return '<button class="card action" data-go="'+x.id+'"><span class="card-icon">'+x.icon+'</span><strong>'+esc(x.label)+'</strong><small>Abrir módulo</small></button>';}).join('')+'</section>';}
+function moduleView(s){var list=modules[s.id]||[];return '<section class="hero"><span class="eyebrow">MÓDULO '+esc(s.label.toUpperCase())+'</span><h2>'+esc(s.label)+'</h2><p>'+description(s.id)+'</p></section><section class="module-list">'+list.map(function(x){return '<button class="module-row" data-module="'+x.id+'"><span class="icon">'+x.icon+'</span><span><strong>'+esc(x.title)+'</strong><small>'+esc(x.text)+'</small></span><span class="status '+(x.status==='Ativo'?'ready':'')+'">'+esc(x.status)+'</span></button>';}).join('')+'</section>';}
+function description(id){if(id==='jogador')return 'Fichas, progressão, poderes, inventário e recursos.';if(id==='mestre')return 'Campanhas, encontros, criaturas e ferramentas de sessão.';return 'Banco oficial das regras dos livros.';}
+function charactersView(){if(state.screen==='edit'&&state.editing)return wizardView();return '<section class="section-heading"><div><span class="eyebrow">MÓDULO JOGADOR</span><h2>Personagens</h2><p>Fichas salvas neste aparelho.</p></div><button class="primary" data-new-character>+ Nova ficha</button></section>'+(state.characters.length?'<section class="character-list">'+state.characters.map(characterCard).join('')+'</section>':'<section class="panel empty"><span class="large-icon">♙</span><h2>Nenhuma ficha criada</h2><p>Crie seu primeiro personagem com o assistente guiado.</p><button class="primary" data-new-character>Criar personagem</button></section>');}
+function characterCard(c){var initial=(c.name||'?').trim().charAt(0).toUpperCase()||'?';return '<article class="character-card"><button class="character-main" data-edit-character="'+c.id+'"><span class="avatar">'+esc(initial)+'</span><span><strong>'+esc(c.name||'Sem nome')+'</strong><small>Nível '+Number(c.level||1)+(c.affiliation?' · '+esc(c.affiliation):'')+'</small></span></button><div class="card-actions"><button data-duplicate-character="'+c.id+'">Duplicar</button><button class="danger" data-delete-character="'+c.id+'">Excluir</button></div></article>';}
+function progress(){var out='<div class="wizard-progress">';for(var i=1;i<=7;i++)out+='<span class="'+(i<=state.wizardStep?'done':'')+'"></span>';return out+'</div><small class="wizard-count">Passo '+state.wizardStep+' de 7</small>';}
+function wizardView(){var c=state.editing,step=state.wizardStep,title='',body='';if(step===1){title='Quem é seu personagem?';body=field('name','Nome do personagem',c.name,'text')+field('player','Nome do jogador',c.player,'text')+field('level','Nível',c.level,'number');}if(step===2){title='Escolha sua Origem';body=choicePlaceholder('Origem','origin',c.origin,'As opções e descrições oficiais serão carregadas do Livro do Jogador.');}if(step===3){title='Escolha seu Antecedente';body=choicePlaceholder('Antecedente','background',c.background,'Cada opção mostrará descrição e efeitos conforme as regras oficiais.');}if(step===4){title='Escolha sua Filiação';body=choicePlaceholder('Filiação','affiliation',c.affiliation,'Os deuses aparecerão aqui com descrição, características e efeitos automáticos.');}if(step===5){title='Escolha seu Caminho Divino';body=choicePlaceholder('Caminho Divino','divinePath',c.divinePath,'O app mostrará apenas Caminhos compatíveis com a Filiação escolhida.');}if(step===6){title='Revisão e cálculos';body='<div class="prepared-block"><strong>'+esc(c.name||'Seu personagem')+'</strong><p>'+summary(c)+'</p><p>PV, MP, Aura, proficiências, resistências e demais valores serão calculados aqui quando o banco oficial de regras estiver cadastrado.</p></div>';}if(step===7){title='Detalhes finais';body='<label class="full-field"><span>Notas do personagem</span><textarea id="wizard-notes" rows="7" placeholder="História e observações...">'+esc(c.notes)+'</textarea></label><div class="prepared-block"><strong>Pronto para salvar</strong><p>As escolhas ficam armazenadas na ficha e poderão alimentar automaticamente progressão, Skills, poderes e combate.</p></div>';}
+return '<section class="section-heading"><div><span class="eyebrow">CRIANDO PERSONAGEM</span><h2>'+esc(title)+'</h2></div><button class="secondary" data-cancel-edit>Cancelar</button></section><section class="panel wizard">'+progress()+'<div class="wizard-body">'+body+'</div><div class="editor-actions">'+(step>1?'<button class="secondary" data-wizard-prev>Voltar</button>':'<span></span>')+(step<7?'<button class="primary" data-wizard-next>Próximo</button>':'<button class="primary" data-wizard-save>Salvar ficha</button>')+'</div></section>';}
+function field(name,label,value,type){return '<label class="full-field"><span>'+esc(label)+'</span><input data-wizard-field="'+name+'" type="'+type+'" value="'+esc(value)+'" '+(type==='number'?'min="1" max="20" inputmode="numeric"':'')+'></label>';}
+function choicePlaceholder(label,name,value,help){return '<div class="choice-placeholder"><span class="large-icon">◇</span><h3>'+esc(label)+'</h3><p>'+esc(help)+'</p><label class="full-field"><span>Seleção temporária</span><input data-wizard-field="'+name+'" value="'+esc(value)+'" placeholder="Será substituído pelas opções do livro"></label><small>Este campo temporário mantém o fluxo testável sem inventar regras.</small></div>';}
+function summary(c){return ['Nível '+c.level,c.origin&&'Origem: '+c.origin,c.background&&'Antecedente: '+c.background,c.affiliation&&'Filiação: '+c.affiliation,c.divinePath&&'Caminho: '+c.divinePath].filter(Boolean).map(esc).join('<br>');}
+function syncWizard(){document.querySelectorAll('[data-wizard-field]').forEach(function(el){var k=el.getAttribute('data-wizard-field');state.editing[k]=el.type==='number'?Math.max(1,Math.min(20,Number(el.value||1))):el.value.trim();});var notes=document.getElementById('wizard-notes');if(notes)state.editing.notes=notes.value;}
+function render(){var active=activeSection(),inside=state.screen==='characters'||state.screen==='edit',content=inside?charactersView():(state.section==='inicio'?homeView():moduleView(active));app.innerHTML='<div class="app-shell"><header class="topbar"><div><span class="eyebrow">SEMIDEUSES RPG 3E</span><h1>'+(inside?'Personagens':esc(active.label))+'</h1></div><div class="brand-mark">S3</div></header>'+(state.message?'<button class="toast" data-dismiss-message>'+esc(state.message)+'</button>':'')+'<main class="content">'+content+'</main>'+bottomNav(inside)+'</div>';bindEvents();}
+function bottomNav(inside){return '<nav class="bottom-nav">'+sections.map(function(x){return '<button data-go="'+x.id+'" class="'+(!inside&&state.section===x.id?'active':'')+'"><span>'+x.icon+'</span><small>'+esc(x.label)+'</small></button>';}).join('')+'</nav>';}
+function openCharacters(){state.section='jogador';state.screen='characters';state.editing=null;render();window.scrollTo(0,0);}
+function message(m){state.message=m;render();setTimeout(function(){if(state.message===m){state.message='';render();}},1800);}
+function bindEvents(){document.querySelectorAll('[data-go]').forEach(function(b){b.onclick=function(){state.section=b.getAttribute('data-go')||'inicio';state.screen='list';state.editing=null;render();};});document.querySelectorAll('[data-open-characters]').forEach(function(b){b.onclick=openCharacters;});document.querySelectorAll('[data-module]').forEach(function(b){b.onclick=function(){if(b.getAttribute('data-module')==='personagens')openCharacters();else alert('Este módulo será ativado em etapa futura.');};});document.querySelectorAll('[data-new-character]').forEach(function(b){b.onclick=function(){state.section='jogador';state.editing=emptyCharacter();state.wizardStep=1;state.screen='edit';render();};});document.querySelectorAll('[data-edit-character]').forEach(function(b){b.onclick=function(){var c=state.characters.find(function(x){return x.id===b.getAttribute('data-edit-character');});if(c){state.editing=JSON.parse(JSON.stringify(c));state.wizardStep=1;state.screen='edit';render();}};});document.querySelectorAll('[data-wizard-next]').forEach(function(b){b.onclick=function(){syncWizard();if(state.wizardStep===1&&!state.editing.name){alert('Informe o nome do personagem.');return;}state.wizardStep=Math.min(7,state.wizardStep+1);render();window.scrollTo(0,0);};});document.querySelectorAll('[data-wizard-prev]').forEach(function(b){b.onclick=function(){syncWizard();state.wizardStep=Math.max(1,state.wizardStep-1);render();};});document.querySelectorAll('[data-wizard-save]').forEach(function(b){b.onclick=function(){syncWizard();var c=state.editing;c.name=c.name||'Sem nome';c.updatedAt=new Date().toISOString();var i=state.characters.findIndex(function(x){return x.id===c.id;});if(i>=0)state.characters[i]=c;else state.characters.unshift(c);saveCharacters();state.editing=null;state.screen='characters';message('Ficha salva neste aparelho.');};});document.querySelectorAll('[data-cancel-edit]').forEach(function(b){b.onclick=function(){state.editing=null;state.screen='characters';render();};});document.querySelectorAll('[data-duplicate-character]').forEach(function(b){b.onclick=function(){var c=state.characters.find(function(x){return x.id===b.getAttribute('data-duplicate-character');});if(c){var copy=JSON.parse(JSON.stringify(c));copy.id=uid();copy.name=(copy.name||'Personagem')+' — cópia';state.characters.unshift(copy);saveCharacters();message('Ficha duplicada.');}};});document.querySelectorAll('[data-delete-character]').forEach(function(b){b.onclick=function(){var id=b.getAttribute('data-delete-character'),c=state.characters.find(function(x){return x.id===id;});if(c&&confirm('Excluir a ficha de '+c.name+'?')){state.characters=state.characters.filter(function(x){return x.id!==id;});saveCharacters();message('Ficha excluída.');}};});}
+try{render();}catch(error){app.innerHTML='<main style="padding:24px;font-family:system-ui"><h1>Falha ao iniciar</h1><pre>'+esc(error.message||error)+'</pre></main>';}
 })();
