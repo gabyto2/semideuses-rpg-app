@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "modules": {
+    "player": ["characters", "progression", "combat", "inventory"],
+    "gm": ["campaigns", "encounters", "bestiary", "prophecies", "atlas"],
+    "compendium": ["origins", "backgrounds", "affiliations", "divinePaths", "skills", "talents", "equipment", "relics", "monsters"]
+  },
+  "storage": {
+    "characters": "semideuses.characters",
+    "campaigns": "semideuses.campaigns",
+    "settings": "semideuses.settings"
+  }
+}
