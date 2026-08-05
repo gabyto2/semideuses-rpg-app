@@ -77,7 +77,68 @@
         ]}
       ]
     }),
-    'Poseidon':overview('poseidon','Poseidon','🔱','Mar, terremotos e cavalos.','Controle de campo e mobilidade.'),
+    'Poseidon':overview('poseidon','Poseidon','🔱','Mar, terremotos e cavalos.','Controle de campo e mobilidade.',{
+      mechanicalStatus:'complete',
+      title:'O Senhor das Marés',
+      casting:'SAB',
+      hitDie:10,
+      savingThrows:['FOR','CON'],
+      skillProficiencies:['Atletismo','Natureza','Lidar com Animais'],
+      weaponProficiencies:['Armas simples','Armas marciais'],
+      armorProficiencies:['Armaduras médias','Armaduras leves','Escudos'],
+      overview:'Controle de campo e mobilidade. A Maré oscila entre Alta, voltada a empurrar, derrubar e inundar, e Baixa, voltada a deslizar, reposicionar e correr. Quase toda habilidade muda de efeito conforme a maré atual.',
+      signature:{
+        name:'Maré',
+        summary:'Você mantém um marcador de Maré de −3 (Baixa) a +3 (Alta), começando em 0 a cada combate. Uma vez por turno, sem gastar ação, suba ou desça a Maré em 1. As cláusulas de Maré Alta favorecem área e empurrão; as de Maré Baixa favorecem mobilidade e reposicionamento.'
+      },
+      progression:{
+        1:['Dom','Assinatura: Maré','Jato de Pressão'],
+        2:['Puxar a Maré'],
+        3:['Escolha do Caminho','Habilidade de Caminho'],
+        5:['Domínio da Água','Marca do Herói'],
+        7:['Habilidade de Caminho'],
+        10:['Vaga'],
+        12:['Habilidade de Caminho'],
+        15:['Ressaca'],
+        17:['Habilidade de Caminho'],
+        20:['Poder Supremo: O Mar Cobra a Conta']
+      },
+      abilities:[
+        ability(1,'Dom','Passiva',null,'Passiva','O mar é sua segunda pele: você respira na água, nada à mesma velocidade que anda, não sofre penalidade para atacar ou se mover submerso e enxerga normalmente na água turva.'),
+        ability(1,'Jato de Pressão','E',1,'Ação','Um jato atinge um alvo a até 12 m e causa 1d10 Concussivo. Maré Alta: empurra 1,5 m por ponto de Maré. Maré Baixa: você desliza 1,5 m por ponto sem provocar Ataques de Oportunidade. À vontade; causa +1d10 nos níveis 5, 11 e 17.'),
+        ability(2,'Puxar a Maré','E',1,'Ação Bônus','Mova sua Maré em 2, além do ajuste gratuito do turno, e escolha um inimigo a até 9 m. Em Maré Alta, ele é empurrado 3 m e fica Caído se bater numa parede. Em Maré Baixa, a areia o prende: velocidade 0 até o fim do próximo turno dele, salvo TR de FOR.'),
+        ability(5,'Domínio da Água','C',4,'Ação, 1 minuto','Controle até 3 m³ de água por 1 minuto para criar cobertura, terreno difícil, uma ponte estreita ou uma montaria aquática. Maré Alta: o volume dobra para 6 m³ e empurra 1,5 m por ponto de Maré quem entra. Maré Baixa: a montaria ganha +6 m de velocidade e você desliza pela água sem provocar Ataques de Oportunidade.'),
+        ability(10,'Vaga','B',6,'Ação','Uma onda em linha de 9 m causa 4d8 Concussivo, arrasta inimigos 3 m e permite reposicionar em até 3 m um aliado atingido pela água. Maré Alta: o empurrão sobe para 6 m e derruba. Maré Baixa: você também desliza 3 m sem provocar Ataques de Oportunidade.'),
+        ability(15,'Ressaca','A',8,'Ação, concentração por 1 minuto','Cria um raio de 12 m em um ponto a até 30 m. É terreno difícil para inimigos, mas não para você e aliados. No fim de cada turno seu, em Maré Alta os inimigos fazem TR de FOR ou são arrastados 6 m ao centro e sofrem 3d8 Contundente; em Maré Baixa, fazem TR de DES ou ficam Caídos e sofrem 3d8 Perfurante. A área pode mover-se 6 m por turno com sua Ação Bônus.'),
+        ability(20,'O Mar Cobra a Conta','Lendário',24,'Ação','1 uso por dia. Uma onda de 30 m de largura avança 90 m: 18d10 Contundente, com TR de FOR para metade. Quem falha é levado 18 m, fica Caído e Agarrado pela água por 1 rodada. Veículos e estruturas não mágicas de até 6 m são arrastados, e a área vira terreno alagado e difícil pelo resto da cena. Até o fim do combate, sua Maré fica travada em 0.')
+      ],
+      paths:[
+        {id:'mar',name:'Caminho do Mar',summary:'Fluidez, inundação, reposicionamento e domínio direto das marés.',status:'complete',abilities:[
+          ability(3,'Chicote de Água','D',2,'Ação','Um tentáculo de água agarra um alvo a até 9 m: TR de FOR; na falha, sofre 2d8 Concussivo e é puxado 3 m. Maré Alta: também fica Restrito até o fim do próximo turno. Maré Baixa: em vez de puxar o alvo, você se puxa até ele ou até um aliado sem provocar Ataques de Oportunidade.'),
+          ability(7,'Maré Crescente','B',6,'Ação, 1 minuto','Inunda uma área de 6 m: terreno difícil para inimigos; aliados ignoram esse terreno. Maré Alta: inimigos que terminam o turno na área são empurrados para a borda. Maré Baixa: aliados dentro ganham +3 m de velocidade.'),
+          ability(12,'Redemoinho','A',8,'Ação, 1 minuto','Cria um vórtice de 4,5 m por 1 minuto. Criaturas dentro fazem TR de FOR ou ficam presas e sofrem 3d8 Concussivo por turno. Maré Alta: cresce para 6 m e puxa quem passa perto. Maré Baixa: você pode mover o vórtice até 6 m por turno como Ação Bônus.'),
+          ability(17,'Tsunami','S',12,'Ação','2 usos por dia. Uma parede de água varre uma faixa de 30 m × 9 m: 7d8 Concussivo, com TR de FOR para metade, derruba e arrasta todos 6 m. Maré Alta amplia a faixa. Maré Baixa: em vez de ampliar, leva até 3 aliados em segurança para a outra ponta.')
+        ]},
+        {id:'terremoto',name:'Caminho do Terremoto',summary:'Domínio do solo, fissuras, atordoamento e remodelação permanente do campo.',status:'complete',abilities:[
+          ability(3,'Tremor','D',2,'Ação','O chão sacode em 4,5 m: TR de DES ou o alvo fica Caído e sofre 2d8 Concussivo. Maré Baixa, em −1 ou menos: a área aumenta para 6 m. Maré Alta: os alvos derrubados também são empurrados 3 m para longe de você.'),
+          ability(7,'Fenda','B',6,'Ação, 1 minuto','Abre uma fenda de 9 m, intransponível por 1 minuto. Quem estava na linha faz TR de DES ou cai dentro, sofre 3d8 e fica Restrito. Maré Baixa: a fenda se estende para 12 m. Maré Alta: as bordas expelem jatos; quem passa adjacente sofre 2d8 e é empurrado.'),
+          ability(12,'Abalo Sísmico','A',8,'Ação','Área de 9 m: 5d8 Concussivo, com TR de CON para metade; quem falha fica Atordoado por 1 rodada. Maré Baixa: +1d8 de dano. Maré Alta: os atingidos também são empurrados 3 m para a borda.'),
+          ability(17,'Cataclismo','S',12,'Ação','2 usos por dia. Reformula o campo em um raio de 12 m, criando crateras e elevações: 7d8 Concussivo, derruba em massa e cria terreno difícil permanente. Maré Baixa: o raio aumenta 3 m. Maré Alta: uma onda de choque empurra todos os inimigos 6 m para fora da área.')
+        ]},
+        {id:'cavalos',name:'Caminho dos Cavalos',summary:'Cavalaria divina, investidas montadas e transporte do grupo pelas ondas.',status:'complete',abilities:[
+          ability(3,'Corcel das Ondas','D',2,'Ação Bônus, 10 minutos','Invoca um corcel de espuma: montaria Grande, CA 14, PV iguais a 5 × seu nível e velocidade 18 m; desfaz-se em água ao chegar a 0 PV. Maré Alta: o primeiro inimigo no caminho a cada turno sofre 2d8 e é empurrado. Maré Baixa: o corcel ganha +6 m de velocidade e galopa sobre água e paredes.'),
+          ability(7,'Carga Montada','B',6,'Ação','Montado, avance em linha e cause 4d8 Concussivo a cada inimigo no caminho; TR de FOR evita ficar Caído. Maré Alta: o dano sobe para 5d8 e o empurrão para 3 m. Maré Baixa: você não provoca Ataques de Oportunidade na carga e pode desviar entre os alvos.'),
+          ability(12,'Manada Espectral','A',8,'Ação','Cavalos espectrais cruzam uma faixa de 6 m: causam 5d8 e abrem o flanco, concedendo Vantagem aos aliados contra os atingidos por 1 rodada. Maré Alta: também empurram 3 m. Maré Baixa: aliados podem se reposicionar 3 m junto com a manada.'),
+          ability(17,'Cavalaria do Mar','S',12,'Ação, 1 minuto','2 usos por dia. Invoca por 1 minuto um esquadrão de cavaleiros das ondas que age na sua Iniciativa. Maré Alta: concentra-se em empurrar e derrubar, com TR de FOR a cada passagem. Maré Baixa: serve de transporte; aliados a até 3 m cavalgam e se reposicionam a cada turno.')
+        ]},
+        {id:'profundezas',name:'Caminho das Profundezas',summary:'O abismo, a pressão esmagadora, as trevas aquáticas e a sucção do fundo.',status:'complete',abilities:[
+          ability(3,'Puxão do Fundo','D',2,'Ação','Correntes afundam um alvo a até 12 m: TR de FOR ou ele sofre 2d8, é puxado 4,5 m e fica Restrito até o fim do próximo turno. Maré Alta, em +1 ou mais: também fica Lento por 1 rodada. Maré Baixa: em vez de puxá-lo, você se afasta 4,5 m sem provocar Ataques de Oportunidade.'),
+          ability(7,'Pressão Abissal','B',6,'Ação','Esmaga um alvo: 4d8 e Desvantagem em ataques por 1 minuto; TR de CON anula a Desvantagem. Maré Alta: +1d8 de dano. Maré Baixa: você desliza 3 m e o próximo ataque contra você tem Desvantagem.'),
+          ability(12,'Escuridão das Profundezas','A',8,'Ação, 1 minuto','Cria trevas aquáticas em uma área de 6 m por 1 minuto. Inimigos ficam Cegos e sofrem 3d8 por turno; você e aliados enxergam. Maré Alta: a área aumenta para 9 m. Maré Baixa: você e aliados ganham +3 m de velocidade e movem-se sem provocar Ataques de Oportunidade.'),
+          ability(17,'O Abismo Chama','S',12,'Ação, 1 minuto','2 usos por dia. Abre um vão abissal de 6 m por 1 minuto. Quem começa o turno dentro faz TR de FOR ou é puxado ao centro e sofre 6d8; no centro, o dano dobra. Maré Alta: o TR para escapar é feito com Desvantagem. Maré Baixa: o vão puxa você e aliados para bordas seguras, reposicionando-os 6 m à sua escolha.')
+        ]}
+      ]
+    }),
     'Hades':overview('hades','Hades','♜','Morte, sombras e riquezas.','Atrito, invocação e dreno.'),
     'Atena':overview('atena','Atena','🦉','Sabedoria e estratégia.','Comando e suporte tático.'),
     'Ares':overview('ares','Ares','🪖','Guerra e violência.','Duelista bruto e resistente.'),
@@ -172,7 +233,7 @@
   function listCompleteAffiliations(){return listAffiliations().filter(function(entry){return entry.mechanicalStatus==='complete';});}
 
   global.SemideusesRulesDatabase={
-    version:'3e-rules-db-0.4.0',edition:'3e',affiliations:affiliations,
+    version:'3e-rules-db-0.5.0',edition:'3e',affiliations:affiliations,
     getAffiliation:getAffiliation,getCatalogAffiliation:getCatalogAffiliation,
     listAffiliations:listAffiliations,listCompleteAffiliations:listCompleteAffiliations
   };
