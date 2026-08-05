@@ -78,7 +78,12 @@
           ability(12,'Ciclo Acelerado','A',8,'Ação, 1 minuto','Por 1 minuto, as estações se aceleram e alternam efeitos de renovação e definhamento a cada turno.'),
           ability(17,'Equinócio','S',12,'Ação','2 usos por dia. Aliados a 12 m recuperam 4d8 PV e removem condições; inimigos a 12 m sofrem 6d8 Necrótico e enfrentam terreno difícil.')
         ]},
-        {id:'terra',name:'Caminho da Terra',summary:'Fortalece o controle do solo, raízes e obstáculos, prendendo inimigos e dominando o campo.',status:'pending',abilities:[]}
+        {id:'terra',name:'Caminho da Terra',summary:'O solo que devora. Transforma o terreno em arma, restringe deslocamentos e retira inimigos do combate.',status:'complete',abilities:[
+          ability(3,'Lama','D',2,'Ação','Amolece o chão em uma área de 4,5 m. Inimigos fazem TR de FOR ou ficam Restritos por 1 rodada. Dentro de uma zona de plantas sua, a área aumenta para 6 m.'),
+          ability(7,'Terra Movediça','B',6,'Ação','Cria uma área de 6 m de terreno difícil que engole os pés dos inimigos. Quem falha no TR de FOR fica preso até conseguir se soltar. Dentro de uma zona de plantas sua, o TR é feito com Desvantagem.'),
+          ability(12,'Abismo de Raízes','A',8,'Ação','Raízes irrompem em uma área de 6 m, causam 5d8 de dano Perfurante e agarram os alvos; TR de FOR evita ficar Restrito. Dentro de uma zona de plantas sua, causa +1d8 de dano.'),
+          ability(17,'A Terra Reclama','S',12,'Ação','2 usos por dia. O solo se abre sob inimigos em uma área de 9 m. No fracasso em TR de DES, são engolidos, ficam Restritos e fora de combate até cavarem a saída, sofrendo 6d8 de dano. Suas zonas de plantas contam como parte da área.')
+        ]}
       ]
     }),
     'Dionísio':overview('dionisio','Dionísio','🍇','Vinho, loucura e êxtase.','Caos, debilitação em área e frenesi.'),
@@ -106,7 +111,7 @@
   function listCompleteAffiliations(){return listAffiliations().filter(function(entry){return entry.mechanicalStatus==='complete';});}
 
   global.SemideusesRulesDatabase={
-    version:'3e-rules-db-0.3.0',edition:'3e',affiliations:affiliations,
+    version:'3e-rules-db-0.3.1',edition:'3e',affiliations:affiliations,
     getAffiliation:getAffiliation,getCatalogAffiliation:getCatalogAffiliation,
     listAffiliations:listAffiliations,listCompleteAffiliations:listCompleteAffiliations
   };
