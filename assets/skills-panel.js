@@ -9,6 +9,10 @@ function findCurrent(){
   if(currentId)return Service.get(currentId);
   return null;
 }
+function syncMpDisplay(c){
+  var card=document.querySelector('.resource-card.mp strong');
+  if(card)card.textContent=Number(c.resources&&c.resources.mpCurrent||0)+' / '+Number(c.rules&&c.rules.mpMax||0);
+}
 function panelHtml(c){
   var skills=Array.isArray(c.skills)?c.skills:[];
   var mp=Math.max(0,Number(c.resources&&c.resources.mpCurrent||0));
@@ -22,6 +26,7 @@ function ensurePanel(force){
   var existing=document.getElementById('skills-panel');
   if(existing&&!force)return;
   var c=findCurrent();if(!c)return;
+  syncMpDisplay(c);
   if(existing)existing.remove();
   var panels=Array.prototype.slice.call(document.querySelectorAll('main .panel'));
   var target=panels.find(function(p){var h=p.querySelector('h3');return h&&h.textContent.trim()==='Progressão';});
