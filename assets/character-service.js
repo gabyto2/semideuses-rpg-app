@@ -84,7 +84,23 @@
     var result=mutator(clone(character));
     return save(result||character);
   }
+  function takeDamage(id,amount){
+    amount=Math.max(0,Number(amount||0));
+    return update(id,function(character){
+      character.resources=character.resources||{};
+      var temp=Math.max(0,Number(character.resources.tempHp||0));
+      var absorbed=Math.min(temp,amount);
+      character.resources.tempHp=temp-absorbed;
+      var remaining=amount-absorbed;
+      if(remaining>0){
+        character.resources.pvCurrent=Math.max(0,Number(character.resources.pvCurrent||0)-remaining);
+      }
+      return character;
+    });
+  }
   function adjustResource(id,type,amount){
+    amount=Number(amount||0);
+    if(type==='pv'&&amount<0)return takeDamage(id,-amount);
     return update(id,function(character){return model().adjustResource(character,type,amount);});
   }
   function setResource(id,type,value){
@@ -121,16 +137,16 @@
   function toggleSaveProficiency(id,attribute){
     if(model().attributes.indexOf(attribute)<0)throw new Error('Atributo inválido.');
     return update(id,function(character){
-      var list=Array.isArray(character.saveProficiencies)?character.saveProficiencies.slice():[];
-      var index=list.indexOf(attribute);
-      if(index>=0)list.splice(index,1);else list.push(attribute);
-      character.saveProficiencies=list;
+      var proficiencies=Array.isArray(character.saveProficiencies)?character.saveProficiencies.slice():[];
+      var index=proficiencies.indexOf(attribute);
+      if(index>=0)proficiencies.splice(index,1);else proficiencies.push(attribute);
+      character.saveProficiencies=proficiencies;
       return character;
     });
   }
 
   global.SemideusesCharacterService={
-    version:'3e-service-0.2.0',
+    version:'3e-service-0.3.0',
     list:list,
     get:get,
     create:create,
@@ -139,6 +155,7 @@
     remove:remove,
     duplicate:duplicate,
     adjustResource:adjustResource,
+    takeDamage:takeDamage,
     setResource:setResource,
     updateAttribute:updateAttribute,
     addSkill:addSkill,
