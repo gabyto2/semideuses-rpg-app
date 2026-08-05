@@ -146,7 +146,7 @@
   }
 
   global.SemideusesCharacterService={
-    version:'3e-service-0.3.0',
+    version:'3e-service-0.3.1',
     list:list,
     get:get,
     create:create,
@@ -156,6 +156,7 @@
     duplicate:duplicate,
     adjustResource:adjustResource,
     takeDamage:takeDamage,
+    applyDamage:takeDamage,
     setResource:setResource,
     updateAttribute:updateAttribute,
     addSkill:addSkill,
