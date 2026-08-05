@@ -2,6 +2,7 @@
   'use strict';
 
   var ATTRIBUTES=['FOR','DES','CON','INT','SAB','CAR'];
+  var CONDITIONS=['Saudável','Ferido','Exausto','Inconsciente','Morrendo','Envenenado','Amedrontado','Atordoado','Impedido'];
   var DEFAULT_ATTRIBUTES={FOR:15,DES:14,CON:13,INT:12,SAB:10,CAR:8};
   var AFFILIATION_RULES={
     'Zeus':{casting:'CAR',hitDie:10},'Poseidon':{casting:'SAB',hitDie:10},
@@ -20,7 +21,7 @@
   };
 
   function clone(value){return JSON.parse(JSON.stringify(value));}
-  function uid(){return 'char-'+Date.now()+'-'+Math.random().toString(36).slice(2,8);}
+  function uid(prefix){return (prefix||'char')+'-'+Date.now()+'-'+Math.random().toString(36).slice(2,8);}
   function clamp(value,min,max){return Math.max(min,Math.min(max,value));}
   function cleanAttributes(source){
     var result={};
@@ -29,6 +30,24 @@
       result[attribute]=Number.isFinite(value)?clamp(value,1,30):DEFAULT_ATTRIBUTES[attribute];
     });
     return result;
+  }
+  function cleanSkills(source){
+    if(!Array.isArray(source))return [];
+    return source.map(function(skill){
+      return {
+        id:skill&&skill.id||uid('skill'),
+        name:String(skill&&skill.name||'Habilidade'),
+        cost:Math.max(0,Number(skill&&skill.cost!=null?skill.cost:skill&&skill.mp||0)),
+        rank:skill&&skill.rank||'',
+        description:skill&&skill.description||''
+      };
+    });
+  }
+  function cleanSaveProficiencies(source){
+    if(!Array.isArray(source))return [];
+    return source.filter(function(attribute,index,list){
+      return ATTRIBUTES.indexOf(attribute)>=0&&list.indexOf(attribute)===index;
+    });
   }
   function affiliationRules(name){return clone(AFFILIATION_RULES[name]||{casting:'SAB',hitDie:8});}
   function calculate(character){
@@ -54,13 +73,18 @@
     else c.resources.pvCurrent=clamp(Number(c.resources.pvCurrent||0),0,c.rules.pvMax);
     if(c.resources.mpCurrent==null||c.resources.mpCurrent===oldMp)c.resources.mpCurrent=c.rules.mpMax;
     else c.resources.mpCurrent=clamp(Number(c.resources.mpCurrent||0),0,c.rules.mpMax);
+    c.resources.tempHp=Math.max(0,Number(c.resources.tempHp||0));
+    c.resources.hitDiceMax=Math.max(1,level);
+    if(c.resources.hitDiceCurrent==null)c.resources.hitDiceCurrent=c.resources.hitDiceMax;
+    c.resources.hitDiceCurrent=clamp(Number(c.resources.hitDiceCurrent||0),0,c.resources.hitDiceMax);
+    c.resources.condition=CONDITIONS.indexOf(c.resources.condition)>=0?c.resources.condition:'Saudável';
     return c;
   }
   function normalize(character){
     var c=clone(character||{});
     c.id=c.id||uid();
     c.systemEdition=c.systemEdition||'3e';
-    c.schemaVersion=2;
+    c.schemaVersion=3;
     c.name=c.name||'';
     c.player=c.player||'';
     c.age=c.age||'';
@@ -73,16 +97,18 @@
     c.divinePath=c.divinePath||'';
     c.heroMark=c.heroMark||'';
     c.attributes=cleanAttributes(c.attributes);
-    c.skills=Array.isArray(c.skills)?c.skills:[];
+    c.skills=cleanSkills(c.skills);
+    c.saveProficiencies=cleanSaveProficiencies(c.saveProficiencies);
     c.notes=c.notes||'';
     return calculate(c);
   }
   function create(overrides){
     return normalize(Object.assign({
-      id:uid(),systemEdition:'3e',schemaVersion:2,name:'',player:'',age:'',
+      id:uid(),systemEdition:'3e',schemaVersion:3,name:'',player:'',age:'',
       appearance:'',level:1,concept:'',heroType:'Semideus Grego',affiliation:'',
       background:'',divinePath:'',heroMark:'',attributes:clone(DEFAULT_ATTRIBUTES),
-      skills:[],notes:'',createdAt:new Date().toISOString()
+      skills:[],saveProficiencies:[],resources:{tempHp:0,condition:'Saudável'},
+      notes:'',createdAt:new Date().toISOString()
     },overrides||{}));
   }
   function updateAttribute(character,attribute,value){
@@ -93,19 +119,23 @@
   }
   function adjustResource(character,type,amount){
     var c=normalize(character);
-    var key=type==='pv'?'pvCurrent':'mpCurrent';
-    var max=type==='pv'?c.rules.pvMax:c.rules.mpMax;
-    c.resources[key]=clamp(Number(c.resources[key]||0)+Number(amount||0),0,max);
+    var keys={pv:'pvCurrent',mp:'mpCurrent',tempHp:'tempHp',hitDice:'hitDiceCurrent'};
+    var key=keys[type];
+    if(!key)throw new Error('Recurso inválido: '+type);
+    var maximum=type==='pv'?c.rules.pvMax:type==='mp'?c.rules.mpMax:type==='hitDice'?c.resources.hitDiceMax:Number.MAX_SAFE_INTEGER;
+    c.resources[key]=clamp(Number(c.resources[key]||0)+Number(amount||0),0,maximum);
     return c;
   }
 
   global.SemideusesCharacter={
-    version:'3e-model-0.2.0',
-    schemaVersion:2,
+    version:'3e-model-0.3.0',
+    schemaVersion:3,
     attributes:ATTRIBUTES.slice(),
+    conditions:CONDITIONS.slice(),
     defaults:{attributes:clone(DEFAULT_ATTRIBUTES)},
     affiliationRules:affiliationRules,
     cleanAttributes:cleanAttributes,
+    cleanSkills:cleanSkills,
     calculate:calculate,
     normalize:normalize,
     create:create,
