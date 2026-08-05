@@ -53,7 +53,7 @@
       ability(5,'Marca do Herói','Passiva',null,'Escolha permanente','Escolha Ataque Extra ou Bônus de Conjuração. Ataque Extra permite dois ataques com arma ao usar a ação Atacar. Bônus de Conjuração reduz em 1 MP o custo de Rank C e permite, uma vez por turno, conjurar uma habilidade de Rank E junto com sua Ação. A escolha é permanente e não acumula com outra fonte do mesmo efeito.'),
       ability(10,'Reposicionar','B',6,'Ação Bônus','Mova dois aliados a até 9 m, cada um até a própria velocidade, sem provocar Ataques de Oportunidade.'),
       ability(15,'Contra-Ordem','A',8,'Reação','Quando um inimigo visível a até 18 m declara um ataque, habilidade ou movimento, gaste 3 Comando para anular a ação; ela é perdida, mas o recurso ou uso do inimigo não é consumido. Contra habilidade de Rank S ou superior, ou contra um chefe, a ação não é anulada: o alvo age com Desvantagem e você redireciona a área ou o alvo em até 9 m. Uma vez por rodada.'),
-      ability(20,'A Coruja de Bronze','Lendário',24,'Ação, 1 minuto','1 uso por dia. Invoque a Coruja de Bronze por 1 minuto. Ela paira a até 30 m, age na sua Iniciativa sem consumir sua Ação e não pode ser alvo de ataques; uma dissipação CD 25 pode expulsá-la. No turno dela, escolha: devolver a um aliado uma Reação já usada; fazer um inimigo repetir com Desvantagem um Teste de Resistência em que obteve sucesso; ou conceder a um aliado que ainda não agiu nesta rodada uma ação de ataque adicional, respeitando o máximo de uma ação adicional por rodada contando todas as fontes. Você ganha 2 Comando por rodada enquanto ela estiver presente. Quando a coruja parte, seu Comando zera e você não gera Comando até o fim do combate.')
+      ability(20,'A Coruja de Bronze','Lendário',24,'Ação, 1 minuto','1 uso por dia. Invoque a Coruja de Bronze por 1 minuto. Ela paira a até 30 m, age na sua Iniciativa sem consumir sua Ação e não pode ser alvo de ataques; uma dissipação CD 25 pode expulsá-la. No turno dela, escolha: devolver a um aliado uma Reação já usada; fazer um inimigo repetir um Teste de Resistência falho com Desvantagem; ou conceder a um aliado que ainda não agiu nesta rodada uma ação de ataque adicional, respeitando o máximo de uma ação adicional por rodada contando todas as fontes. Você ganha 2 Comando por rodada enquanto ela estiver presente. Quando a coruja parte, seu Comando zera e você não gera Comando até o fim do combate.')
     ],
     paths:[
       {
@@ -95,5 +95,5 @@
     ]
   };
 
-  db.version='3e-rules-db-0.7.0';
+  db.version='3e-rules-db-0.7.1';
 })(window);
