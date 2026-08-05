@@ -1,28 +1,65 @@
 (function(){
 'use strict';
-var CHAR_KEY='semideuses.characters.v4';
-var EXTRA_KEY='semideuses.sheetExtras.v1';
+var Service=window.SemideusesCharacterService;
+var Rules=window.SemideusesRules;
 var attrs=['FOR','DES','CON','INT','SAB','CAR'];
 var conditions=['Saudável','Ferido','Exausto','Inconsciente','Morrendo','Envenenado','Amedrontado','Atordoado','Impedido'];
 var currentId='';
-var scheduled=false;
-function readJson(key,fallback){try{var value=JSON.parse(localStorage.getItem(key)||'');return value==null?fallback:value;}catch(e){return fallback;}}
-function writeJson(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true;}catch(e){alert('Não foi possível salvar os dados da ficha: '+e.message);return false;}}
-function characters(){var list=readJson(CHAR_KEY,[]);return Array.isArray(list)?list:[];}
-function extras(){var data=readJson(EXTRA_KEY,{});return data&&typeof data==='object'?data:{};}
-function findCurrent(){var list=characters();if(currentId){var match=list.find(function(c){return c.id===currentId;});if(match)return match;}var heading=document.querySelector('.section-heading h2');if(!heading)return null;var name=heading.textContent.trim();var matches=list.filter(function(c){return String(c.name||'').trim()===name;});matches.sort(function(a,b){return String(b.updatedAt||'').localeCompare(String(a.updatedAt||''));});if(matches[0])currentId=matches[0].id;return matches[0]||null;}
-function mod(value){return Math.floor((Number(value||10)-10)/2);}
 function signed(value){return value>=0?'+'+value:String(value);}
-function prof(level){level=Number(level||1);return level<=4?2:level<=8?3:level<=12?4:level<=16?5:6;}
-function getExtra(c){var all=extras(),x=all[c.id]||{};x.tempHp=Math.max(0,Number(x.tempHp||0));x.hitDiceMax=Math.max(1,Number(x.hitDiceMax||c.level||1));x.hitDiceCurrent=Math.min(x.hitDiceMax,Math.max(0,Number(x.hitDiceCurrent==null?x.hitDiceMax:x.hitDiceCurrent)));x.condition=x.condition||'Saudável';x.saveProficiencies=Array.isArray(x.saveProficiencies)?x.saveProficiencies.filter(function(a){return attrs.indexOf(a)>=0;}):[];return x;}
-function saveExtra(c,x){var all=extras();all[c.id]=x;return writeJson(EXTRA_KEY,all);}
-function extraResourcesHtml(c,x){return '<section class="panel" id="sheet-extra-resources"><h3>Recursos adicionais</h3><div class="sheet-extra-grid"><article class="sheet-extra-card"><span>PV temporários</span><strong>'+x.tempHp+'</strong><div class="mini-adjust"><button data-extra-temp="-1">−1</button><button data-extra-temp="1">+1</button></div></article><article class="sheet-extra-card"><span>Dados de Vida</span><strong>'+x.hitDiceCurrent+' / '+x.hitDiceMax+' d'+Number(c.rules&&c.rules.hitDie||8)+'</strong><div class="mini-adjust"><button data-extra-hitdice="-1">Usar 1</button><button data-extra-hitdice="1">Recuperar 1</button></div></article><article class="sheet-extra-card"><span>Condição atual</span><strong>'+x.condition+'</strong><select class="condition-select" data-extra-condition>'+conditions.map(function(name){return '<option '+(name===x.condition?'selected':'')+'>'+name+'</option>';}).join('')+'</select></article></div><p class="sheet-note">PV temporários são uma reserva separada. A automação completa para absorver dano por eles será ligada ao motor oficial na próxima etapa.</p></section>';}
-function savesHtml(c,x){var bonus=prof(c.level);return '<section class="panel" id="sheet-saves"><div class="proficiency-banner"><span>Bônus de Proficiência</span><strong>+'+bonus+'</strong></div><h3>Testes de Resistência</h3><div class="save-grid">'+attrs.map(function(a){var trained=x.saveProficiencies.indexOf(a)>=0,total=mod(c.attributes&&c.attributes[a])+(trained?bonus:0);return '<article class="save-card '+(trained?'proficient':'')+'"><span>'+a+'</span><strong>'+signed(total)+'</strong><small>'+signed(mod(c.attributes&&c.attributes[a]))+' atributo'+(trained?' + '+bonus+' proficiência':'')+'</small><button class="save-toggle" data-save-prof="'+a+'">'+(trained?'● Proficiente':'○ Marcar proficiência')+'</button></article>';}).join('')+'</div><p class="sheet-note">Até o banco oficial de cada Filiação estar completo, marque manualmente os Testes de Resistência concedidos por ela. O app já recalcula o total pelo atributo e pelo nível.</p></section>';}
+function findCurrent(){
+  if(currentId){var byId=Service.get(currentId);if(byId)return byId;}
+  currentId=sessionStorage.getItem('semideuses.currentCharacterId')||'';
+  return currentId?Service.get(currentId):null;
+}
+function extraResourcesHtml(c){
+  var r=c.resources||{};
+  return '<section class="panel" id="sheet-extra-resources"><h3>Recursos adicionais</h3><div class="sheet-extra-grid">'+
+  '<article class="sheet-extra-card"><span>PV temporários</span><strong>'+Math.max(0,Number(r.tempHp||0))+'</strong><div class="mini-adjust"><button data-extra-temp="-1">−1</button><button data-extra-temp="1">+1</button></div></article>'+
+  '<article class="sheet-extra-card"><span>Dados de Vida</span><strong>'+Number(r.hitDiceCurrent||0)+' / '+Number(r.hitDiceMax||c.level||1)+' d'+Number(c.rules&&c.rules.hitDie||8)+'</strong><div class="mini-adjust"><button data-extra-hitdice="-1">Usar 1</button><button data-extra-hitdice="1">Recuperar 1</button></div></article>'+
+  '<article class="sheet-extra-card"><span>Condição atual</span><strong>'+String(r.condition||'Saudável')+'</strong><select class="condition-select" data-extra-condition>'+conditions.map(function(name){return '<option '+(name===(r.condition||'Saudável')?'selected':'')+'>'+name+'</option>';}).join('')+'</select></article></div>'+
+  '<p class="sheet-note">O dano consome primeiro os PV temporários. Apenas o restante reduz os PV atuais.</p></section>';
+}
+function savesHtml(c){
+  var bonus=Rules.proficiency(c.level),proficiencies=Array.isArray(c.saveProficiencies)?c.saveProficiencies:[];
+  return '<section class="panel" id="sheet-saves"><div class="proficiency-banner"><span>Bônus de Proficiência</span><strong>+'+bonus+'</strong></div><h3>Testes de Resistência</h3><div class="save-grid">'+attrs.map(function(a){var trained=proficiencies.indexOf(a)>=0,total=Rules.modifier(c.attributes&&c.attributes[a])+(trained?bonus:0);return '<article class="save-card '+(trained?'proficient':'')+'"><span>'+a+'</span><strong>'+signed(total)+'</strong><small>'+signed(Rules.modifier(c.attributes&&c.attributes[a]))+' atributo'+(trained?' + '+bonus+' proficiência':'')+'</small><button class="save-toggle" data-save-prof="'+a+'">'+(trained?'● Proficiente':'○ Marcar proficiência')+'</button></article>';}).join('')+'</div><p class="sheet-note">Até o banco oficial de cada Filiação estar completo, marque manualmente os Testes de Resistência concedidos por ela.</p></section>';
+}
 function isSheet(){return Array.prototype.some.call(document.querySelectorAll('.eyebrow'),function(e){return e.textContent.trim()==='FICHA PRONTA';});}
-function ensure(){scheduled=false;if(!isSheet())return;var c=findCurrent();if(!c)return;var x=getExtra(c);if(!document.getElementById('sheet-extra-resources')){var resources=document.querySelector('.resource-grid');if(resources)resources.insertAdjacentHTML('afterend',extraResourcesHtml(c,x));}
-if(!document.getElementById('sheet-saves')){var panels=Array.prototype.slice.call(document.querySelectorAll('main .panel'));var attributesPanel=panels.find(function(p){var h=p.querySelector('h3');return h&&h.textContent.trim()==='Atributos';});if(attributesPanel)attributesPanel.insertAdjacentHTML('afterend',savesHtml(c,x));}}
-function schedule(){if(scheduled)return;scheduled=true;setTimeout(ensure,0);}
-document.addEventListener('click',function(event){var open=event.target.closest('[data-open-sheet]');if(open){currentId=open.getAttribute('data-open-sheet')||'';schedule();return;}var c=findCurrent();if(!c)return;var x=getExtra(c);var temp=event.target.closest('[data-extra-temp]');if(temp){x.tempHp=Math.max(0,x.tempHp+Number(temp.getAttribute('data-extra-temp')||0));if(saveExtra(c,x)){var panel=document.getElementById('sheet-extra-resources');if(panel)panel.remove();schedule();}return;}var hd=event.target.closest('[data-extra-hitdice]');if(hd){x.hitDiceCurrent=Math.min(x.hitDiceMax,Math.max(0,x.hitDiceCurrent+Number(hd.getAttribute('data-extra-hitdice')||0)));if(saveExtra(c,x)){var panel2=document.getElementById('sheet-extra-resources');if(panel2)panel2.remove();schedule();}return;}var profButton=event.target.closest('[data-save-prof]');if(profButton){var a=profButton.getAttribute('data-save-prof'),i=x.saveProficiencies.indexOf(a);if(i>=0)x.saveProficiencies.splice(i,1);else x.saveProficiencies.push(a);if(saveExtra(c,x)){var saves=document.getElementById('sheet-saves');if(saves)saves.remove();schedule();}return;}schedule();},false);
-document.addEventListener('change',function(event){var select=event.target.closest('[data-extra-condition]');if(!select)return;var c=findCurrent();if(!c)return;var x=getExtra(c);x.condition=select.value;if(saveExtra(c,x)){var panel=document.getElementById('sheet-extra-resources');if(panel)panel.remove();schedule();}},false);
-var observer=new MutationObserver(function(){schedule();});observer.observe(document.getElementById('app')||document.body,{childList:true,subtree:true});window.addEventListener('load',schedule);
+function ensure(force){
+  if(!isSheet())return;
+  var c=findCurrent();if(!c)return;
+  var oldResources=document.getElementById('sheet-extra-resources');
+  var oldSaves=document.getElementById('sheet-saves');
+  if(force){if(oldResources)oldResources.remove();if(oldSaves)oldSaves.remove();}
+  if(!document.getElementById('sheet-extra-resources')){
+    var resources=document.querySelector('.resource-grid');
+    if(resources)resources.insertAdjacentHTML('afterend',extraResourcesHtml(c));
+  }
+  if(!document.getElementById('sheet-saves')){
+    var panels=Array.prototype.slice.call(document.querySelectorAll('main .panel'));
+    var attributesPanel=panels.find(function(p){var h=p.querySelector('h3');return h&&h.textContent.trim()==='Atributos';});
+    if(attributesPanel)attributesPanel.insertAdjacentHTML('afterend',savesHtml(c));
+  }
+}
+document.addEventListener('click',function(event){
+  var open=event.target.closest('[data-open-sheet]');
+  if(open){currentId=open.getAttribute('data-open-sheet')||'';sessionStorage.setItem('semideuses.currentCharacterId',currentId);setTimeout(function(){ensure(false);},0);return;}
+  var c=findCurrent();if(!c)return;
+  try{
+    var temp=event.target.closest('[data-extra-temp]');
+    if(temp){Service.adjustResource(c.id,'tempHp',Number(temp.getAttribute('data-extra-temp')||0));setTimeout(function(){ensure(true);},0);return;}
+    var hd=event.target.closest('[data-extra-hitdice]');
+    if(hd){Service.adjustResource(c.id,'hitDice',Number(hd.getAttribute('data-extra-hitdice')||0));setTimeout(function(){ensure(true);},0);return;}
+    var profButton=event.target.closest('[data-save-prof]');
+    if(profButton){Service.toggleSaveProficiency(c.id,profButton.getAttribute('data-save-prof'));setTimeout(function(){ensure(true);},0);return;}
+  }catch(error){alert(error.message);}
+},false);
+document.addEventListener('change',function(event){
+  var select=event.target.closest('[data-extra-condition]');if(!select)return;
+  var c=findCurrent();if(!c)return;
+  try{Service.setCondition(c.id,select.value);setTimeout(function(){ensure(true);},0);}catch(error){alert(error.message);}
+},false);
+window.addEventListener('semideuses:character-updated',function(event){
+  if(event.detail&&event.detail.id===currentId)setTimeout(function(){ensure(true);},0);
+});
+window.addEventListener('load',function(){setTimeout(function(){ensure(false);},0);});
 })();
