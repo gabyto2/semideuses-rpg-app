@@ -4,7 +4,7 @@
   var ATTRIBUTES=['FOR','DES','CON','INT','SAB','CAR'];
   var CONDITIONS=['Saudável','Ferido','Exausto','Inconsciente','Morrendo','Envenenado','Amedrontado','Atordoado','Impedido'];
   var DEFAULT_ATTRIBUTES={FOR:15,DES:14,CON:13,INT:12,SAB:10,CAR:8};
-  var AFFILIATION_RULES={
+  var LEGACY_AFFILIATION_RULES={
     'Zeus':{casting:'CAR',hitDie:10},'Poseidon':{casting:'SAB',hitDie:10},
     'Hades':{casting:'INT',hitDie:10},'Atena':{casting:'INT',hitDie:8},
     'Ares':{casting:'FOR',hitDie:12},'Apolo':{casting:'CAR',hitDie:8},
@@ -23,6 +23,12 @@
   function clone(value){return JSON.parse(JSON.stringify(value));}
   function uid(prefix){return (prefix||'char')+'-'+Date.now()+'-'+Math.random().toString(36).slice(2,8);}
   function clamp(value,min,max){return Math.max(min,Math.min(max,value));}
+  function uniqueAttributes(source){
+    if(!Array.isArray(source))return [];
+    return source.filter(function(attribute,index,list){
+      return ATTRIBUTES.indexOf(attribute)>=0&&list.indexOf(attribute)===index;
+    });
+  }
   function cleanAttributes(source){
     var result={};
     ATTRIBUTES.forEach(function(attribute){
@@ -43,16 +49,44 @@
       };
     });
   }
-  function cleanSaveProficiencies(source){
-    if(!Array.isArray(source))return [];
-    return source.filter(function(attribute,index,list){
-      return ATTRIBUTES.indexOf(attribute)>=0&&list.indexOf(attribute)===index;
-    });
+  function databaseAffiliation(name){
+    var database=global.SemideusesRulesDatabase;
+    if(!database||typeof database.getAffiliation!=='function')return null;
+    return database.getAffiliation(name);
   }
-  function affiliationRules(name){return clone(AFFILIATION_RULES[name]||{casting:'SAB',hitDie:8});}
+  function affiliationRules(name){
+    var official=databaseAffiliation(name);
+    if(official){
+      return {
+        source:'rules-database',
+        id:official.id||'',
+        name:official.name||name,
+        title:official.title||'',
+        icon:official.icon||'',
+        domain:official.domain||'',
+        profile:official.profile||'',
+        overview:official.overview||'',
+        casting:official.casting||'SAB',
+        hitDie:Number(official.hitDie||8),
+        savingThrows:uniqueAttributes(official.savingThrows),
+        skillProficiencies:Array.isArray(official.skillProficiencies)?official.skillProficiencies.slice():[],
+        weaponProficiencies:Array.isArray(official.weaponProficiencies)?official.weaponProficiencies.slice():[],
+        armorProficiencies:Array.isArray(official.armorProficiencies)?official.armorProficiencies.slice():[],
+        progression:clone(official.progression||{}),
+        signature:clone(official.signature||null),
+        paths:clone(official.paths||[])
+      };
+    }
+    var legacy=LEGACY_AFFILIATION_RULES[name]||{casting:'SAB',hitDie:8};
+    return {
+      source:'legacy-fallback',id:'',name:name||'',title:'',icon:'',domain:'',profile:'',overview:'',
+      casting:legacy.casting,hitDie:legacy.hitDie,savingThrows:[],skillProficiencies:[],
+      weaponProficiencies:[],armorProficiencies:[],progression:{},signature:null,paths:[]
+    };
+  }
   function calculate(character){
     var c=character;
-    var rules=affiliationRules(c.affiliation);
+    var affiliation=affiliationRules(c.affiliation);
     var level=clamp(Number(c.level||1),1,20);
     var oldPv=c.rules&&Number(c.rules.pvMax);
     var oldMp=c.rules&&Number(c.rules.mpMax);
@@ -62,11 +96,25 @@
     c.level=level;
     c.attributes=cleanAttributes(c.attributes);
     c.rules={
-      casting:rules.casting,
-      hitDie:rules.hitDie,
+      source:affiliation.source,
+      affiliationId:affiliation.id,
+      affiliationTitle:affiliation.title,
+      affiliationIcon:affiliation.icon,
+      domain:affiliation.domain,
+      profile:affiliation.profile,
+      overview:affiliation.overview,
+      casting:affiliation.casting,
+      hitDie:affiliation.hitDie,
+      savingThrows:affiliation.savingThrows,
+      skillProficiencies:affiliation.skillProficiencies,
+      weaponProficiencies:affiliation.weaponProficiencies,
+      armorProficiencies:affiliation.armorProficiencies,
+      progression:affiliation.progression,
+      signature:affiliation.signature,
+      paths:affiliation.paths,
       proficiency:ruleEngine.proficiency(level),
-      pvMax:ruleEngine.maxHP(level,rules.hitDie,c.attributes.CON),
-      mpMax:ruleEngine.maxMP(level,c.attributes[rules.casting])
+      pvMax:ruleEngine.maxHP(level,affiliation.hitDie,c.attributes.CON),
+      mpMax:ruleEngine.maxMP(level,c.attributes[affiliation.casting])
     };
     c.resources=c.resources||{};
     if(c.resources.pvCurrent==null||c.resources.pvCurrent===oldPv)c.resources.pvCurrent=c.rules.pvMax;
@@ -78,13 +126,15 @@
     if(c.resources.hitDiceCurrent==null)c.resources.hitDiceCurrent=c.resources.hitDiceMax;
     c.resources.hitDiceCurrent=clamp(Number(c.resources.hitDiceCurrent||0),0,c.resources.hitDiceMax);
     c.resources.condition=CONDITIONS.indexOf(c.resources.condition)>=0?c.resources.condition:'Saudável';
+    c.officialSaveProficiencies=uniqueAttributes(affiliation.savingThrows);
+    c.saveProficiencies=uniqueAttributes(c.saveProficiencies);
     return c;
   }
   function normalize(character){
     var c=clone(character||{});
     c.id=c.id||uid();
     c.systemEdition=c.systemEdition||'3e';
-    c.schemaVersion=3;
+    c.schemaVersion=4;
     c.name=c.name||'';
     c.player=c.player||'';
     c.age=c.age||'';
@@ -98,17 +148,18 @@
     c.heroMark=c.heroMark||'';
     c.attributes=cleanAttributes(c.attributes);
     c.skills=cleanSkills(c.skills);
-    c.saveProficiencies=cleanSaveProficiencies(c.saveProficiencies);
+    c.saveProficiencies=uniqueAttributes(c.saveProficiencies);
+    c.officialSaveProficiencies=uniqueAttributes(c.officialSaveProficiencies);
     c.notes=c.notes||'';
     return calculate(c);
   }
   function create(overrides){
     return normalize(Object.assign({
-      id:uid(),systemEdition:'3e',schemaVersion:3,name:'',player:'',age:'',
+      id:uid(),systemEdition:'3e',schemaVersion:4,name:'',player:'',age:'',
       appearance:'',level:1,concept:'',heroType:'Semideus Grego',affiliation:'',
       background:'',divinePath:'',heroMark:'',attributes:clone(DEFAULT_ATTRIBUTES),
-      skills:[],saveProficiencies:[],resources:{tempHp:0,condition:'Saudável'},
-      notes:'',createdAt:new Date().toISOString()
+      skills:[],saveProficiencies:[],officialSaveProficiencies:[],
+      resources:{tempHp:0,condition:'Saudável'},notes:'',createdAt:new Date().toISOString()
     },overrides||{}));
   }
   function updateAttribute(character,attribute,value){
@@ -128,11 +179,12 @@
   }
 
   global.SemideusesCharacter={
-    version:'3e-model-0.3.0',
-    schemaVersion:3,
+    version:'3e-model-0.4.0',
+    schemaVersion:4,
     attributes:ATTRIBUTES.slice(),
     conditions:CONDITIONS.slice(),
     defaults:{attributes:clone(DEFAULT_ATTRIBUTES)},
+    databaseAffiliation:databaseAffiliation,
     affiliationRules:affiliationRules,
     cleanAttributes:cleanAttributes,
     cleanSkills:cleanSkills,
