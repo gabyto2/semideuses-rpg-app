@@ -10,7 +10,7 @@
   var scheduled=false;
   var rendering=false;
 
-  function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(char){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[char];});}
+  function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(char){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char];});}
   function currentCharacter(){
     if(App&&typeof App.getEditing==='function'){
       var editing=App.getEditing();
