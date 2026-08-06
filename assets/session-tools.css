@@ -1,0 +1,26 @@
+.session-control-panel{scroll-margin-top:1rem}
+.session-actions{display:flex;flex-wrap:wrap;gap:.55rem}
+.session-actions button{min-height:42px}
+.active-effects{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem;align-items:center}
+.active-effects>strong{width:100%;font-size:.82rem;text-transform:uppercase;letter-spacing:.06em;opacity:.72}
+.active-effects button{display:flex;gap:.65rem;align-items:center;padding:.55rem .7rem;border-radius:10px}
+.active-effects button span{font-weight:700}.active-effects button small{opacity:.7}
+.session-history{margin-top:1rem}.session-history summary{cursor:pointer;font-weight:700}
+.session-history>div{display:grid;gap:.4rem;margin-top:.65rem}
+.session-history article{display:flex;justify-content:space-between;gap:1rem;padding:.55rem .7rem;border-radius:9px;background:rgba(255,255,255,.035)}
+.session-history small{opacity:.7;text-align:right}
+.official-abilities-runtime{scroll-margin-top:1rem}
+.ability-runtime-list{display:grid;gap:.65rem}
+.official-ability-card{border:1px solid rgba(120,148,166,.25);border-radius:12px;overflow:hidden;background:rgba(255,255,255,.025)}
+.official-ability-card summary{display:flex;justify-content:space-between;gap:1rem;align-items:center;cursor:pointer;padding:.85rem 1rem;list-style:none}
+.official-ability-card summary::-webkit-details-marker{display:none}
+.official-ability-card summary span:first-child{display:flex;flex-direction:column;gap:.2rem}.official-ability-card summary small{opacity:.68}
+.ability-cost{white-space:nowrap;font-size:.82rem;font-weight:700}
+.official-ability-body{padding:0 1rem 1rem}.official-ability-body p{line-height:1.55}
+.ability-meta{display:flex;flex-wrap:wrap;gap:.45rem;margin-bottom:.65rem}.ability-meta span,.ability-passive-label{padding:.3rem .55rem;border-radius:999px;background:rgba(255,255,255,.07);font-size:.78rem}
+.ability-path-heading{margin:1.25rem 0 .65rem}
+.multi-condition-panel{scroll-margin-top:1rem}.condition-chip-list{display:flex;flex-wrap:wrap;gap:.5rem}
+.condition-chip-list button{padding:.5rem .7rem;border-radius:999px}
+.condition-add-row{display:flex;gap:.6rem;margin-top:1rem}.condition-add-row select{flex:1;min-width:0}
+.session-empty{opacity:.7}
+@media(max-width:560px){.session-actions{display:grid;grid-template-columns:1fr 1fr}.session-actions button{width:100%}.official-ability-card summary{align-items:flex-start}.condition-add-row{flex-direction:column}.session-history article{flex-direction:column}.session-history small{text-align:left}}
