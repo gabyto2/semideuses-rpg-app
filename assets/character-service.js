@@ -5,10 +5,7 @@
   var LEGACY_EXTRAS_KEY='semideuses.sheetExtras.v1';
   var migrationDone=false;
 
-  function requireDependency(name,value){
-    if(!value)throw new Error(name+' não está carregado.');
-    return value;
-  }
+  function requireDependency(name,value){if(!value)throw new Error(name+' não está carregado.');return value;}
   function storage(){return requireDependency('SemideusesStorage',global.SemideusesStorage);}
   function model(){return requireDependency('SemideusesCharacter',global.SemideusesCharacter);}
   function clone(value){return model().clone(value);}
@@ -38,6 +35,7 @@
           character.saveProficiencies=extras.saveProficiencies.slice();changed=true;
         }
       }
+      if(Number(raw.schemaVersion||0)<model().schemaVersion)changed=true;
       return model().normalize(character);
     });
     if(changed)storage().writeCharacters(list);
@@ -59,6 +57,15 @@
     storage().upsert(normalized);
     global.dispatchEvent(new CustomEvent('semideuses:character-updated',{detail:{id:normalized.id,character:clone(normalized)}}));
     return clone(normalized);
+  }
+  function saveValidated(character){
+    var result=model().validate(character);
+    if(!result.valid){
+      var error=new Error(result.errors.map(function(item){return item.message;}).join(' '));
+      error.validation=result;
+      throw error;
+    }
+    return save(result.character);
   }
   function create(overrides){return save(model().create(overrides||{}));}
   function remove(id){
@@ -92,9 +99,7 @@
       var absorbed=Math.min(temp,amount);
       character.resources.tempHp=temp-absorbed;
       var remaining=amount-absorbed;
-      if(remaining>0){
-        character.resources.pvCurrent=Math.max(0,Number(character.resources.pvCurrent||0)-remaining);
-      }
+      if(remaining>0)character.resources.pvCurrent=Math.max(0,Number(character.resources.pvCurrent||0)-remaining);
       return character;
     });
   }
@@ -104,13 +109,15 @@
     return update(id,function(character){return model().adjustResource(character,type,amount);});
   }
   function setResource(id,type,value){
+    return update(id,function(character){return model().setResource(character,type,value);});
+  }
+  function primaryResource(id){
     var character=get(id);
     if(!character)throw new Error('Personagem não encontrado.');
-    var keys={pv:'pvCurrent',mp:'mpCurrent',tempHp:'tempHp',hitDice:'hitDiceCurrent'};
-    var key=keys[type];
-    if(!key)throw new Error('Recurso inválido: '+type);
-    return adjustResource(id,type,Number(value||0)-Number(character.resources&&character.resources[key]||0));
+    return model().resourceState(character,'primary');
   }
+  function adjustSpecialResource(id,resourceId,amount){return adjustResource(id,'special:'+resourceId,amount);}
+  function setSpecialResource(id,resourceId,value){return setResource(id,'special:'+resourceId,value);}
   function updateAttribute(id,attribute,value){return update(id,function(character){return model().updateAttribute(character,attribute,value);});}
   function addSkill(id,skill){
     return update(id,function(character){
@@ -127,12 +134,31 @@
     var skill=(character.skills||[]).find(function(item){return item.id===skillId;});
     if(!skill)throw new Error('Skill não encontrada.');
     var cost=Math.max(0,Number(skill.cost||0));
-    if(Number(character.resources.mpCurrent||0)<cost)throw new Error('MP insuficiente.');
-    return adjustResource(id,'mp',-cost);
+    var resourceId=skill.resourceId||'primary';
+    var state=model().resourceState(character,resourceId);
+    if(!state)throw new Error('Recurso da habilidade não encontrado.');
+    if(Number(state.current||0)<cost)throw new Error(state.label+' insuficiente.');
+    return adjustResource(id,resourceId,-cost);
   }
   function setCondition(id,condition){
     if(model().conditions.indexOf(condition)<0)throw new Error('Condição inválida.');
-    return update(id,function(character){character.resources.condition=condition;return character;});
+    return update(id,function(character){
+      character.resources=character.resources||{};
+      character.resources.conditions=condition==='Saudável'?[]:[condition];
+      character.resources.condition=condition;
+      return character;
+    });
+  }
+  function toggleCondition(id,condition){
+    if(condition==='Saudável'||model().conditions.indexOf(condition)<0)throw new Error('Condição inválida.');
+    return update(id,function(character){
+      var list=Array.isArray(character.resources&&character.resources.conditions)?character.resources.conditions.slice():[];
+      var index=list.indexOf(condition);
+      if(index>=0)list.splice(index,1);else list.push(condition);
+      character.resources.conditions=list;
+      character.resources.condition=list[0]||'Saudável';
+      return character;
+    });
   }
   function toggleSaveProficiency(id,attribute){
     if(model().attributes.indexOf(attribute)<0)throw new Error('Atributo inválido.');
@@ -144,13 +170,15 @@
       return character;
     });
   }
+  function validate(character,options){return model().validate(character,options||{});}
 
   global.SemideusesCharacterService={
-    version:'3e-service-0.3.1',
+    version:'3e-service-0.4.0',
     list:list,
     get:get,
     create:create,
     save:save,
+    saveValidated:saveValidated,
     update:update,
     remove:remove,
     duplicate:duplicate,
@@ -158,12 +186,17 @@
     takeDamage:takeDamage,
     applyDamage:takeDamage,
     setResource:setResource,
+    primaryResource:primaryResource,
+    adjustSpecialResource:adjustSpecialResource,
+    setSpecialResource:setSpecialResource,
     updateAttribute:updateAttribute,
     addSkill:addSkill,
     removeSkill:removeSkill,
     useSkill:useSkill,
     setCondition:setCondition,
+    toggleCondition:toggleCondition,
     toggleSaveProficiency:toggleSaveProficiency,
+    validate:validate,
     migrateLegacyData:migrateLegacyData
   };
 })(window);
