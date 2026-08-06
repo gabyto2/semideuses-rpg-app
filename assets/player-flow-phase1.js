@@ -9,6 +9,7 @@
   var enhancing=false;
 
   function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(char){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char];});}
+  function setText(element,text){text=String(text);if(element&&element.textContent!==text)element.textContent=text;}
   function currentCharacter(){
     if(App&&typeof App.getEditing==='function'){
       var editing=App.getEditing();
@@ -46,22 +47,22 @@
     var definition=primary(character);
     var card=document.querySelector('.resource-card.mp');
     if(card){
-      card.dataset.primaryResource=definition.id;
+      if(card.dataset.primaryResource!==definition.id)card.dataset.primaryResource=definition.id;
       var label=card.querySelector(':scope > span');
-      if(label)label.textContent=definition.label+' atual';
+      setText(label,definition.label+' atual');
       var display=card.querySelector('[data-resource-display="mp"]');
-      if(display)display.textContent=character.resources.primaryCurrent+' / '+character.rules.primaryMax;
+      setText(display,character.resources.primaryCurrent+' / '+character.rules.primaryMax);
       var actions=card.querySelectorAll('[data-apply="mp"]');
-      if(actions[0])actions[0].textContent='Gastar';
-      if(actions[1])actions[1].textContent='Restaurar';
+      setText(actions[0],'Gastar');
+      setText(actions[1],'Restaurar');
     }
     document.querySelectorAll('.review-grid > div').forEach(function(item){
       var label=item.querySelector('span');
       if(!label)return;
       if(label.textContent.trim()==='MP máximo'||label.textContent.trim()===definition.label+' máximo'){
-        label.textContent=definition.label+' máximo';
+        setText(label,definition.label+' máximo');
         var value=item.querySelector('strong');
-        if(value)value.textContent=character.rules.primaryMax;
+        setText(value,character.rules.primaryMax);
       }
     });
     var skillsHeading=Array.prototype.find.call(document.querySelectorAll('.panel'),function(panel){
@@ -70,9 +71,10 @@
     });
     if(skillsHeading){
       var intro=skillsHeading.querySelector('.section-heading p');
-      if(intro)intro.textContent='O custo fixo é descontado automaticamente de '+definition.label+'.';
+      setText(intro,'O custo fixo é descontado automaticamente de '+definition.label+'.');
       skillsHeading.querySelectorAll('.skill-row small').forEach(function(small){
-        small.textContent=small.textContent.replace(/\bMP\b/g,definition.costLabel||definition.label);
+        var next=small.textContent.replace(/\bMP\b/g,definition.costLabel||definition.label);
+        setText(small,next);
       });
     }
   }
@@ -102,11 +104,16 @@
     }
     return '';
   }
-  function specialPanel(character){
+  function specialStateKey(character){
+    var definitions=character.rules&&Array.isArray(character.rules.specialResources)?character.rules.specialResources:[];
+    var states=character.resources&&character.resources.special||{};
+    return encodeURIComponent(JSON.stringify({affiliation:character.affiliation,resources:definitions.map(function(definition){var state=states[definition.id]||{};return [definition.id,definition.min,definition.max,state.current];})}));
+  }
+  function specialPanel(character,stateKey){
     var definitions=character.rules&&Array.isArray(character.rules.specialResources)?character.rules.specialResources:[];
     if(!definitions.length)return '';
     var states=character.resources&&character.resources.special||{};
-    return '<section class="panel affiliation-resources-panel" data-affiliation-resources><div class="section-heading"><div><span class="eyebrow">ASSINATURA EM JOGO</span><h3>Recursos de '+esc(character.affiliation)+'</h3><p>Controles vinculados ao Banco de Regras da 3ª edição.</p></div></div><div class="special-resource-grid">'+definitions.map(function(definition){
+    return '<section class="panel affiliation-resources-panel" data-affiliation-resources data-resource-state="'+esc(stateKey)+'"><div class="section-heading"><div><span class="eyebrow">ASSINATURA EM JOGO</span><h3>Recursos de '+esc(character.affiliation)+'</h3><p>Controles vinculados ao Banco de Regras da 3ª edição.</p></div></div><div class="special-resource-grid">'+definitions.map(function(definition){
       var state=states[definition.id]||{current:null};
       return '<article class="special-resource-card" data-special-card="'+esc(definition.id)+'"><span>'+esc(definition.label)+'</span><strong>'+displayValue(definition,state)+'</strong>'+(definition.description?'<small>'+esc(definition.description)+'</small>':'')+controls(definition,state)+'</article>';
     }).join('')+'</div></section>';
@@ -115,7 +122,9 @@
     var resourceGrid=document.querySelector('.resource-grid');
     if(!resourceGrid)return;
     var existing=document.querySelector('[data-affiliation-resources]');
-    var html=specialPanel(character);
+    var stateKey=specialStateKey(character);
+    if(existing&&existing.dataset.resourceState===stateKey)return;
+    var html=specialPanel(character,stateKey);
     if(!html){if(existing)existing.remove();return;}
     if(existing)existing.outerHTML=html;
     else resourceGrid.insertAdjacentHTML('afterend',html);
