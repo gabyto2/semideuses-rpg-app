@@ -88,7 +88,8 @@ function ensureItemHub(){
   var equipment=document.querySelector('[data-equipment-center]'),c=character();
   if(!equipment||!c)return;
   var old=document.querySelector('[data-items-hub]');
-  var html='<section class="panel items-hub" data-items-hub><div class="items-hub-head"><div><span class="eyebrow">CENTRAL DE ITENS</span><h2>Itens & Acervo</h2><p>Um único lugar para equipar, consultar inventário e administrar itens míticos.</p></div><button class="secondary" data-open-item-compendium>Consultar Compêndio de Itens</button></div><nav class="items-master-tabs">'+
+  var hubState=[itemView,(c.inventory||[]).length,c.mythic&&c.mythic.panoplyId||'',(c.mythic&&c.mythic.consumables||[]).length,(c.mythic&&c.mythic.relics||[]).length,(c.mythic&&c.mythic.artifacts||[]).length].join('|');
+  var html='<section class="panel items-hub" data-items-hub data-items-state="'+esc(hubState)+'"><div class="items-hub-head"><div><span class="eyebrow">CENTRAL DE ITENS</span><h2>Itens & Acervo</h2><p>Um único lugar para equipar, consultar inventário e administrar itens míticos.</p></div><button class="secondary" data-open-item-compendium>Consultar Compêndio de Itens</button></div><nav class="items-master-tabs">'+
     itemNavButton('equipment:equipped','Em uso')+
     itemNavButton('equipment:inventory','Inventário',(c.inventory||[]).length)+
     itemNavButton('equipment:catalog','Catálogo comum')+
@@ -99,7 +100,7 @@ function ensureItemHub(){
     itemNavButton('mythic:catalog:Panóplia','Catálogo mítico')+
     '</nav><p class="items-hub-note">Itens comuns adicionados vão primeiro para o <strong>Inventário</strong>. Armas, armaduras e escudos só alteram a ficha depois de serem <strong>equipados</strong> em “Em uso”.</p></section>';
   if(!old)equipment.insertAdjacentHTML('beforebegin',html);
-  else if(old.outerHTML!==html)old.outerHTML=html;
+  else if(old.dataset.itemsState!==hubState)old.outerHTML=html;
   setCentersVisibility();
 }
 function shortlist(){
@@ -112,11 +113,11 @@ function annotateCatalogs(){
     var id=btn.dataset.addCatalogItem,count=(c.inventory||[]).filter(function(r){return r.catalogId===id;}).reduce(function(s,r){return s+Number(r.quantity||1);},0);
     var card=btn.closest('.equipment-catalog-card');
     if(count){
-      btn.textContent='Adicionar outra';
+      if(btn.textContent!=='Adicionar outra')btn.textContent='Adicionar outra';
       if(card&&!card.querySelector('[data-owned-count]')){
         var badge=document.createElement('span');badge.className='item-owned-badge';badge.setAttribute('data-owned-count','');badge.textContent='No inventário: '+count;card.querySelector('summary').appendChild(badge);
-      }else if(card){card.querySelector('[data-owned-count]').textContent='No inventário: '+count;}
-    }else btn.textContent='Adicionar ao inventário';
+      }else if(card){var existing=card.querySelector('[data-owned-count]');var label='No inventário: '+count;if(existing.textContent!==label)existing.textContent=label;}
+    }else if(btn.textContent!=='Adicionar ao inventário')btn.textContent='Adicionar ao inventário';
     if(card&&selected.indexOf('equipment:'+id)>=0)card.classList.add('shortlisted');
   });
   document.querySelectorAll('[data-add-mythic-consumable],[data-link-panoply],[data-add-owned-mythic]').forEach(function(btn){
