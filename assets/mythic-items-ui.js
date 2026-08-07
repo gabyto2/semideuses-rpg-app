@@ -1,43 +1,143 @@
 (function(global){
   'use strict';
-  var Service=global.SemideusesCharacterService,Model=global.SemideusesCharacter,db=global.SemideusesRulesDatabase,Runtime=global.SemideusesMythicRuntime,App=global.SemideusesApp;if(!Service||!Model||!db||!Runtime)return;
+  var Service=global.SemideusesCharacterService,Model=global.SemideusesCharacter,db=global.SemideusesRulesDatabase,Runtime=global.SemideusesMythicRuntime,App=global.SemideusesApp;
+  if(!Service||!Model||!db||!Runtime)return;
   var tab='panoply',catalogTier='Consumível',query='',catalogLimit=24,rendering=false,scheduled=false;
+
   function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function character(){var e=App&&App.getEditing&&App.getEditing();return e&&e.id?Service.get(e.id)||e:null;}
-  function restoreRefresh(){var x=global.scrollX,y=global.scrollY;if(App&&App.refresh)App.refresh();setTimeout(function(){global.scrollTo(x,y);},0);schedule();}
-  function actionLabel(a){return a||'Ativação não especificada';}
-  function recoveryLabel(item){var a=item&&item.active||{},u=a.usage||item&&item.usage;if(u&&u.scope)return u.max+'×/'+(u.scope==='combat'?'combate':u.scope==='shortRest'?'Descanso Curto':u.scope==='day'?'dia':u.scope);if(a.recovery==='shortRest')return 'Descanso Curto';if(a.recovery==='longRest')return 'Descanso Longo';return 'Recarga não indicada';}
-  function panoplyTab(c){var p=Model.panoply(c);if(!p)return '<div class="mythic-empty"><span>✦</span><h3>Nenhuma Panóplia vinculada</h3><p>Cada herói pode portar exatamente uma Panóplia ligada à alma. Ela desperta nos níveis 5, 11 e 17.</p><button class="primary" data-open-mythic-catalog="Panóplia">Escolher Panóplia</button></div>';
-    var wakes=Model.panoplyAwakenings(c),check=Runtime.canUsePanoply(c),a=p.active||{};
-    return '<div class="mythic-panoply-head"><div><span class="eyebrow">PANÓPLIA LIGADA À ALMA</span><h3>'+esc(p.name)+'</h3><small>'+esc(p.sourceGroup||'')+'</small></div><button class="danger-link" data-unlink-panoply>Corrigir vínculo</button></div>'+(p.source?'<p class="mythic-lore">'+esc(p.source)+'</p>':'')+'<article class="panoply-stage unlocked"><span>BASE</span><p>'+esc(p.base||'')+'</p></article><div class="panoply-awaken-grid">'+wakes.map(function(w){return '<article class="panoply-stage '+(w.unlocked?'unlocked':'locked')+'"><span>NÍVEL '+w.level+(w.unlocked?' · DESPERTO':' · BLOQUEADO')+'</span><p>'+esc(w.effect)+'</p></article>';}).join('')+'</div><article class="panoply-active"><div><span class="eyebrow">ATIVA</span><h4>'+esc(a.name||'Ativa da Panóplia')+'</h4><small>Rank '+esc(a.rank||'—')+' · '+Number(a.cost||0)+' '+esc(c.rules.primaryResource.label)+' · '+esc(actionLabel(a.action))+' · '+esc(recoveryLabel(p))+'</small></div><p>'+esc(a.effect||'')+'</p><button class="primary" data-use-panoply '+(check.allowed?'':'disabled title="'+esc(check.reason||'Indisponível')+'"')+'>Ativar '+esc(a.name||'Panóplia')+'</button>'+(a.action?'':'<small class="sheet-note">O texto não especifica Ação/Ação Bônus/Reação; o aplicativo não inventa esse custo.</small>')+'</article>';
+  function stateKey(c){
+    return [c.id,c.level,JSON.stringify(c.mythic||{}),c.resources&&c.resources.primaryCurrent,
+      JSON.stringify(c.session&&c.session.abilityUses||{}),JSON.stringify(c.session&&c.session.turnEconomy||{})].join('|');
   }
-  function consumableCard(c,r){var d=db.getMythicItem(r.catalogId),variants=d&&d.variants||[],check=variants.length?null:Runtime.canUseConsumable(c,r.id);return '<article class="mythic-consumable"><details><summary><span><strong>'+esc(d.name)+'</strong><small>'+esc(d.sourceGroup||'Consumível')+' · '+r.charges+' '+esc(d.chargeLabel||'uso(s)')+'</small></span><b>'+r.charges+'</b></summary><div>'+(d.source?'<p class="mythic-lore">'+esc(d.source)+'</p>':'')+'<p>'+esc(d.effect||'')+'</p>'+(d.action?'<div class="equipment-tags"><span>'+esc(d.action)+'</span></div>':'')+(variants.length?'<div class="mythic-variant-actions">'+variants.map(function(v){var count=Number(r.variantCharges&&r.variantCharges[v.id]||0),vcheck=Runtime.canUseConsumable(c,r.id,v.id);return '<button class="secondary" data-use-consumable="'+r.id+'" data-variant="'+v.id+'" '+(vcheck.allowed?'':'disabled title="'+esc(vcheck.reason||'Indisponível')+'"')+'>'+esc(v.label)+' · '+count+'</button>';}).join('')+'</div>':'<button class="primary" data-use-consumable="'+r.id+'" '+(check&&check.allowed?'':'disabled title="'+esc(check&&check.reason||'Indisponível')+'"')+'>Usar · restam '+r.charges+'</button>')+'<button class="danger-link" data-remove-mythic-consumable="'+r.id+'">Remover do inventário</button></div></details></article>';}
-  function consumablesTab(c){var list=c.mythic&&c.mythic.consumables||[];return '<div class="mythic-tab-head"><div><span class="eyebrow">CONSUMÍVEIS MÍTICOS</span><h3>Doses e usos</h3><p>Usar desconta a dose e respeita a economia de ações quando o livro informa a ativação.</p></div><button class="secondary" data-open-mythic-catalog="Consumível">+ Adicionar</button></div>'+(list.length?'<div class="mythic-consumable-list">'+list.map(function(r){return consumableCard(c,r);}).join('')+'</div>':'<div class="command-empty"><p>Nenhum consumível mítico registrado.</p></div>');}
-  function activeBlock(c,pair){var i=pair.definition,a=i.active;if(!a)return '<small class="sheet-note">Sem Ativa estruturada: use o item conforme o texto original acima.</small>';var check=Runtime.canUseOwnedItem(c,pair.record.id);return '<div class="mythic-owned-active"><strong>'+esc(a.name||'Ativa')+'</strong><small>Rank '+esc(a.rank||'—')+(a.cost?' · '+a.cost+' '+esc(c.rules.primaryResource.label):'')+' · '+esc(actionLabel(a.action))+' · '+esc(recoveryLabel(i))+'</small><p>'+esc(a.effect||'')+'</p><button class="primary" data-use-owned-mythic="'+pair.record.id+'" '+(check.allowed?'':'disabled title="'+esc(check.reason||'Indisponível')+'"')+'>Ativar</button>'+(a.action?'':'<small class="sheet-note">Sem custo de ação especificado no texto; o aplicativo não presume um.</small>')+'</div>';}
-  function ownedCard(c,pair){var i=pair.definition;return '<article class="mythic-owned-card"><details><summary><span><strong>'+esc(i.name)+'</strong><small>'+esc(i.kind||'objeto')+' · pág. '+esc(i.page||'—')+'</small></span><b>'+esc(i.tier)+'</b></summary><div>'+(i.meta?'<div class="equipment-tags"><span>'+esc(i.meta)+'</span></div>':'')+'<p>'+esc(i.effect||'')+'</p>'+(i.projectNote?'<small class="sheet-note">'+esc(i.projectNote)+'</small>':'')+activeBlock(c,pair)+'<button class="danger-link" data-remove-owned-mythic="'+pair.record.id+'">Remover da ficha</button></div></details></article>';}
-  function ownedTab(c,tier){var list=Model.mythicOwned?Model.mythicOwned(c,tier):[],isArtifact=tier==='Artefato';return '<div class="mythic-tab-head"><div><span class="eyebrow">'+esc(tier.toUpperCase())+'</span><h3>'+esc(isArtifact?'Peças que moldam a campanha':'Tesouros conquistados')+'</h3><p>'+esc(isArtifact?'O livro recomenda no máximo um Artefato ativo por grupo; 2 ou mais elevam o orçamento de encontro em 1 nível.':'Relíquias são recompensas narrativas; não são compradas em loja.')+'</p></div><button class="secondary" data-open-mythic-catalog="'+esc(tier)+'">+ Registrar</button></div>'+(isArtifact?'<div class="mythic-warning '+(list.length>=2?'alert':'')+'"><strong>Artefatos nesta ficha: '+list.length+'</strong><span>A regra é do grupo inteiro; confira também as fichas dos demais jogadores.</span></div>':'')+(list.length?'<div class="mythic-owned-list">'+list.map(function(pair){return ownedCard(c,pair);}).join('')+'</div>':'<div class="command-empty"><p>Nenhum '+esc(tier.toLowerCase())+' registrado.</p></div>');}
-  function catalogText(i){if(i.tier==='Consumível')return i.effect||'';if(i.tier==='Panóplia')return (i.base||'')+' '+Object.keys(i.awakenings||{}).map(function(k){return 'Desperta '+k+': '+i.awakenings[k];}).join(' ')+' Ativa — '+(i.active&&i.active.name||'')+': '+(i.active&&i.active.effect||'');return i.effect||'';}
-  function catalogCard(c,i){var owned=false;if(i.tier==='Panóplia')owned=c.mythic.panoplyId===i.id;else if(i.tier==='Relíquia'||i.tier==='Artefato'){var key=i.tier==='Relíquia'?'relics':'artifacts';owned=(c.mythic[key]||[]).some(function(r){return r.catalogId===i.id;});}var action='';
-    if(i.tier==='Consumível')action='<div class="equipment-tags"><span>'+esc(i.defaultCharges?i.defaultCharges+' '+i.chargeLabel:i.chargeFormula||i.chargeLabel)+'</span>'+(i.action?'<span>'+esc(i.action)+'</span>':'')+'</div><button class="secondary" data-add-mythic-consumable="'+i.id+'">Adicionar ao inventário</button>';
-    else if(i.tier==='Panóplia')action='<button class="'+(owned?'secondary':'primary')+'" data-link-panoply="'+i.id+'" '+(owned?'disabled':'')+'>'+(owned?'Vinculada':'Vincular Panóplia')+'</button>';
-    else action='<button class="'+(owned?'secondary':'primary')+'" data-add-owned-mythic="'+i.id+'" '+(owned?'disabled':'')+'>'+(owned?'Na ficha':'Registrar '+i.tier)+'</button>';
-    return '<details class="mythic-catalog-card"><summary><span><strong>'+esc(i.name)+'</strong><small>'+esc(i.meta||i.sourceGroup||i.kind||i.tier)+' · pág. '+esc(i.page||'—')+'</small></span><b>'+esc(i.tier)+'</b></summary><div>'+(i.source?'<p class="mythic-lore">'+esc(i.source)+'</p>':'')+'<p>'+esc(catalogText(i))+'</p>'+(i.projectNote?'<small class="sheet-note">'+esc(i.projectNote)+'</small>':'')+(i.active?'<div class="equipment-tags"><span>Ativa: '+esc(i.active.name)+'</span>'+(i.active.rank?'<span>Rank '+esc(i.active.rank)+'</span>':'')+(i.active.action?'<span>'+esc(i.active.action)+'</span>':'')+'<span>'+esc(recoveryLabel(i))+'</span></div>':'')+action+'</div></details>';}
-  function catalogTab(c){var all=db.listMythicItems?db.listMythicItems(catalogTier):[],q=query.trim().toLowerCase();if(q)all=all.filter(function(i){return (i.name+' '+(i.meta||'')+' '+(i.sourceGroup||'')+' '+catalogText(i)).toLowerCase().indexOf(q)>=0;});var visible=all.slice(0,catalogLimit);return '<div class="mythic-catalog-controls"><div class="equipment-tabs"><button class="'+(catalogTier==='Consumível'?'active':'')+'" data-mythic-tier="Consumível">43 Consumíveis</button><button class="'+(catalogTier==='Panóplia'?'active':'')+'" data-mythic-tier="Panóplia">52 Panóplias</button><button class="'+(catalogTier==='Relíquia'?'active':'')+'" data-mythic-tier="Relíquia">180 Relíquias</button><button class="'+(catalogTier==='Artefato'?'active':'')+'" data-mythic-tier="Artefato">69 Artefatos</button></div><label>Buscar<input data-mythic-search value="'+esc(query)+'" placeholder="Nome, mito, tipo ou efeito"></label><span>'+all.length+' resultado(s)</span></div><div class="mythic-catalog-list">'+visible.map(function(i){return catalogCard(c,i);}).join('')+'</div>'+(visible.length<all.length?'<button class="secondary mythic-more" data-mythic-more>Mostrar mais · '+(all.length-visible.length)+' restantes</button>':'');}
+  function restoreRefresh(){var x=global.scrollX,y=global.scrollY;if(App&&App.refresh)App.refresh();requestAnimationFrame(function(){global.scrollTo(x,y);});schedule();}
+  function actionLabel(a){return a||'Ativação não especificada';}
+  function recoveryLabel(item){
+    var a=item&&item.active||{},u=a.usage||item&&item.usage;
+    if(u&&u.scope)return u.max+'×/'+(u.scope==='combat'?'combate':u.scope==='shortRest'?'Descanso Curto':u.scope==='day'?'dia':u.scope);
+    if(a.recovery==='shortRest')return 'Descanso Curto';
+    if(a.recovery==='longRest')return 'Descanso Longo';
+    return 'Recarga não indicada';
+  }
+  function panoplyTab(c){
+    var p=Model.panoply(c);
+    if(!p)return '<div class="mythic-empty"><span>✦</span><h3>Nenhuma Panóplia vinculada</h3><p>Cada herói pode portar exatamente uma Panóplia ligada à alma. Ela desperta nos níveis 5, 11 e 17.</p><div class="mythic-empty-actions"><button class="primary" data-open-mythic-catalog="Panóplia">Explorar as 52 Panóplias</button><button class="secondary" data-open-item-compendium>Consultar no Compêndio</button></div></div>';
+    var wakes=Model.panoplyAwakenings(c),check=Runtime.canUsePanoply(c),a=p.active||{};
+    return '<div class="mythic-panoply-head"><div><span class="eyebrow">PANÓPLIA LIGADA À ALMA</span><h3>'+esc(p.name)+'</h3><small>'+esc(p.sourceGroup||'')+'</small></div><button class="danger-link" data-unlink-panoply>Corrigir vínculo</button></div>'+
+      (p.source?'<p class="mythic-lore">'+esc(p.source)+'</p>':'')+
+      '<article class="panoply-stage unlocked"><span>BASE</span><p>'+esc(p.base||'')+'</p></article>'+
+      '<div class="panoply-awaken-grid">'+wakes.map(function(w){return '<article class="panoply-stage '+(w.unlocked?'unlocked':'locked')+'"><span>NÍVEL '+w.level+(w.unlocked?' · DESPERTO':' · BLOQUEADO')+'</span><p>'+esc(w.effect)+'</p></article>';}).join('')+'</div>'+
+      '<article class="panoply-active"><div><span class="eyebrow">ATIVA</span><h4>'+esc(a.name||'Ativa da Panóplia')+'</h4><small>Rank '+esc(a.rank||'—')+' · '+Number(a.cost||0)+' '+esc(c.rules.primaryResource.label)+' · '+esc(actionLabel(a.action))+' · '+esc(recoveryLabel(p))+'</small></div><p>'+esc(a.effect||'')+'</p><button class="primary" data-use-panoply '+(check.allowed?'':'disabled title="'+esc(check.reason||'Indisponível')+'"')+'>Ativar '+esc(a.name||'Panóplia')+'</button>'+
+      (a.action?'':'<small class="sheet-note">O texto não especifica Ação/Ação Bônus/Reação; o aplicativo não inventa esse custo.</small>')+'</article>';
+  }
+  function consumableCard(c,r){
+    var d=db.getMythicItem(r.catalogId),variants=d&&d.variants||[],check=variants.length?null:Runtime.canUseConsumable(c,r.id);
+    if(!d)return '';
+    return '<article class="mythic-consumable"><details><summary><span><strong>'+esc(d.name)+'</strong><small>'+esc(d.sourceGroup||'Consumível')+' · '+r.charges+' '+esc(d.chargeLabel||'uso(s)')+'</small></span><b>'+r.charges+'</b></summary><div>'+
+      (d.source?'<p class="mythic-lore">'+esc(d.source)+'</p>':'')+'<p>'+esc(d.effect||'')+'</p>'+
+      (d.action?'<div class="equipment-tags"><span>'+esc(d.action)+'</span></div>':'')+
+      (variants.length?'<div class="mythic-variant-actions">'+variants.map(function(v){var count=Number(r.variantCharges&&r.variantCharges[v.id]||0),vcheck=Runtime.canUseConsumable(c,r.id,v.id);return '<button class="secondary" data-use-consumable="'+r.id+'" data-variant="'+v.id+'" '+(vcheck.allowed?'':'disabled title="'+esc(vcheck.reason||'Indisponível')+'"')+'>'+esc(v.label)+' · '+count+'</button>';}).join('')+'</div>':
+      '<button class="primary" data-use-consumable="'+r.id+'" '+(check&&check.allowed?'':'disabled title="'+esc(check&&check.reason||'Indisponível')+'"')+'>Usar · restam '+r.charges+'</button>')+
+      '<button class="danger-link" data-remove-mythic-consumable="'+r.id+'">Remover do inventário</button></div></details></article>';
+  }
+  function consumablesTab(c){
+    var list=c.mythic&&c.mythic.consumables||[];
+    return '<div class="mythic-tab-head"><div><span class="eyebrow">CONSUMÍVEIS MÍTICOS</span><h3>Doses e usos</h3><p>Usar desconta a dose e respeita a economia de ações quando o livro informa a ativação.</p></div><button class="secondary" data-open-mythic-catalog="Consumível">+ Adicionar</button></div>'+
+      (list.length?'<div class="mythic-consumable-list">'+list.map(function(r){return consumableCard(c,r);}).join('')+'</div>':'<div class="command-empty"><p>Nenhum consumível mítico registrado.</p></div>');
+  }
+  function activeBlock(c,pair){
+    var i=pair.definition,a=i.active;
+    if(!a)return '<small class="sheet-note">Sem Ativa estruturada: use o item conforme o texto original acima.</small>';
+    var check=Runtime.canUseOwnedItem(c,pair.record.id);
+    return '<div class="mythic-owned-active"><strong>'+esc(a.name||'Ativa')+'</strong><small>Rank '+esc(a.rank||'—')+(a.cost?' · '+a.cost+' '+esc(c.rules.primaryResource.label):'')+' · '+esc(actionLabel(a.action))+' · '+esc(recoveryLabel(i))+'</small><p>'+esc(a.effect||'')+'</p><button class="primary" data-use-owned-mythic="'+pair.record.id+'" '+(check.allowed?'':'disabled title="'+esc(check.reason||'Indisponível')+'"')+'>Ativar</button>'+
+      (a.action?'':'<small class="sheet-note">Sem custo de ação especificado no texto; o aplicativo não presume um.</small>')+'</div>';
+  }
+  function ownedCard(c,pair){
+    var i=pair.definition;
+    return '<article class="mythic-owned-card"><details><summary><span><strong>'+esc(i.name)+'</strong><small>'+esc(i.kind||'objeto')+' · pág. '+esc(i.page||'—')+'</small></span><b>'+esc(i.tier)+'</b></summary><div>'+
+      (i.meta?'<div class="equipment-tags"><span>'+esc(i.meta)+'</span></div>':'')+'<p>'+esc(i.effect||'')+'</p>'+
+      (i.projectNote?'<small class="sheet-note">'+esc(i.projectNote)+'</small>':'')+activeBlock(c,pair)+
+      '<button class="danger-link" data-remove-owned-mythic="'+pair.record.id+'">Remover da ficha</button></div></details></article>';
+  }
+  function ownedTab(c,tier){
+    var list=Model.mythicOwned?Model.mythicOwned(c,tier):[],isArtifact=tier==='Artefato';
+    return '<div class="mythic-tab-head"><div><span class="eyebrow">'+esc(tier.toUpperCase())+'</span><h3>'+esc(isArtifact?'Peças que moldam a campanha':'Tesouros conquistados')+'</h3><p>'+esc(isArtifact?'O livro recomenda no máximo um Artefato ativo por grupo; 2 ou mais elevam o orçamento de encontro em 1 nível.':'Relíquias são recompensas narrativas; não são compradas em loja.')+'</p></div><button class="secondary" data-open-mythic-catalog="'+esc(tier)+'">+ Registrar</button></div>'+
+      (isArtifact?'<div class="mythic-warning '+(list.length>=2?'alert':'')+'"><strong>Artefatos nesta ficha: '+list.length+'</strong><span>A regra é do grupo inteiro; confira também as fichas dos demais jogadores.</span></div>':'')+
+      (list.length?'<div class="mythic-owned-list">'+list.map(function(pair){return ownedCard(c,pair);}).join('')+'</div>':'<div class="command-empty"><p>Nenhum '+esc(tier.toLowerCase())+' registrado.</p></div>');
+  }
+  function catalogText(i){
+    if(i.tier==='Consumível')return i.effect||'';
+    if(i.tier==='Panóplia')return (i.base||'')+' '+Object.keys(i.awakenings||{}).map(function(k){return 'Desperta '+k+': '+i.awakenings[k];}).join(' ')+' Ativa — '+(i.active&&i.active.name||'')+': '+(i.active&&i.active.effect||'');
+    return i.effect||'';
+  }
+  function catalogCard(c,i){
+    var owned=false;
+    if(i.tier==='Panóplia')owned=c.mythic.panoplyId===i.id;
+    else if(i.tier==='Relíquia'||i.tier==='Artefato'){var key=i.tier==='Relíquia'?'relics':'artifacts';owned=(c.mythic[key]||[]).some(function(r){return r.catalogId===i.id;});}
+    var action='';
+    if(i.tier==='Consumível')action='<div class="equipment-tags"><span>'+esc(i.defaultCharges?i.defaultCharges+' '+i.chargeLabel:i.chargeFormula||i.chargeLabel)+'</span>'+(i.action?'<span>'+esc(i.action)+'</span>':'')+'</div><button class="secondary" data-add-mythic-consumable="'+i.id+'">Adicionar aos Consumíveis</button>';
+    else if(i.tier==='Panóplia')action='<button class="'+(owned?'secondary':'primary')+'" data-link-panoply="'+i.id+'" '+(owned?'disabled':'')+'>'+(owned?'Panóplia vinculada':'Vincular esta Panóplia')+'</button>';
+    else action='<button class="'+(owned?'secondary':'primary')+'" data-add-owned-mythic="'+i.id+'" '+(owned?'disabled':'')+'>'+(owned?'Já está na ficha':'Registrar '+i.tier+' na ficha')+'</button>';
+    return '<details class="mythic-catalog-card"><summary><span><strong>'+esc(i.name)+'</strong><small>'+esc(i.meta||i.sourceGroup||i.kind||i.tier)+' · pág. '+esc(i.page||'—')+'</small></span><b>'+esc(i.tier)+'</b></summary><div>'+
+      (i.source?'<p class="mythic-lore">'+esc(i.source)+'</p>':'')+'<p>'+esc(catalogText(i))+'</p>'+
+      (i.projectNote?'<small class="sheet-note">'+esc(i.projectNote)+'</small>':'')+
+      (i.active?'<div class="equipment-tags"><span>Ativa: '+esc(i.active.name)+'</span>'+(i.active.rank?'<span>Rank '+esc(i.active.rank)+'</span>':'')+(i.active.action?'<span>'+esc(i.active.action)+'</span>':'')+'<span>'+esc(recoveryLabel(i))+'</span></div>':'')+
+      action+'</div></details>';
+  }
+  function catalogTab(c){
+    var all=db.listMythicItems?db.listMythicItems(catalogTier):[],q=query.trim().toLowerCase();
+    if(q)all=all.filter(function(i){return (i.name+' '+(i.meta||'')+' '+(i.sourceGroup||'')+' '+catalogText(i)).toLowerCase().indexOf(q)>=0;});
+    var visible=all.slice(0,catalogLimit);
+    return '<div class="mythic-catalog-controls"><div class="equipment-tabs"><button class="'+(catalogTier==='Consumível'?'active':'')+'" data-mythic-tier="Consumível">43 Consumíveis</button><button class="'+(catalogTier==='Panóplia'?'active':'')+'" data-mythic-tier="Panóplia">52 Panóplias</button><button class="'+(catalogTier==='Relíquia'?'active':'')+'" data-mythic-tier="Relíquia">180 Relíquias</button><button class="'+(catalogTier==='Artefato'?'active':'')+'" data-mythic-tier="Artefato">69 Artefatos</button></div><label>Buscar<input data-mythic-search value="'+esc(query)+'" placeholder="Nome, mito, tipo ou efeito"></label><span>'+all.length+' resultado(s)</span></div><div class="mythic-catalog-list">'+visible.map(function(i){return catalogCard(c,i);}).join('')+'</div>'+
+      (visible.length<all.length?'<button class="secondary mythic-more" data-mythic-more>Mostrar mais · '+(all.length-visible.length)+' restantes</button>':'');
+  }
   function body(c){if(tab==='consumables')return consumablesTab(c);if(tab==='relics')return ownedTab(c,'Relíquia');if(tab==='artifacts')return ownedTab(c,'Artefato');if(tab==='catalog')return catalogTab(c);return panoplyTab(c);}
-  function html(c){return '<section class="panel mythic-center" data-mythic-center><div class="section-heading"><div><span class="eyebrow">ITENS MÍTICOS</span><h2>Acervo Mítico</h2><p>Panóplias, consumíveis, Relíquias e Artefatos conquistados pela história.</p></div></div><nav class="mythic-tabs"><button class="'+(tab==='panoply'?'active':'')+'" data-mythic-tab="panoply">Panóplia</button><button class="'+(tab==='consumables'?'active':'')+'" data-mythic-tab="consumables">Consumíveis <b>'+((c.mythic&&c.mythic.consumables||[]).length)+'</b></button><button class="'+(tab==='relics'?'active':'')+'" data-mythic-tab="relics">Relíquias <b>'+((c.mythic&&c.mythic.relics||[]).length)+'</b></button><button class="'+(tab==='artifacts'?'active':'')+'" data-mythic-tab="artifacts">Artefatos <b>'+((c.mythic&&c.mythic.artifacts||[]).length)+'</b></button><button class="'+(tab==='catalog'?'active':'')+'" data-mythic-tab="catalog">Catálogo</button></nav><div class="mythic-body">'+body(c)+'</div></section>';}
-  function render(){if(rendering)return;var anchor=document.querySelector('[data-equipment-center]'),c=character();if(!anchor||!c)return;rendering=true;try{var old=document.querySelector('[data-mythic-center]'),markup=html(c);if(old)old.outerHTML=markup;else anchor.insertAdjacentHTML('afterend',markup);}finally{rendering=false;}}
-  function schedule(){if(scheduled)return;scheduled=true;setTimeout(function(){scheduled=false;render();},0);}
-  document.addEventListener('click',function(e){var c=character();if(!c)return;var t=e.target.closest('[data-mythic-tab]');if(t){tab=t.dataset.mythicTab;render();return;}var open=e.target.closest('[data-open-mythic-catalog]');if(open){catalogTier=open.dataset.openMythicCatalog;catalogLimit=24;tab='catalog';render();return;}var tier=e.target.closest('[data-mythic-tier]');if(tier){catalogTier=tier.dataset.mythicTier;catalogLimit=24;render();return;}if(e.target.closest('[data-mythic-more]')){catalogLimit+=24;render();return;}
-    var add=e.target.closest('[data-add-mythic-consumable]');if(add){try{var d=db.getMythicItem(add.dataset.addMythicConsumable),amount=null;if(d&&d.chargeFormula){amount=prompt('Quantidade obtida ('+d.chargeFormula+' '+d.chargeLabel+'):','');if(amount===null)return;}Service.addMythicConsumable(c.id,add.dataset.addMythicConsumable,amount);tab='consumables';restoreRefresh();}catch(err){alert(err.message);}return;}
+  function html(c,key){
+    return '<section class="panel mythic-center" data-mythic-center data-state="'+esc(key)+'"><div class="section-heading"><div><span class="eyebrow">ITENS MÍTICOS</span><h2>Acervo Mítico</h2><p>Panóplias, consumíveis, Relíquias e Artefatos conquistados pela história.</p></div></div><nav class="mythic-tabs"><button class="'+(tab==='panoply'?'active':'')+'" data-mythic-tab="panoply">Panóplia</button><button class="'+(tab==='consumables'?'active':'')+'" data-mythic-tab="consumables">Consumíveis <b>'+((c.mythic&&c.mythic.consumables||[]).length)+'</b></button><button class="'+(tab==='relics'?'active':'')+'" data-mythic-tab="relics">Relíquias <b>'+((c.mythic&&c.mythic.relics||[]).length)+'</b></button><button class="'+(tab==='artifacts'?'active':'')+'" data-mythic-tab="artifacts">Artefatos <b>'+((c.mythic&&c.mythic.artifacts||[]).length)+'</b></button><button class="'+(tab==='catalog'?'active':'')+'" data-mythic-tab="catalog">Catálogo</button></nav><div class="mythic-body">'+body(c)+'</div></section>';
+  }
+  function render(force){
+    if(rendering)return;
+    var anchor=document.querySelector('[data-equipment-center]'),c=character();if(!anchor||!c)return;
+    rendering=true;
+    try{
+      var key=stateKey(c)+'|'+tab+'|'+catalogTier+'|'+query+'|'+catalogLimit;
+      var old=document.querySelector('[data-mythic-center]'),markup=html(c,key);
+      if(!old)anchor.insertAdjacentHTML('afterend',markup);
+      else if(force||old.dataset.state!==key)old.outerHTML=markup;
+    }finally{rendering=false;}
+  }
+  function schedule(){if(scheduled)return;scheduled=true;setTimeout(function(){scheduled=false;render(false);},0);}
+  function openCatalog(tier){catalogTier=tier||catalogTier||'Panóplia';catalogLimit=24;query='';tab='catalog';render(true);}
+
+  document.addEventListener('click',function(e){
+    var c=character();if(!c)return;
+    var t=e.target.closest('[data-mythic-tab]');if(t){tab=t.dataset.mythicTab;render(true);return;}
+    var open=e.target.closest('[data-open-mythic-catalog]');if(open){openCatalog(open.dataset.openMythicCatalog);return;}
+    var tier=e.target.closest('[data-mythic-tier]');if(tier){catalogTier=tier.dataset.mythicTier;catalogLimit=24;render(true);return;}
+    if(e.target.closest('[data-mythic-more]')){catalogLimit+=24;render(true);return;}
+
+    var add=e.target.closest('[data-add-mythic-consumable]');
+    if(add){try{var d=db.getMythicItem(add.dataset.addMythicConsumable),amount=null;if(d&&d.chargeFormula){amount=prompt('Quantidade obtida ('+d.chargeFormula+' '+d.chargeLabel+'):','');if(amount===null)return;}Service.addMythicConsumable(c.id,add.dataset.addMythicConsumable,amount);tab='consumables';restoreRefresh();}catch(err){alert(err.message);}return;}
     var use=e.target.closest('[data-use-consumable]');if(use){try{Runtime.useConsumable(c.id,use.dataset.useConsumable,use.dataset.variant||'');restoreRefresh();}catch(err){alert(err.message);}return;}
     var rem=e.target.closest('[data-remove-mythic-consumable]');if(rem){if(confirm('Remover este consumível da ficha?'))try{Service.removeMythicConsumable(c.id,rem.dataset.removeMythicConsumable);restoreRefresh();}catch(err){alert(err.message);}return;}
-    var link=e.target.closest('[data-link-panoply]');if(link){try{var replace=!!c.mythic.panoplyId;if(replace&&!confirm('O personagem já possui uma Panóplia. Trocar o vínculo apenas como correção/autorização do Mestre?'))return;Service.linkPanoply(c.id,link.dataset.linkPanoply,replace);tab='panoply';restoreRefresh();}catch(err){alert(err.message);}return;}
+    var link=e.target.closest('[data-link-panoply]');
+    if(link){try{var replace=!!c.mythic.panoplyId;if(replace&&!confirm('O personagem já possui uma Panóplia. Trocar o vínculo apenas como correção/autorização do Mestre?'))return;Service.linkPanoply(c.id,link.dataset.linkPanoply,replace);tab='panoply';restoreRefresh();}catch(err){alert(err.message);}return;}
     if(e.target.closest('[data-unlink-panoply]')){if(confirm('Remover o vínculo apenas para corrigir a ficha? A Panóplia normalmente é ligada à alma.'))try{Service.unlinkPanoply(c.id);restoreRefresh();}catch(err){alert(err.message);}return;}
     if(e.target.closest('[data-use-panoply]')){try{Runtime.usePanoply(c.id);restoreRefresh();}catch(err){alert(err.message);}return;}
-    var own=e.target.closest('[data-add-owned-mythic]');if(own){try{var item=db.getMythicItem(own.dataset.addOwnedMythic);Service.addMythicOwnedItem(c.id,item.id);tab=item.tier==='Relíquia'?'relics':'artifacts';restoreRefresh();}catch(err){alert(err.message);}return;}
+    var own=e.target.closest('[data-add-owned-mythic]');
+    if(own){try{var item=db.getMythicItem(own.dataset.addOwnedMythic);Service.addMythicOwnedItem(c.id,item.id);tab=item.tier==='Relíquia'?'relics':'artifacts';restoreRefresh();}catch(err){alert(err.message);}return;}
     var ro=e.target.closest('[data-remove-owned-mythic]');if(ro){if(confirm('Remover este item mítico da ficha?'))try{Service.removeMythicOwnedItem(c.id,ro.dataset.removeOwnedMythic);restoreRefresh();}catch(err){alert(err.message);}return;}
     var uo=e.target.closest('[data-use-owned-mythic]');if(uo){try{Runtime.useOwnedItem(c.id,uo.dataset.useOwnedMythic);restoreRefresh();}catch(err){alert(err.message);}return;}
   });
-  document.addEventListener('input',function(e){if(e.target.matches('[data-mythic-search]')){query=e.target.value;catalogLimit=24;render();}});
-  global.addEventListener('semideuses:character-updated',schedule);global.addEventListener('load',schedule);new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});schedule();
+  document.addEventListener('input',function(e){
+    if(e.target.matches('[data-mythic-search]')){
+      var pos=e.target.selectionStart;query=e.target.value;catalogLimit=24;render(true);
+      var next=document.querySelector('[data-mythic-search]');if(next){next.focus();try{next.setSelectionRange(pos,pos);}catch(err){}}
+    }
+  });
+  global.addEventListener('semideuses:character-updated',schedule);
+  global.addEventListener('load',schedule);
+  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
+  global.SemideusesMythicUI={openCatalog:openCatalog,show:function(next){tab=next||'panoply';render(true);}};
+  schedule();
 })(window);
