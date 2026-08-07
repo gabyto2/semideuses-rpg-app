@@ -1,0 +1,32 @@
+const fs=require('fs');
+const vm=require('vm');
+const path=require('path');
+const root=path.join(__dirname,'..','assets');
+const context={window:{SemideusesRulesDatabase:{}}};
+context.window.window=context.window;
+vm.createContext(context);
+function run(name){vm.runInContext(fs.readFileSync(path.join(root,name),'utf8'),context,{filename:name});}
+function assert(condition,message){if(!condition)throw new Error(message);}
+run('rules-mythic-core.js');
+for(let i=1;i<=12;i++)run('rules-relics-catalog-'+String(i).padStart(2,'0')+'.js');
+for(let i=1;i<=5;i++)run('rules-artifacts-catalog-'+String(i).padStart(2,'0')+'.js');
+run('rules-mythic-expanded-normalize.js');
+const db=context.window.SemideusesRulesDatabase;
+assert(db.listMythicItems('Relíquia').length===180,'Esperadas 180 Relíquias.');
+assert(db.listMythicItems('Artefato').length===69,'Esperados 69 Artefatos.');
+assert(db.listMythicItems('Amaldiçoado').length===0,'Itens Amaldiçoados não podem entrar neste lote.');
+assert(!db.getMythicItem('artifact-flecha-de-paris'),'A Flecha de Páris pertence ao próximo tier Amaldiçoado.');
+const ares=db.getMythicItem('relic-couraca-de-ares');
+assert(ares&&ares.active&&ares.active.name==='Rugido de Guerra','Couraça de Ares deve expor Rugido de Guerra.');
+assert(ares.active.rank==='A'&&ares.active.cost===8&&ares.active.action==='Ação Bônus'&&ares.active.recovery==='longRest','Ativa da Couraça de Ares incorreta.');
+const poseidon=db.getMythicItem('relic-escamas-de-poseidon');
+assert(poseidon&&poseidon.active&&poseidon.active.rank==='B'&&poseidon.active.cost===6&&poseidon.active.action==='Reação'&&poseidon.active.recovery==='shortRest','Ativa das Escamas de Poseidon incorreta.');
+const luvas=db.getMythicItem('relic-luvas-de-polideuces');
+assert(luvas&&luvas.active&&luvas.active.action==='','Luvas de Polideuces não devem consumir Reação: o texto apenas remove a Reação do alvo.');
+const odisseu=db.getMythicItem('artifact-arco-de-odisseu');
+assert(odisseu&&odisseu.active&&odisseu.active.name==='Tiro dos Doze Machados'&&odisseu.active.rank==='A'&&odisseu.active.cost===8,'Arco de Odisseu deve estruturar Tiro dos Doze Machados.');
+const graias=db.getMythicItem('artifact-olho-das-graias');
+assert(graias&&graias.active&&graias.active.usage&&graias.active.usage.scope==='day'&&graias.active.usage.max===2,'Olho das Graias deve registrar 2 usos por dia.');
+const dragon=db.getMythicItem('relic-escamas-do-dragao-de-bronze');
+assert(dragon&&/CON substitui DES/.test(dragon.projectNote||''),'Itens com CA por DES devem exibir o override de CON do projeto.');
+console.log('mythic-relic-artifact.test: OK · 180 Relíquias · 69 Artefatos');
