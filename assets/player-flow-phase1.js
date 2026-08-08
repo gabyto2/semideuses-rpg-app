@@ -187,8 +187,8 @@
   if(!Model)return;
 
   var STEP_BY_HEADING={
-    'Conceito':0,'Identidade':1,'Filiação':2,'Atributos':3,
-    'Antecedente':4,'Caminho':5,'Marca':6,'Revisão':7
+    'Conceito':0,'Identidade':1,'Natureza':2,'Filiação':3,'Atributos':4,
+    'Antecedente':5,'Caminho':6,'Marca':7,'Revisão':8
   };
 
   function heading(){var h=document.querySelector('.wizard-head h2');return h?h.textContent.trim():'';}

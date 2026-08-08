@@ -1,0 +1,9 @@
+.nature-option{margin-top:14px}
+.nature-choice-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.nature-future{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.nature-future h4{margin:5px 0 6px;color:var(--blue);font-size:1.05rem}
+.nature-future>p{margin:0;color:var(--muted);line-height:1.5}
+.nature-future .choice-list{margin-top:12px}
+.nature-option.unavailable{cursor:default;border-style:dashed;background:rgba(18,61,90,.025)}
+.nature-option.unavailable small:last-child{margin-top:3px;font-size:.72rem;opacity:.72}
+@media(max-width:560px){.nature-choice-head{align-items:flex-start}.nature-choice-head .status{white-space:nowrap}}

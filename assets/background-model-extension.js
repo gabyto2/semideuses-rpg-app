@@ -36,9 +36,9 @@
     var result=originalValidate(character,options||{});
     var c=normalize(character);
     var step=options&&options.step;
-    if((step==null||step===4)&&c.background&&!getBackground(c.background)){
+    if((step==null||step===5)&&c.background&&!getBackground(c.background)){
       result.errors=result.errors.filter(function(error){return error.code!=='required-background';});
-      result.errors.push({step:4,field:'background',code:'invalid-background',message:'Escolha um Antecedente oficial da 3ª edição.'});
+      result.errors.push({step:5,field:'background',code:'invalid-background',message:'Escolha um Antecedente oficial da 3ª edição.'});
     }
     result.valid=result.errors.length===0;
     result.character=c;

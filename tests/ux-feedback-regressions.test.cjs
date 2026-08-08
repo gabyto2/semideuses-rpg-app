@@ -36,6 +36,13 @@ window.SemideusesCharacter={
   attributes:['FOR','DES','CON','INT','SAB','CAR'],conditions:['Saudável','Abalado'],clone,create:blank,calculate:value=>value,
   validate:value=>({valid:true,errors:[],character:value})
 };
+window.SemideusesOriginCatalog={list:()=>[
+  {id:'semideus-grego',name:'Semideus Grego',group:'Semideus',implemented:true,summary:'Semideus disponível.',sourcePages:'19–23'},
+  {id:'satiro-fauno',name:'Sátiro / Fauno',group:'Heróis Além do Sangue',implemented:false,summary:'Protetor da natureza.',sourcePages:'24–25'},
+  {id:'ciclope',name:'Ciclope',group:'Heróis Além do Sangue',implemented:false,summary:'Bruto da forja.',sourcePages:'25–26'},
+  {id:'mortal-vidente',name:'Mortal Vidente',group:'Heróis Além do Sangue',implemented:false,summary:'Humano que enxerga a Névoa.',sourcePages:'26–27'},
+  {id:'legado',name:'Legado',group:'Heróis Além do Sangue',implemented:false,summary:'Sangue diluído.',sourcePages:'27–29'}
+]};
 window.SemideusesRules={modifier:value=>Math.floor((Number(value)-10)/2)};
 window.SemideusesRulesDatabase={
   listCompleteAffiliations:()=>[{name:'Atena',icon:'🦉',domain:'Sabedoria'}],listBackgrounds:()=>[],heroMarks:[],
@@ -52,12 +59,16 @@ assert(!window.document.querySelector('[data-open-characters]'),'Não deve exist
 
 window.document.querySelector('[data-new]').click();
 assert.equal(window.document.querySelector('.wizard-head h2').textContent,'Conceito');
-assert.equal(window.document.querySelector('.wizard-head small').textContent,'Passo 1 de 8');
+assert.equal(window.document.querySelector('.wizard-head small').textContent,'Passo 1 de 9');
 window.document.querySelector('[data-next]').click();
 assert.equal(window.document.querySelector('.wizard-head h2').textContent,'Identidade');
 window.document.querySelector('[data-next]').click();
-assert.equal(window.document.querySelector('.wizard-head h2').textContent,'Filiação','A criação deve seguir de Identidade direto para Filiação.');
-assert(window.document.querySelector('.wizard-card').textContent.includes('Natureza aplicada automaticamente: Semideus Grego'));
+assert.equal(window.document.querySelector('.wizard-head h2').textContent,'Natureza','A criação deve preservar a etapa que futuramente muda o motor de origem.');
+const futureOrigins=[...window.document.querySelectorAll('[data-future-origin]')].map(option=>option.textContent);
+['Sátiro / Fauno','Ciclope','Mortal Vidente','Legado'].forEach(name=>assert(futureOrigins.some(text=>text.includes(name)),'A Natureza deve listar '+name+'.'));
+assert(window.document.querySelector('.wizard-card').textContent.includes('Estas opções são jogáveis no livro'));
+window.document.querySelector('[data-next]').click();
+assert.equal(window.document.querySelector('.wizard-head h2').textContent,'Filiação');
 
 window.document.querySelector('[data-cancel]').click();
 window.document.querySelector('[data-open-sheet="atena-17"]').click();

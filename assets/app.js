@@ -5,6 +5,7 @@ var Service=window.SemideusesCharacterService;
 var Model=window.SemideusesCharacter;
 var Rules=window.SemideusesRules;
 var Database=window.SemideusesRulesDatabase;
+var OriginCatalog=window.SemideusesOriginCatalog;
 if(!Service||!Model||!Rules||!Database)throw new Error('Núcleo do aplicativo não carregado.');
 
 var attrs=Model.attributes.slice();
@@ -15,11 +16,12 @@ var sections=[
   {id:'mestre',label:'Mestre',icon:'⚑'},
   {id:'compendio',label:'Compêndio',icon:'☷'}
 ];
-var steps=['Conceito','Identidade','Filiação','Atributos','Antecedente','Caminho','Marca','Revisão'];
+var steps=['Conceito','Identidade','Natureza','Filiação','Atributos','Antecedente','Caminho','Marca','Revisão'];
 
 function affiliationCatalog(){return typeof Database.listCompleteAffiliations==='function'?Database.listCompleteAffiliations():[];}
 function backgroundCatalog(){return typeof Database.listBackgrounds==='function'?Database.listBackgrounds():[];}
 function heroMarkCatalog(){return Array.isArray(Database.heroMarks)?Database.heroMarks.slice():[];}
+function originCatalog(){return OriginCatalog&&typeof OriginCatalog.list==='function'?OriginCatalog.list():[{id:'semideus-grego',name:'Semideus Grego',group:'Semideus',implemented:true,summary:'Filho de mortal e divindade do Olimpo.'}];}
 function affiliationByName(name){return typeof Database.getAffiliation==='function'?Database.getAffiliation(name):null;}
 function backgroundByName(name){return typeof Database.getBackground==='function'?Database.getBackground(name):null;}
 
@@ -113,15 +115,16 @@ function stepView(){
   var c=state.editing;
   if(state.step===0)return '<span class="step-icon">✦</span><h3>Conceito do personagem <small class="optional">opcional</small></h3><p>Esta etapa resume quem o personagem é antes dos números. Uma frase já é suficiente.</p><div class="prompt-list"><small>Quem ele era antes do mundo mítico?</small><small>Qual sua principal qualidade ou dificuldade?</small><small>O que deseja alcançar?</small></div><label class="full-field"><span>Resumo do conceito</span><textarea data-field="concept" rows="6" placeholder="Ex.: Uma atleta protetora que teme decepcionar a própria mãe divina.">'+esc(c.concept)+'</textarea></label><button class="text-button" data-skip-concept>Pular por enquanto</button>';
   if(state.step===1){var persisted=!!Service.get(c.id);return '<div class="identity-hero"><div class="portrait-placeholder">'+esc((c.name||'?').charAt(0).toUpperCase())+'</div><div><h3>Identidade do herói</h3><p>Dados principais usados no cabeçalho e na apresentação da ficha.</p></div></div><div class="form-grid">'+field('name','Nome do personagem',c.name,'text','Helena Demétrio')+field('player','Nome do jogador',c.player,'text','Quem controla a ficha')+field('age','Idade',c.age,'number','17')+'</div><label class="full-field"><span>Aparência ou detalhe marcante</span><textarea data-field="appearance" rows="4" placeholder="Cabelos, roupas, cicatriz, postura ou outro detalhe visual.">'+esc(c.appearance)+'</textarea></label>'+(persisted?'<div class="level-control"><span>Nível do personagem</span><strong data-level-display>'+c.level+'</strong></div><div class="coming">Use o botão Evoluir ficha para subir de nível sem recuperar PV ou recursos indevidamente.</div>':'<div class="level-control"><span>Nível inicial</span><button data-level-delta="-1">−</button><strong data-level-display>'+c.level+'</strong><button data-level-delta="1">+</button><input data-field="level" type="number" min="1" max="20" value="'+c.level+'"></div><div class="coming">Caminho libera no nível 3. Marca do Herói libera no nível 5.</div>');}
-  if(state.step===2)return '<h3>Escolha a Filiação</h3><p class="sheet-note">Natureza aplicada automaticamente: <strong>Semideus Grego</strong>.</p><div class="choice-grid">'+affiliationCatalog().map(function(affiliation){return '<button class="choice '+(c.affiliation===affiliation.name?'selected':'')+'" data-aff="'+esc(affiliation.name)+'"><span class="choice-icon">'+esc(affiliation.icon||'✦')+'</span><strong>'+esc(affiliation.name)+'</strong><small>'+esc(affiliation.domain||affiliation.profile||'')+'</small></button>';}).join('')+'</div>';
-  if(state.step===3)return '<h3>Atributos</h3><p>O modificador é calculado automaticamente.</p><div class="attribute-grid">'+attrs.map(function(attribute){return '<label><span>'+attribute+'</span><small>Valor</small><input data-attr="'+attribute+'" type="number" min="1" max="30" value="'+c.attributes[attribute]+'"><small>Modificador</small><b data-mod="'+attribute+'">'+signed(Rules.modifier(c.attributes[attribute]))+'</b></label>';}).join('')+'</div>';
-  if(state.step===4)return '<h3>Antecedente</h3><p>Cada Antecedente aplica três proficiências, uma ferramenta, um Traço e um Vínculo.</p><div class="choice-list">'+backgroundCatalog().map(function(background){return backgroundChoice(background,c.background===background.name);}).join('')+'</div>';
-  if(state.step===5){
+  if(state.step===2){var origins=originCatalog(),semideus=origins.find(function(origin){return origin.id==='semideus-grego';})||origins[0],beyond=origins.filter(function(origin){return origin.group==='Heróis Além do Sangue';});return '<span class="step-icon">⚜</span><h3>Natureza do herói</h3><p>A Natureza define qual estrutura de origem e progressão o personagem utiliza.</p><button class="choice selected nature-option" type="button"><span class="nature-choice-head"><strong>'+esc(semideus.name)+'</strong><span class="status ready">Disponível</span></span><small>'+esc(semideus.summary)+'</small></button><section class="nature-future"><span class="eyebrow">HERÓIS ALÉM DO SANGUE</span><h4>Origens oficiais em integração</h4><p>Estas opções são jogáveis no livro, mas ainda precisam do motor próprio no aplicativo.</p><div class="choice-list">'+beyond.map(function(origin){return '<article class="choice nature-option unavailable" data-future-origin="'+esc(origin.id)+'"><span class="nature-choice-head"><strong>'+esc(origin.name)+'</strong><span class="status">Em integração</span></span><small>'+esc(origin.summary)+'</small><small>Livro do Jogador 3e · p. '+esc(origin.sourcePages)+'</small></article>';}).join('')+'</div></section>';}
+  if(state.step===3)return '<h3>Escolha a Filiação</h3><div class="choice-grid">'+affiliationCatalog().map(function(affiliation){return '<button class="choice '+(c.affiliation===affiliation.name?'selected':'')+'" data-aff="'+esc(affiliation.name)+'"><span class="choice-icon">'+esc(affiliation.icon||'✦')+'</span><strong>'+esc(affiliation.name)+'</strong><small>'+esc(affiliation.domain||affiliation.profile||'')+'</small></button>';}).join('')+'</div>';
+  if(state.step===4)return '<h3>Atributos</h3><p>O modificador é calculado automaticamente.</p><div class="attribute-grid">'+attrs.map(function(attribute){return '<label><span>'+attribute+'</span><small>Valor</small><input data-attr="'+attribute+'" type="number" min="1" max="30" value="'+c.attributes[attribute]+'"><small>Modificador</small><b data-mod="'+attribute+'">'+signed(Rules.modifier(c.attributes[attribute]))+'</b></label>';}).join('')+'</div>';
+  if(state.step===5)return '<h3>Antecedente</h3><p>Cada Antecedente aplica três proficiências, uma ferramenta, um Traço e um Vínculo.</p><div class="choice-list">'+backgroundCatalog().map(function(background){return backgroundChoice(background,c.background===background.name);}).join('')+'</div>';
+  if(state.step===6){
     if(c.level<3)return '<span class="step-icon">🔒</span><h3>Caminho ainda não liberado</h3><p>Esta escolha aparece no nível 3.</p>';
     var paths=c.rules&&Array.isArray(c.rules.paths)?c.rules.paths:[];
     return '<h3>Caminho Divino</h3>'+(paths.length?'<div class="choice-list">'+paths.map(function(path){return '<button class="choice '+(c.divinePath===path.name?'selected':'')+'" data-path="'+esc(path.name)+'"><strong>'+esc(path.name)+'</strong><small>'+esc(path.summary||'')+'</small></button>';}).join('')+'</div>':'<div class="coming">Nenhum Caminho oficial encontrado.</div>');
   }
-  if(state.step===6){
+  if(state.step===7){
     if(c.level<5)return '<span class="step-icon">🔒</span><h3>Marca ainda não liberada</h3><p>Esta escolha aparece no nível 5.</p>';
     return '<h3>Marca do Herói</h3><div class="choice-list">'+heroMarkCatalog().map(function(mark){return '<button class="choice '+(c.heroMark===mark.name?'selected':'')+'" data-mark="'+esc(mark.name)+'"><strong>'+esc(mark.name)+'</strong><small>'+esc(mark.description||'')+'</small></button>';}).join('')+'</div>';
   }

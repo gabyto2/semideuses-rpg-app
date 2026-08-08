@@ -35,6 +35,7 @@ const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
   name.value='Teste de Atributos';
   name.oninput();
   window.document.querySelector('[data-next]').onclick();
+  window.document.querySelector('[data-next]').onclick();
   window.document.querySelector('[data-aff="Poseidon"]').onclick();
   window.document.querySelector('[data-next]').onclick();
 

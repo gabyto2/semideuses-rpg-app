@@ -297,18 +297,19 @@
     var errors=[];
     function add(step,field,code,message){if(onlyStep==null||onlyStep===step)errors.push({step:step,field:field,code:code,message:message});}
     if(!String(c.name||'').trim())add(1,'name','required-name','Informe o nome do personagem.');
+    if(!String(c.heroType||'').trim())add(2,'heroType','required-nature','Escolha a Natureza do personagem.');
     var affiliation=databaseAffiliation(c.affiliation);
-    if(!c.affiliation||!affiliation)add(2,'affiliation','required-affiliation','Escolha uma Filiação válida da 3ª edição.');
+    if(!c.affiliation||!affiliation)add(3,'affiliation','required-affiliation','Escolha uma Filiação válida da 3ª edição.');
     ATTRIBUTES.forEach(function(attribute){
       var value=Number(c.attributes[attribute]);
-      if(!Number.isFinite(value)||value<1||value>30)add(3,attribute,'invalid-attribute','O atributo '+attribute+' precisa estar entre 1 e 30.');
+      if(!Number.isFinite(value)||value<1||value>30)add(4,attribute,'invalid-attribute','O atributo '+attribute+' precisa estar entre 1 e 30.');
     });
-    if(!String(c.background||'').trim())add(4,'background','required-background','Escolha um Antecedente antes de continuar.');
+    if(!String(c.background||'').trim())add(5,'background','required-background','Escolha um Antecedente antes de continuar.');
     if(affiliation&&c.level>=3&&Array.isArray(affiliation.paths)&&affiliation.paths.length){
       var pathNames=affiliation.paths.map(function(path){return path.name;});
-      if(pathNames.indexOf(c.divinePath)<0)add(5,'divinePath','required-path','Escolha um Caminho válido para '+c.affiliation+'.');
+      if(pathNames.indexOf(c.divinePath)<0)add(6,'divinePath','required-path','Escolha um Caminho válido para '+c.affiliation+'.');
     }
-    if(c.level>=5&&heroMarks().indexOf(c.heroMark)<0)add(6,'heroMark','required-hero-mark','Escolha uma Marca do Herói válida.');
+    if(c.level>=5&&heroMarks().indexOf(c.heroMark)<0)add(7,'heroMark','required-hero-mark','Escolha uma Marca do Herói válida.');
     return {valid:errors.length===0,errors:errors,character:c};
   }
 
