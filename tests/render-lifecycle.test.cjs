@@ -26,7 +26,7 @@ function appLifecycle(){
 
 function sheetHtml(){
   return '<section class="section-heading"><span class="eyebrow">FICHA PRONTA</span><h2>Helena Demétrio</h2></section>'+ 
-    '<div class="sheet-identity-meta"></div>'+ 
+    '<div class="sheet-identity-meta"></div><div class="sheet-badges"><span class="sheet-badge identity">Idade 17</span><span class="sheet-badge path">Caminho das Estações</span></div>'+ 
     '<section class="panel"><h3>Testes de Resistência</h3></section>'+ 
     '<section data-mythic-center><button class="active" data-mythic-tab="panoply">Panóplia</button><div class="mythic-body"></div></section>';
 }
@@ -51,6 +51,9 @@ async function enhancementLifecycle(){
     assert.equal(window.document.querySelectorAll('.official-affiliation-panel').length,1,'As regras oficiais devem '+message+'.');
     assert.equal(window.document.querySelectorAll('[data-compendium-sheet]').length,1,'O atalho do Compêndio deve '+message+'.');
     assert.equal(window.document.querySelectorAll('[data-panoply-builder]').length,1,'O construtor de Panóplia deve '+message+'.');
+    const labels=[...window.document.querySelectorAll('[data-compendium-sheet] button')].map(button=>button.textContent.trim());
+    assert(labels.includes('📖 Consultar Caminho das Estações'),'O atalho deve consultar o Caminho selecionado.');
+    assert(!labels.some(label=>label.includes('Idade 17')),'A idade nunca pode ser tratada como Caminho.');
   };
   assertMounted('aparecer na ficha');
 

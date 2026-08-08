@@ -63,7 +63,8 @@
     });
     if(!savesPanel)return;
 
-    var html='<section class="panel official-affiliation-panel">'+
+    var html='<details class="panel official-affiliation-panel sheet-reference-panel">'+
+      '<summary><span><strong>Regras da Filiação · '+esc(affiliation.name)+'</strong><small>Dado de Vida, proficiências e referência oficial</small></span><b>Detalhes</b></summary><div class="sheet-reference-body">'+
       '<div class="official-rules-heading"><div><span class="eyebrow">REGRAS DA FILIAÇÃO</span><h3>'+esc(affiliation.name)+'</h3><p>'+esc(affiliation.profile||affiliation.domain||'')+'</p></div><span class="official-rules-icon">'+esc(affiliation.icon||'✦')+'</span></div>'+
       '<div class="official-rules-core">'+
         '<article><span>Atributo de Conjuração</span><strong>'+esc(affiliation.casting||'—')+'</strong></article>'+
@@ -76,7 +77,7 @@
         '<div><strong>Armas</strong>'+listHtml(affiliation.weaponProficiencies)+'</div>'+
         '<div><strong>Armaduras</strong>'+listHtml(affiliation.armorProficiencies)+'</div>'+
       '</div>'+
-    '</section>';
+    '</div></details>';
     savesPanel.insertAdjacentHTML('afterend',html);
   }
 

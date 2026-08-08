@@ -18,6 +18,8 @@ window.eval(fs.readFileSync(path.join(root,'assets/sheet-header.js'),'utf8'));
   await wait(20);
   assert(window.document.querySelector('.sheet-identity-hero'),'O topo personalizado deve aparecer ao abrir a ficha.');
   assert.equal(window.document.querySelector('.sheet-character-name').textContent,character.name);
+  assert.equal(window.document.querySelector('.sheet-badge.identity').textContent,'Idade 17');
+  assert.equal(window.document.querySelector('.sheet-badge.path').textContent,character.divinePath);
   assert.equal(window.document.querySelector('.section-heading').style.display,'none');
 
   window.document.getElementById('app').innerHTML=sheet();
@@ -26,6 +28,7 @@ window.eval(fs.readFileSync(path.join(root,'assets/sheet-header.js'),'utf8'));
   await wait(20);
   assert(window.document.querySelector('.sheet-identity-hero'),'O topo personalizado deve voltar automaticamente após o redesenho da ficha.');
   assert.equal(window.document.querySelector('.sheet-character-name').textContent,character.name);
+  assert.equal(window.document.querySelector('.sheet-badge.path').textContent,character.divinePath);
   assert.equal(window.document.querySelector('.section-heading').style.display,'none');
   dom.window.close();
   console.log('sheet-header-persistence.test: OK');

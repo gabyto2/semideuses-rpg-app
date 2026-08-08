@@ -29,10 +29,18 @@ context.SemideusesRulesDatabase={
 vm.createContext(context);
 function load(relative){const file=path.join(root,relative);vm.runInContext(fs.readFileSync(file,'utf8'),context,{filename:file});}
 load('assets/rules-resource-definitions.js');
+load('assets/rules-conditions.js');
 load('assets/character-model.js');
 
 const Model=context.SemideusesCharacter;
 assert(Model,'modelo carregado');
+assert(Model.conditions.includes('Dominado'));
+assert(Model.conditions.includes('Petrificado'));
+assert(Model.conditions.includes('Morrendo'));
+assert(!Model.conditions.includes('Ferido'),'Ferido é uma faixa de PV, não uma condição oficial selecionável.');
+assert(!Model.conditions.includes('Impedido'),'Impedido não consta na lista oficial de condições da 3e.');
+assert(context.SemideusesConditionRules.get('Abalado').effects.some(effect=>effect.includes('SAB e CAR')));
+assert(context.SemideusesConditionRules.get('Surdo').effects.some(effect=>effect.includes('audição')));
 
 let hebe=Model.create({name:'Hebe Teste',affiliation:'Hebe',level:5,background:'Atleta',divinePath:'Caminho de Teste',heroMark:'Ataque Extra'});
 assert.equal(hebe.rules.primaryResource.id,'vigor');

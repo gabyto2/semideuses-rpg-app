@@ -5,6 +5,7 @@
   var Model=global.SemideusesCharacter;
   var Runtime=global.SemideusesSessionRuntime;
   var App=global.SemideusesApp;
+  var ConditionRules=global.SemideusesConditionRules;
   if(!Service||!Model||!Runtime)return;
 
   var scheduled=false;
@@ -81,12 +82,21 @@
       (path.length?'<h4 class="ability-path-heading">'+esc(path[0].pathName)+'</h4><div class="ability-runtime-list">'+path.map(function(item){return abilityCard(character,item);}).join('')+'</div>':'')+
     '</section>';
   }
+  function conditionRule(name){return ConditionRules&&typeof ConditionRules.get==='function'?ConditionRules.get(name):null;}
+  function conditionEffects(rule){
+    if(!rule)return '<p>Descrição oficial indisponível nesta versão.</p>';
+    return '<p>'+esc(rule.summary||'')+'</p>'+(rule.effects&&rule.effects.length?'<ul>'+rule.effects.map(function(effect){return '<li>'+esc(effect)+'</li>';}).join('')+'</ul>':'')+'<small class="condition-source">Livro do Jogador 3e · p. '+esc(rule.pages||'—')+'</small>';
+  }
+  function conditionCard(name){
+    return '<details class="condition-rule-card"><summary><span><strong>'+esc(name)+'</strong><small>Ver efeitos</small></span><b>⌄</b></summary><div>'+conditionEffects(conditionRule(name))+'<button class="secondary" data-remove-condition="'+esc(name)+'">Remover estado</button></div></details>';
+  }
   function conditionsPanel(character,key){
     var active=Array.isArray(character.resources.conditions)?character.resources.conditions:[];
     var options=Model.conditions.filter(function(condition){return condition!=='Saudável'&&active.indexOf(condition)<0;});
     return '<section class="panel multi-condition-panel" data-multi-conditions data-conditions-state="'+esc(key)+'"><div class="section-heading"><div><span class="eyebrow">ESTADOS ATIVOS</span><h3>Condições</h3><p>O personagem pode manter várias condições ao mesmo tempo.</p></div></div>'+
-      (active.length?'<div class="condition-chip-list">'+active.map(function(condition){return '<button data-remove-condition="'+esc(condition)+'">'+esc(condition)+' ×</button>';}).join('')+'</div>':'<p class="session-empty">Nenhuma condição ativa.</p>')+
+      (active.length?'<div class="condition-active-list">'+active.map(conditionCard).join('')+'</div>':'<p class="session-empty">Nenhuma condição ativa.</p>')+
       (options.length?'<div class="condition-add-row"><select data-condition-picker><option value="">Adicionar condição…</option>'+options.map(function(condition){return '<option value="'+esc(condition)+'">'+esc(condition)+'</option>';}).join('')+'</select><button class="secondary" data-add-condition>Adicionar</button></div>':'')+
+      (options.length?'<div class="condition-preview" data-condition-preview><p>Escolha um estado acima para consultar os efeitos antes de adicionar.</p></div>':'')+
     '</section>';
   }
   function hideLegacyCondition(){
@@ -188,6 +198,14 @@
       try{Service.toggleCondition(addCharacter.id,value);schedule();}
       catch(error){alert(error.message);}
     }
+  });
+
+  document.addEventListener('change',function(event){
+    var picker=event.target.closest('[data-condition-picker]');
+    if(!picker)return;
+    var preview=document.querySelector('[data-condition-preview]');
+    if(!preview)return;
+    preview.innerHTML=picker.value?'<strong>'+esc(picker.value)+'</strong>'+conditionEffects(conditionRule(picker.value)):'<p>Escolha um estado acima para consultar os efeitos antes de adicionar.</p>';
   });
 
   global.addEventListener('semideuses:character-updated',schedule);
