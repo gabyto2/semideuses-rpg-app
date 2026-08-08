@@ -3,13 +3,13 @@
 var App=global.SemideusesApp,Service=global.SemideusesCharacterService,Model=global.SemideusesCharacter,db=global.SemideusesRulesDatabase;
 if(!Service||!Model||!db)return;
 
-var itemView='equipment:equipped';
+var itemView='equipment:inventory';
 var restoring=null,scheduled=false;
 var mutationSelectors=[
   '[data-adjust]','[data-apply]','[data-extra-resource]','[data-condition]',
   '[data-command-use-ability]','[data-command-use-skill]','[data-use-official]',
   '[data-signature-spend]','[data-signature-trigger]','[data-economy-manual]',
-  '[data-equip-slot]','[data-unequip-slot]','[data-wield-mode]','[data-inventory-qty]',
+  '[data-equip-slot]','[data-unequip-slot]','[data-inventory-equip]','[data-inventory-unequip]','[data-wield-mode]','[data-inventory-qty]',
   '[data-remove-inventory]','[data-add-catalog-item]','[data-buy-catalog-item]',
   '[data-save-dracmas]','[data-add-custom-item]','[data-item-weight]','[data-attack-attribute]',
   '[data-use-consumable]','[data-remove-mythic-consumable]','[data-add-mythic-consumable]',
@@ -82,23 +82,24 @@ function activateItemView(view,doClick){
   ensureItemHub();
 }
 function itemNavButton(view,label,count){
-  return '<button class="'+(itemView===view?'active':'')+'" data-items-view="'+esc(view)+'"><span>'+esc(label)+'</span>'+(count!=null?'<b>'+count+'</b>':'')+'</button>';
+  return '<button class="'+(itemView===view?'active ':'')+(view==='equipment:inventory'?'featured':'')+'" data-items-view="'+esc(view)+'"><span>'+esc(label)+'</span>'+(count!=null?'<b>'+count+'</b>':'')+'</button>';
 }
 function ensureItemHub(){
   var equipment=document.querySelector('[data-equipment-center]'),c=character();
   if(!equipment||!c)return;
   var old=document.querySelector('[data-items-hub]');
-  var hubState=[itemView,(c.inventory||[]).length,c.mythic&&c.mythic.panoplyId||'',(c.mythic&&c.mythic.consumables||[]).length,(c.mythic&&c.mythic.relics||[]).length,(c.mythic&&c.mythic.artifacts||[]).length].join('|');
-  var html='<section class="panel items-hub" data-items-hub data-items-state="'+esc(hubState)+'"><div class="items-hub-head"><div><span class="eyebrow">CENTRAL DE ITENS</span><h2>Itens & Acervo</h2><p>Um único lugar para equipar, consultar inventário e administrar itens míticos.</p></div><button class="secondary" data-open-item-compendium>Consultar Compêndio de Itens</button></div><nav class="items-master-tabs">'+
-    itemNavButton('equipment:equipped','Em uso')+
-    itemNavButton('equipment:inventory','Inventário',(c.inventory||[]).length)+
-    itemNavButton('equipment:catalog','Catálogo comum')+
+  var hubState=[itemView,(c.inventory||[]).length,JSON.stringify(c.equipmentSlots||{}),c.mythic&&c.mythic.panoplyId||'',(c.mythic&&c.mythic.consumables||[]).length,(c.mythic&&c.mythic.relics||[]).length,(c.mythic&&c.mythic.artifacts||[]).length].join('|');
+  var slots=c.equipmentSlots||{},equippedCount=['armor','shield','mainHand','offHand'].filter(function(slot){return !!slots[slot];}).length;
+  var html='<section class="panel items-hub" data-items-hub data-items-state="'+esc(hubState)+'"><div class="items-hub-head"><div><span class="eyebrow">CENTRAL DE ITENS</span><h2>Inventário e itens</h2><p>Veja o que você possui, equipe o que está usando e adicione novos itens.</p></div><button class="secondary" data-open-item-compendium>Consultar Compêndio de Itens</button></div><nav class="items-master-tabs" aria-label="Inventário e itens">'+
+    itemNavButton('equipment:inventory','Meu Inventário',(c.inventory||[]).length)+
+    itemNavButton('equipment:catalog','+ Adicionar itens')+
+    itemNavButton('equipment:equipped','Em uso',equippedCount)+
     itemNavButton('mythic:panoply','Panóplia',c.mythic&&c.mythic.panoplyId?1:0)+
     itemNavButton('mythic:consumables','Consumíveis',(c.mythic&&c.mythic.consumables||[]).length)+
     itemNavButton('mythic:relics','Relíquias',(c.mythic&&c.mythic.relics||[]).length)+
     itemNavButton('mythic:artifacts','Artefatos',(c.mythic&&c.mythic.artifacts||[]).length)+
     itemNavButton('mythic:catalog:Panóplia','Catálogo mítico')+
-    '</nav><p class="items-hub-note">Itens comuns adicionados vão primeiro para o <strong>Inventário</strong>. Armas, armaduras e escudos só alteram a ficha depois de serem <strong>equipados</strong> em “Em uso”.</p></section>';
+    '</nav><p class="items-hub-note"><strong>Como funciona:</strong> adicione ou compre um item → ele aparece em <strong>Meu Inventário</strong> → toque em <strong>Equipar</strong>. A aba “Em uso” mostra o resultado na CA e nos ataques.</p></section>';
   if(!old)equipment.insertAdjacentHTML('beforebegin',html);
   else if(old.dataset.itemsState!==hubState)old.outerHTML=html;
   setCentersVisibility();
@@ -142,11 +143,11 @@ function patchService(name,handler){
 patchService('addCatalogItem',function(args,saved){
   var d=db.getEquipmentItem&&db.getEquipmentItem(args[1]),count=(saved.inventory||[]).filter(function(r){return r.catalogId===args[1];}).reduce(function(s,r){return s+Number(r.quantity||1);},0);
   if(!d)return;var equip=/^(weapon|armor|shield)$/.test(d.type);
-  toast(d.name+' foi para o Inventário'+(count?' (agora '+count+')':'')+'.'+(equip?' Ainda não está equipado.':''),equip?'Ir para Em uso':'Abrir Inventário',function(){activateItemView(equip?'equipment:equipped':'equipment:inventory');setTimeout(function(){var h=document.querySelector('[data-items-hub]');if(h)h.scrollIntoView({block:'start'});},0);});
+  toast(d.name+' foi para o Inventário'+(count?' (agora '+count+')':'')+'.'+(equip?' Você pode equipá-lo por lá.':''),equip?'Ver e equipar':'Abrir Inventário',function(){activateItemView('equipment:inventory');setTimeout(function(){var h=document.querySelector('[data-items-hub]');if(h)h.scrollIntoView({block:'start'});},0);});
 });
 patchService('buyCatalogItem',function(args){
   var d=db.getEquipmentItem&&db.getEquipmentItem(args[1]);if(!d)return;var equip=/^(weapon|armor|shield)$/.test(d.type);
-  toast(d.name+' comprado e adicionado ao Inventário.'+(equip?' Ele ainda precisa ser equipado.':''),equip?'Ir para Em uso':'Abrir Inventário',function(){activateItemView(equip?'equipment:equipped':'equipment:inventory');});
+  toast(d.name+' comprado e adicionado ao Inventário.'+(equip?' Você pode equipá-lo por lá.':''),equip?'Ver e equipar':'Abrir Inventário',function(){activateItemView('equipment:inventory');});
 });
 patchService('addMythicConsumable',function(args){var d=db.getMythicItem&&db.getMythicItem(args[1]);if(d)toast(d.name+' adicionado aos Consumíveis míticos.','Ver Consumíveis',function(){activateItemView('mythic:consumables');});});
 patchService('linkPanoply',function(args){var d=db.getMythicItem&&db.getMythicItem(args[1]);if(d)toast(d.name+' vinculada como Panóplia do personagem.','Ver Panóplia',function(){activateItemView('mythic:panoply');});});
@@ -174,6 +175,6 @@ document.addEventListener('click',function(e){
 global.addEventListener('semideuses:character-updated',function(){schedule();restoreScroll();});
 global.addEventListener('load',schedule);
 new MutationObserver(function(){schedule();restoreScroll();}).observe(document.documentElement,{childList:true,subtree:true});
-global.SemideusesItemsUX={open:function(view){activateItemView(view||'equipment:equipped',true);},toast:toast};
+global.SemideusesItemsUX={open:function(view){activateItemView(view||'equipment:inventory',true);},toast:toast};
 schedule();
 })(window);

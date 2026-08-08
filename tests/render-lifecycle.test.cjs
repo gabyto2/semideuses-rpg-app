@@ -33,7 +33,7 @@ function sheetHtml(){
 
 async function enhancementLifecycle(){
   const character={id:'helena',name:'Helena Demétrio',affiliation:'Deméter',divinePath:'Caminho das Estações',mythic:{}};
-  const affiliation={name:'Deméter',profile:'Natureza e colheita',icon:'🌾',casting:'SAB',hitDie:8,savingThrows:['CON','SAB'],skillProficiencies:['Natureza'],weaponProficiencies:['Foice'],armorProficiencies:['Leves'],paths:[]};
+  const affiliation={name:'Deméter',profile:'Natureza e colheita',icon:'🌾',casting:'SAB',hitDie:8,savingThrows:['CON','SAB'],skillProficiencies:['Natureza'],weaponProficiencies:['Foice'],armorProficiencies:['Leves'],paths:[{name:'Caminho das Estações'}]};
   const dom=new JSDOM('<!doctype html><div id="app">'+sheetHtml()+'</div>',{url:'https://example.test/',runScripts:'outside-only',pretendToBeVisual:true});
   const window=dom.window;
   window.SemideusesApp={getEditing:()=>character};
@@ -64,8 +64,22 @@ async function enhancementLifecycle(){
   dom.window.close();
 }
 
+async function unsupportedOriginHasNoDeadLinks(){
+  const satyr={id:'satyr',name:'Lino',heroType:'Sátiro / Fauno',affiliation:'',divinePath:'Caminho da Natureza Selvagem'};
+  const html='<section><span class="eyebrow">FICHA PRONTA</span></section><section class="sheet-identity-hero"><span class="sheet-affiliation-label">Sátiro / Fauno</span><span class="sheet-badge path">Caminho da Natureza Selvagem</span></section>';
+  const dom=new JSDOM('<!doctype html><div id="app">'+html+'</div>',{url:'https://example.test/',runScripts:'outside-only',pretendToBeVisual:true});
+  const window=dom.window;
+  window.SemideusesApp={getEditing:()=>satyr};
+  window.SemideusesRulesDatabase={getCatalogAffiliation:()=>null};
+  window.eval(source('compendium-integration.js'));
+  await wait(20);
+  assert.equal(window.document.querySelector('[data-compendium-sheet]'),null,'Origens sem entrada no Compêndio não devem exibir botões de regras que não abrem nada.');
+  dom.window.close();
+}
+
 (async()=>{
   appLifecycle();
   await enhancementLifecycle();
+  await unsupportedOriginHasNoDeadLinks();
   console.log('render-lifecycle.test: OK');
 })().catch(error=>{console.error(error);process.exitCode=1;});
