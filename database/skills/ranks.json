@@ -1,0 +1,20 @@
+{
+  "edition": 3,
+  "ranks": [
+    {"rank": "E", "mp": 1, "minimumLevel": 1, "dailyLimit": null},
+    {"rank": "D", "mp": 2, "minimumLevel": 1, "dailyLimit": null},
+    {"rank": "C", "mp": 4, "minimumLevel": 5, "dailyLimit": null},
+    {"rank": "B", "mp": 6, "minimumLevel": 5, "dailyLimit": null},
+    {"rank": "A", "mp": 8, "minimumLevel": 9, "dailyLimit": null},
+    {"rank": "S", "mp": 12, "minimumLevel": 13, "dailyLimit": 2},
+    {"rank": "SS", "mp": 16, "minimumLevel": 17, "dailyLimit": 1},
+    {"rank": "Lendário", "mp": 24, "minimumLevel": 17, "dailyLimit": 1}
+  ],
+  "passiveSkillsCostMP": false,
+  "amplification": {
+    "minimumLevel": 13,
+    "extraMP": 4,
+    "maximumPerCast": 1,
+    "options": ["+1 dado de dano ou cura", "+1 alvo", "+3 m de área ou alcance"]
+  }
+}

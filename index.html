@@ -1,18 +1,167 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#123d5a" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Semideuses 3e" />
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="apple-touch-icon" href="/icons/icon-180.png" />
-    <title>Semideuses RPG 3e</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#123d5a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Semideuses 3e" />
+  <title>Semideuses RPG 3e</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180.png" />
+  <link rel="stylesheet" href="/assets/app.css" />
+  <link rel="stylesheet" href="/assets/nature-creation.css" />
+  <link rel="stylesheet" href="/assets/resources.css" />
+  <link rel="stylesheet" href="/assets/stabilization.css" />
+  <link rel="stylesheet" href="/assets/sheet-v1.css" />
+  <link rel="stylesheet" href="/assets/quick-edit.css" />
+  <link rel="stylesheet" href="/assets/attribute-creation.css" />
+  <link rel="stylesheet" href="/assets/sheet-header.css" />
+  <link rel="stylesheet" href="/assets/mobile-flow-fixes.css" />
+  <link rel="stylesheet" href="/assets/mobile-keyboard.css" />
+  <link rel="stylesheet" href="/assets/official-rules-ui.css" />
+  <link rel="stylesheet" href="/assets/compendium.css" />
+  <link rel="stylesheet" href="/assets/player-flow-phase1.css" />
+  <link rel="stylesheet" href="/assets/session-tools.css" />
+  <link rel="stylesheet" href="/assets/advanced-session-ui.css" />
+  <link rel="stylesheet" href="/assets/sheet-command-center.css" />
+  <link rel="stylesheet" href="/assets/equipment.css" />
+  <link rel="stylesheet" href="/assets/mythic-items.css" />
+  <link rel="stylesheet" href="/assets/mythic-expanded.css" />
+  <link rel="stylesheet" href="/assets/sheet-ux-enhancements.css" />
+  <link rel="stylesheet" href="/assets/portability.css" />
+  <link rel="stylesheet" href="/assets/evolution-ui.css" />
+  <link rel="stylesheet" href="/assets/stability-items-ux.css" />
+  <link rel="stylesheet" href="/assets/interaction-fixes-v2.css" />
+  <link rel="stylesheet" href="/assets/advanced-items-ui.css" />
+  <link rel="stylesheet" href="/assets/player-sheet-finalization.css" />
+  <link rel="stylesheet" href="/assets/sheet-polish-v3.css" />
+</head>
+<body>
+  <div id="app"></div>
+  <noscript>Este aplicativo precisa de JavaScript ativado.</noscript>
+  <script defer src="/assets/rules-engine.js"></script>
+  <script defer src="/assets/rules-conditions.js"></script>
+  <script defer src="/assets/rules-origins.js"></script>
+  <script defer src="/assets/rules-database.js"></script>
+  <script defer src="/assets/rules-hades.js"></script>
+  <script defer src="/assets/rules-atena.js"></script>
+  <script defer src="/assets/rules-ares.js"></script>
+  <script defer src="/assets/rules-apolo.js"></script>
+  <script defer src="/assets/rules-hefesto.js"></script>
+  <script defer src="/assets/rules-hermes.js"></script>
+  <script defer src="/assets/rules-afrodite.js"></script>
+  <script defer src="/assets/rules-dionisio.js"></script>
+  <script defer src="/assets/rules-artemis.js"></script>
+  <script defer src="/assets/rules-hecate.js"></script>
+  <script defer src="/assets/rules-iris.js"></script>
+  <script defer src="/assets/rules-nemesis.js"></script>
+  <script defer src="/assets/rules-hipnos.js"></script>
+  <script defer src="/assets/rules-morfeu.js"></script>
+  <script defer src="/assets/rules-nike.js"></script>
+  <script defer src="/assets/rules-tique.js"></script>
+  <script defer src="/assets/rules-tanatos.js"></script>
+  <script defer src="/assets/rules-eolo.js"></script>
+  <script defer src="/assets/rules-circe.js"></script>
+  <script defer src="/assets/rules-persefone.js"></script>
+  <script defer src="/assets/rules-hebe.js"></script>
+  <script defer src="/assets/rules-eros.js"></script>
+  <script defer src="/assets/rules-nyx.js"></script>
+  <script defer src="/assets/rules-resource-definitions.js"></script>
+  <script defer src="/assets/rules-backgrounds.js"></script>
+  <script defer src="/assets/rules-skills.js"></script>
+  <script defer src="/assets/skill-builder.js"></script>
+  <script defer src="/assets/rules-talents.js"></script>
+  <script defer src="/assets/rules-equipment.js"></script>
+  <script defer src="/assets/rules-mythic-core.js"></script>
+  <script defer src="/assets/rules-consumables-part-01.js"></script>
+  <script defer src="/assets/rules-consumables-part-02.js"></script>
+  <script defer src="/assets/rules-consumables-part-03.js"></script>
+  <script defer src="/assets/rules-consumables-part-04.js"></script>
+  <script defer src="/assets/rules-panoplies-part-01.js"></script>
+  <script defer src="/assets/rules-panoplies-part-02.js"></script>
+  <script defer src="/assets/rules-panoplies-part-03.js"></script>
+  <script defer src="/assets/rules-panoplies-part-04.js"></script>
+  <script defer src="/assets/rules-panoplies-part-05.js"></script>
+  <script defer src="/assets/rules-panoplies-part-06.js"></script>
+  <script defer src="/assets/rules-relics-catalog-01.js"></script>
+  <script defer src="/assets/rules-relics-catalog-02.js"></script>
+  <script defer src="/assets/rules-relics-catalog-03.js"></script>
+  <script defer src="/assets/rules-relics-catalog-04.js"></script>
+  <script defer src="/assets/rules-relics-catalog-05.js"></script>
+  <script defer src="/assets/rules-relics-catalog-06.js"></script>
+  <script defer src="/assets/rules-relics-catalog-07.js"></script>
+  <script defer src="/assets/rules-relics-catalog-08.js"></script>
+  <script defer src="/assets/rules-relics-catalog-09.js"></script>
+  <script defer src="/assets/rules-relics-catalog-10.js"></script>
+  <script defer src="/assets/rules-relics-catalog-11.js"></script>
+  <script defer src="/assets/rules-relics-catalog-12.js"></script>
+  <script defer src="/assets/rules-artifacts-catalog-01.js"></script>
+  <script defer src="/assets/rules-artifacts-catalog-02.js"></script>
+  <script defer src="/assets/rules-artifacts-catalog-03.js"></script>
+  <script defer src="/assets/rules-artifacts-catalog-04.js"></script>
+  <script defer src="/assets/rules-artifacts-catalog-05.js"></script>
+  <script defer src="/assets/rules-cursed-items.js"></script>
+  <script defer src="/assets/rules-forge.js"></script>
+  <script defer src="/assets/rules-mythic-expanded-normalize.js"></script>
+  <script defer src="/assets/rules-mythic-finalize.js"></script>
+  <script defer src="/assets/storage.js"></script>
+  <script defer src="/assets/character-model.js"></script>
+  <script defer src="/assets/background-model-extension.js"></script>
+  <script defer src="/assets/player-mechanics-extension.js"></script>
+  <script defer src="/assets/equipment-model-extension.js"></script>
+  <script defer src="/assets/mythic-model-extension.js"></script>
+  <script defer src="/assets/character-service.js"></script>
+  <script defer src="/assets/player-mechanics-service.js"></script>
+  <script defer src="/assets/equipment-service.js"></script>
+  <script defer src="/assets/dual-wield-service-extension.js"></script>
+  <script defer src="/assets/mythic-service.js"></script>
+  <script defer src="/assets/panoply-builder-extension.js"></script>
+  <script defer src="/assets/cursed-items-extension.js"></script>
+  <script defer src="/assets/forge-engine.js"></script>
+  <script defer src="/assets/forge-character-extension.js"></script>
+  <script defer src="/assets/forge-unique-extension.js"></script>
+  <script defer src="/assets/combat-profile-extension.js"></script>
+  <script defer src="/assets/exhaustion-extension.js"></script>
+  <script defer src="/assets/skill-training-extension.js"></script>
+  <script defer src="/assets/session-runtime.js"></script>
+  <script defer src="/assets/skill-runtime-extension.js"></script>
+  <script defer src="/assets/target-runtime.js"></script>
+  <script defer src="/assets/signature-runtime.js"></script>
+  <script defer src="/assets/action-economy-extension.js"></script>
+  <script defer src="/assets/weapon-combat-extension.js"></script>
+  <script defer src="/assets/mythic-runtime.js"></script>
+  <script defer src="/assets/forge-unique-runtime.js"></script>
+  <script defer src="/assets/background-runtime.js"></script>
+  <script defer src="/assets/evolution-runtime.js"></script>
+  <script defer src="/assets/app.js"></script>
+  <script defer src="/assets/player-flow-phase1.js"></script>
+  <script defer src="/assets/session-tools.js"></script>
+  <script defer src="/assets/advanced-session-ui.js"></script>
+  <script defer src="/assets/sheet-command-center.js"></script>
+  <script defer src="/assets/equipment-ui.js"></script>
+  <script defer src="/assets/mythic-items-ui.js"></script>
+  <script defer src="/assets/panoply-builder-ui.js"></script>
+  <script defer src="/assets/portability.js"></script>
+  <script defer src="/assets/evolution-ui.js"></script>
+  <script defer src="/assets/sheet-ux-enhancements.js"></script>
+  <script defer src="/assets/remove-pronouns.js"></script>
+  <script defer src="/assets/attribute-creation.js"></script>
+  <script defer src="/assets/sheet-header.js"></script>
+  <script defer src="/assets/mobile-keyboard.js"></script>
+  <script defer src="/assets/official-rules-ui.js"></script>
+  <script defer src="/assets/compendium.js"></script>
+  <script defer src="/assets/compendium-integration.js"></script>
+  <script defer src="/assets/item-compendium.js"></script>
+  <script defer src="/assets/stability-items-ux.js"></script>
+  <script defer src="/assets/command-center-stability-v2.js"></script>
+  <script defer src="/assets/advanced-items-ui.js"></script>
+  <script defer src="/assets/forge-modification-ui.js"></script>
+  <script defer src="/assets/forge-unique-ui.js"></script>
+  <script defer src="/assets/player-sheet-finalization.js"></script>
+  <script defer src="/assets/sheet-polish-v3.js"></script>
+  <script defer src="/assets/pwa.js"></script>
+</body>
 </html>

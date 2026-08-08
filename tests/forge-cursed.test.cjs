@@ -1,0 +1,35 @@
+const fs=require('fs');const vm=require('vm');const assert=require('assert');const path=require('path');const root=path.resolve(__dirname,'..');
+const context={console};context.window=context;context.SemideusesRules={modifier:v=>Math.floor((Number(v||10)-10)/2),proficiency:l=>l<=4?2:l<=8?3:l<=12?4:l<=16?5:6,rankCost:r=>({E:1,D:2,C:4,B:6,A:8,S:12,SS:16,'Lendário':24}[r]||0)};
+context.SemideusesRulesDatabase={affiliations:{},getTalent(id){if(id==='artesao-habilidoso'||id==='Artesão Habilidoso')return {id:'artesao-habilidoso',name:'Artesão Habilidoso'};return null;}};
+context.SemideusesCharacter={clone:v=>JSON.parse(JSON.stringify(v)),uid:(p='id')=>p+'-'+Math.random().toString(36).slice(2),normalize(c){c=JSON.parse(JSON.stringify(c||{}));c.id=c.id||'c';c.level=Number(c.level||1);c.affiliation=c.affiliation||'';c.divinePath=c.divinePath||'';c.talents=c.talents||[];c.attributes=c.attributes||{FOR:10,DES:10,CON:10,INT:10,SAB:10,CAR:10};return c;}};
+function load(file){vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),context,{filename:file});}
+vm.createContext(context);
+load('assets/rules-equipment.js');load('assets/rules-mythic-core.js');load('assets/rules-cursed-items.js');load('assets/rules-forge.js');load('assets/forge-engine.js');
+const db=context.SemideusesRulesDatabase,Forge=context.SemideusesForge;
+assert.equal(db.listCursedItems().length,27,'devem existir 27 Amaldiçoados');
+assert.equal(db.listMythicItems('Amaldiçoado').length,27);
+const paris=db.getMythicItem('cursed-flecha-de-paris');assert.equal(paris.tier,'Amaldiçoado');assert.equal(paris.active.rank,'A');assert.equal(paris.active.cost,8);assert.equal(paris.active.usage.scope,'day');assert(paris.curse.length>0);
+assert.equal(db.forge.materials.length,16,'7 materiais comuns + 9 míticos/lendários');
+assert.equal(db.forge.materials.filter(m=>m.kind==='comum').length,7);
+assert.equal(db.forge.components.length,8);
+assert.equal(db.forge.properties.length,26,'12 arma + 9 armadura + 5 universais');
+assert.equal(db.forge.properties.filter(p=>p.scope==='weapon').length,12);
+assert.equal(db.forge.properties.filter(p=>p.scope==='armor').length,9);
+assert.equal(db.forge.properties.filter(p=>p.scope==='universal').length,5);
+function character(extra){return Object.assign({id:'c',level:5,affiliation:'',divinePath:'',talents:[],attributes:{FOR:14,DES:12,CON:14,INT:12,SAB:10,CAR:10}},extra||{});}
+assert.equal(Forge.artisanFor(character()).id,'common');
+assert.equal(Forge.artisanFor(character({talents:[{name:'Artesão Habilidoso'}]})).id,'skilled');
+assert.equal(Forge.artisanFor(character({affiliation:'Hefesto'})).id,'master');
+assert.equal(Forge.artisanFor(character({level:17,affiliation:'Hefesto',divinePath:'Caminho da Forja'})).id,'divine');
+let p=Forge.preview(character({talents:[{name:'Artesão Habilidoso'}]}),{baseItemId:'espada-longa',materialId:'bronze-celestial',quality:'Superior',propertyIds:[],forgeId:'standard',materialTimeClass:''});
+assert.equal(p.valid,false,'material mítico não-lendário exige categoria de tempo definida com o Mestre');
+assert(p.errors.some(e=>/mítico simples/.test(e)));
+p=Forge.preview(character({talents:[{name:'Artesão Habilidoso'}]}),{baseItemId:'espada-longa',materialId:'bronze-celestial',quality:'Superior',propertyIds:['queimante'],forgeId:'standard',materialTimeClass:'simple'});
+assert.equal(p.valid,true);assert.equal(p.materialKg,1.5,'uma propriedade paga aumenta material em 50%');assert.equal(p.materialCost,75);assert.equal(p.dc,15);assert.equal(p.testBonus,3);
+let original=Forge.preview(character({level:17,affiliation:'Hefesto',divinePath:'Caminho da Forja'}),{baseItemId:'espada-longa',materialId:'bronze-celestial',quality:'Obra Prima',propertyIds:['queimante','afiada'],forgeId:'hephaestus',materialTimeClass:'simple'});
+assert.equal(original.valid,true);assert.equal(original.materialKg,1,'as duas propriedades grátis da Forja Original não aumentam material');assert.equal(original.paidProperties,0);
+let ok=Forge.resolve(character({affiliation:'Hefesto'}),{baseItemId:'espada-longa',materialId:'bronze-celestial',quality:'Obra Prima',propertyIds:['queimante'],forgeId:'standard',materialTimeClass:'simple'},20);assert.equal(ok.resultQuality,'Obra Prima');assert.equal(ok.success,true);
+let fail=Forge.resolve(character({affiliation:'Hefesto'}),{baseItemId:'espada-longa',materialId:'bronze-celestial',quality:'Padrão',propertyIds:[],forgeId:'standard',materialTimeClass:'simple'},1);assert.equal(fail.resultQuality,'Padrão');assert.equal(fail.defective,false,'filho de Hefesto nunca produz defeito abaixo de Padrão');
+let mortalFail=Forge.resolve(character(),{baseItemId:'espada-longa',materialId:'aco',quality:'Padrão',propertyIds:[],forgeId:'standard'},1);assert.equal(mortalFail.defective,true);
+let styx=Forge.preview(character({affiliation:'Hefesto'}),{baseItemId:'espada-longa',materialId:'metal-do-estige',quality:'Obra Prima',propertyIds:['afiada'],forgeId:'standard',materialTimeClass:'legendary'});assert.equal(styx.valid,false);assert(styx.errors.some(e=>/Artesão Divino/.test(e)));
+console.log('forge-cursed.test: OK');
