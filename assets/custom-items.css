@@ -1,0 +1,53 @@
+.equipment-custom > summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.equipment-custom > .custom-item-help {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 11px;
+  background: rgba(18, 61, 90, 0.06);
+  line-height: 1.45;
+}
+
+.equipment-custom label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.equipment-custom label small {
+  font-size: 0.75rem;
+  line-height: 1.35;
+  opacity: 0.72;
+}
+
+.equipment-custom input,
+.equipment-custom select,
+.equipment-custom textarea {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.equipment-custom [hidden] {
+  display: none !important;
+}
+
+.inventory-main .equipment-tags {
+  margin-top: 7px;
+}
+
+.advanced-exit {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border, #d7d7d7);
+}
+
+@media (max-width: 720px) {
+  .advanced-exit button {
+    width: 100%;
+  }
+}

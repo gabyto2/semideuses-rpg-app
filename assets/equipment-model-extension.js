@@ -3,8 +3,29 @@
   var Model=global.SemideusesCharacter,Rules=global.SemideusesRules,db=global.SemideusesRulesDatabase;if(!Model||!Rules||!db)return;
   var originalNormalize=Model.normalize,originalCalculate=Model.calculate,originalCreate=Model.create;
   function clone(v){return Model.clone(v);}function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
-  function itemDefinition(record){if(!record)return null;var c=record.catalogId&&db.getEquipmentItem?db.getEquipmentItem(record.catalogId):null;return c?Object.assign({},c,{record:clone(record)}):Object.assign({id:record.id,name:record.name||'Item',type:record.type||'misc',category:record.category||'',properties:record.properties||[],notes:record.notes||'',cost:Number(record.cost||0)},clone(record),{record:clone(record)});}
-  function cleanInventory(source){if(!Array.isArray(source))return [];return source.map(function(raw){raw=raw||{};var c=raw.catalogId&&db.getEquipmentItem?db.getEquipmentItem(raw.catalogId):null;return {id:raw.id||Model.uid('item'),catalogId:String(raw.catalogId||''),name:String(raw.name||c&&c.name||'Item'),type:String(raw.type||c&&c.type||'misc'),quantity:Math.max(1,Math.floor(Number(raw.quantity||1))),notes:String(raw.notes||''),weightKg:raw.weightKg==null||raw.weightKg===''?null:Math.max(0,Number(raw.weightKg||0)),attackAttribute:['FOR','DES','auto'].indexOf(raw.attackAttribute)>=0?raw.attackAttribute:'auto',wieldMode:['one','two'].indexOf(raw.wieldMode)>=0?raw.wieldMode:'one',custom:!!raw.custom,category:String(raw.category||c&&c.category||''),damage:String(raw.damage||c&&c.damage||''),damageType:String(raw.damageType||c&&c.damageType||''),properties:Array.isArray(raw.properties)?raw.properties.slice():c&&c.properties?c.properties.slice():[],cost:Number(raw.cost!=null?raw.cost:c&&c.cost||0)};});}
+  function itemDefinition(record){
+    if(!record)return null;
+    var c=record.catalogId&&db.getEquipmentItem?db.getEquipmentItem(record.catalogId):null;
+    if(!c)return Object.assign({id:record.id,name:record.name||'Item',type:record.type||'misc',category:record.category||'',properties:record.properties||[],notes:record.notes||'',cost:Number(record.cost||0)},clone(record),{record:clone(record)});
+    if(!record.custom)return Object.assign({},c,{record:clone(record)});
+    return Object.assign({},c,{
+      name:record.name||c.name,
+      type:record.type||c.type,
+      category:record.category||c.category||'',
+      training:record.training||c.training||'',
+      rangeType:record.rangeType||c.rangeType||'',
+      range:record.range||c.range||'',
+      damage:record.damage||c.damage||'',
+      damageType:record.damageType||c.damageType||'',
+      properties:Array.isArray(record.properties)?record.properties.slice():(c.properties||[]).slice(),
+      notes:record.notes||c.notes||'',
+      baseAC:record.baseAC!=null?Number(record.baseAC):c.baseAC,
+      acBonus:record.acBonus!=null?Number(record.acBonus):c.acBonus,
+      cost:record.cost!=null?Number(record.cost):Number(c.cost||0),
+      record:clone(record)
+    });
+  }
+  function cleanInventory(source){if(!Array.isArray(source))return [];return source.map(function(raw){raw=raw||{};var c=raw.catalogId&&db.getEquipmentItem?db.getEquipmentItem(raw.catalogId):null;return {id:raw.id||Model.uid('item'),catalogId:String(raw.catalogId||''),name:String(raw.name||c&&c.name||'Item'),type:String(raw.type||c&&c.type||'misc'),quantity:Math.max(1,Math.floor(Number(raw.quantity||1))),notes:String(raw.notes||''),weightKg:raw.weightKg==null||raw.weightKg===''?null:Math.max(0,Number(raw.weightKg||0)),attackAttribute:['FOR','DES','auto'].indexOf(raw.attackAttribute)>=0?raw.attackAttribute:'auto',wieldMode:['one','two'].indexOf(raw.wieldMode)>=0?raw.wieldMode:'one',custom:!!raw.custom,category:String(raw.category||c&&c.category||''),training:String(raw.training||c&&c.training||''),rangeType:String(raw.rangeType||c&&c.rangeType||''),range:String(raw.range||c&&c.range||''),damage:String(raw.damage||c&&c.damage||''),damageType:String(raw.damageType||c&&c.damageType||''),properties:Array.isArray(raw.properties)?raw.properties.slice():c&&c.properties?c.properties.slice():[],baseAC:raw.baseAC==null?(!c||c.baseAC==null?null:Number(c.baseAC)):Number(raw.baseAC),acBonus:raw.acBonus==null?(!c||c.acBonus==null?null:Number(c.acBonus)):Number(raw.acBonus),cost:Number(raw.cost!=null?raw.cost:c&&c.cost||0)};});}
   function inventoryItem(c,id){return (c.inventory||[]).find(function(i){return i.id===id;})||null;}function hasProperty(d,p){return (d&&d.properties||[]).some(function(v){return norm(v).indexOf(norm(p))===0;});}function versatileDamage(d){var p=(d&&d.properties||[]).find(function(v){return /^Versátil \(/i.test(v);}),m=p&&p.match(/\(([^)]+)\)/);return m?m[1]:'';}
   function weaponProficient(c,d){if(!d||d.type!=='weapon')return false;var t=norm((c.rules.weaponProficiencies||[]).join(' ')),name=norm(d.name),martial=norm(d.training)==='marcial';if(!martial&&t.indexOf('simple')>=0)return true;if(martial&&t.indexOf('marciais')>=0&&t.indexOf('marciais leves')<0)return true;if(martial&&t.indexOf('marciais leves')>=0&&hasProperty(d,'Leve'))return true;if(t.indexOf('arco')>=0&&name.indexOf('arco')>=0)return true;return false;}
   function armorProficient(c,d){if(!d||d.type!=='armor')return false;var t=norm((c.rules.armorProficiencies||[]).join(' ')),cat=norm(d.category);return cat==='leve'?t.indexOf('leve')>=0:cat==='media'?t.indexOf('media')>=0:cat==='pesada'?t.indexOf('pesada')>=0:false;}function shieldProficient(c){return norm((c.rules.armorProficiencies||[]).join(' ')).indexOf('escudo')>=0;}
