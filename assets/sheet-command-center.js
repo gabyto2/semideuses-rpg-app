@@ -125,7 +125,10 @@
       }).join('')+'</div>';
   }
   function tabBody(c){if(activeTab==='path')return pathTab(c);if(activeTab==='skills')return skillsTab(c);if(activeTab==='talents')return talentsTab(c);if(activeTab==='pericias')return periciasTab(c);return powersTab(c);}
-  function hub(c,key){return '<section class="panel command-center" data-command-center data-state="'+esc(key)+'">'+tabs(c)+'<div class="command-tab-body">'+tabBody(c)+'</div></section>';}
+  function affiliationResource(c){var definition=c.rules&&c.rules.primaryResource||{label:'MP'};return '<section class="command-resource-block"><div class="command-resource-heading"><div><span class="eyebrow">RECURSO DA FILIAÇÃO</span><h3>'+esc(definition.label||'MP')+'</h3><p>Recurso usado pelas habilidades abaixo.</p></div></div><div data-command-resource-slot></div></section>';}
+  function hub(c,key){return '<section class="panel command-center" data-command-center data-state="'+esc(key)+'">'+affiliationResource(c)+tabs(c)+'<div class="command-tab-body">'+tabBody(c)+'</div></section>';}
+  function releaseAffiliationResource(grid){var card=document.querySelector('[data-affiliation-resource]');if(card&&card.closest('[data-command-center]'))grid.appendChild(card);}
+  function placeAffiliationResource(grid){var card=document.querySelector('[data-affiliation-resource]'),slot=document.querySelector('[data-command-resource-slot]');if(!card||!slot)return;slot.appendChild(card);grid.classList.add('vitality-only');}
   function hideLegacy(){
     document.querySelectorAll('.official-abilities-runtime').forEach(function(node){node.style.display='none';});
     Array.prototype.forEach.call(document.querySelectorAll('.panel h3'),function(heading){
@@ -147,7 +150,9 @@
         stats.outerHTML=topStats(c,sk);
       }
       var key=stateKey(c),old=document.querySelector('[data-command-center]'),html=hub(c,key);
-      if(old){if(force||old.dataset.state!==key)old.outerHTML=html;}else grid.insertAdjacentHTML('afterend',html);
+      if(old&&force||old&&old.dataset.state!==key){releaseAffiliationResource(grid);old.outerHTML=html;}
+      else if(!old)grid.insertAdjacentHTML('afterend',html);
+      placeAffiliationResource(grid);
       hideLegacy();
     }finally{rendering=false;}
   }
