@@ -10,7 +10,7 @@
     return [c.id,c.level,JSON.stringify(c.mythic||{}),c.resources&&c.resources.primaryCurrent,
       JSON.stringify(c.session&&c.session.abilityUses||{}),JSON.stringify(c.session&&c.session.turnEconomy||{})].join('|');
   }
-  function restoreRefresh(){var x=global.scrollX,y=global.scrollY;if(App&&App.refresh)App.refresh();requestAnimationFrame(function(){global.scrollTo(x,y);});schedule();}
+  function restoreRefresh(){if(App&&App.refresh)App.refresh();schedule();}
   function actionLabel(a){return a||'Ativação não especificada';}
   function recoveryLabel(item){
     var a=item&&item.active||{},u=a.usage||item&&item.usage;

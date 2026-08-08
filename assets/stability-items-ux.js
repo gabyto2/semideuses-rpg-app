@@ -4,11 +4,8 @@ var App=global.SemideusesApp,Service=global.SemideusesCharacterService,Model=glo
 if(!Service||!Model||!db)return;
 
 var itemView='equipment:inventory';
-var restoring=null,scheduled=false;
+var scrollAnchor=null,restoreScheduled=false,scheduled=false;
 var mutationSelectors=[
-  '[data-adjust]','[data-apply]','[data-extra-resource]','[data-condition]',
-  '[data-command-use-ability]','[data-command-use-skill]','[data-use-official]',
-  '[data-signature-spend]','[data-signature-trigger]','[data-economy-manual]',
   '[data-equip-slot]','[data-unequip-slot]','[data-inventory-equip]','[data-inventory-unequip]','[data-wield-mode]','[data-inventory-qty]',
   '[data-remove-inventory]','[data-add-catalog-item]','[data-buy-catalog-item]',
   '[data-save-dracmas]','[data-add-custom-item]','[data-item-weight]','[data-attack-attribute]',
@@ -20,27 +17,34 @@ var mutationSelectors=[
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function character(){var e=App&&App.getEditing&&App.getEditing();return e&&e.id?Service.get(e.id)||e:null;}
 
-function beginScrollLock(target){
-  var y=Math.max(0,global.scrollY||0),x=Math.max(0,global.scrollX||0);
-  restoring={x:x,y:y,until:Date.now()+650,target:target||null};
+function attrSelector(name,value){return '['+name+'="'+String(value||'').replace(/["\\]/g,'\\$&')+'"]';}
+function anchorInfo(target){
+  var item=target&&target.closest&&target.closest('[data-inventory-item],[data-catalog-item],[data-equipment-slot-card]');
+  if(item&&item.hasAttribute('data-inventory-item'))return {selector:attrSelector('data-inventory-item',item.dataset.inventoryItem),node:item};
+  if(item&&item.hasAttribute('data-catalog-item'))return {selector:attrSelector('data-catalog-item',item.dataset.catalogItem),node:item};
+  if(item&&item.hasAttribute('data-equipment-slot-card'))return {selector:attrSelector('data-equipment-slot-card',item.dataset.equipmentSlotCard),node:item};
+  var center=target&&target.closest&&target.closest('[data-equipment-center],[data-mythic-center],[data-advanced-items-panel]');
+  if(!center)return null;
+  return {selector:center.hasAttribute('data-equipment-center')?'[data-equipment-center]':center.hasAttribute('data-mythic-center')?'[data-mythic-center]':'[data-advanced-items-panel]',node:center};
 }
-function restoreScroll(){
-  if(!restoring||Date.now()>restoring.until)return;
-  var p=restoring;
-  global.scrollTo(p.x,p.y);
-  requestAnimationFrame(function(){if(restoring===p&&Date.now()<=p.until)global.scrollTo(p.x,p.y);});
-  setTimeout(function(){if(restoring===p&&Date.now()<=p.until)global.scrollTo(p.x,p.y);},40);
-  setTimeout(function(){if(restoring===p&&Date.now()<=p.until)global.scrollTo(p.x,p.y);},120);
+function rememberItemPosition(target){
+  var info=anchorInfo(target);if(!info)return;
+  scrollAnchor={selector:info.selector,top:info.node.getBoundingClientRect().top,x:global.scrollX||0,y:global.scrollY||0,until:Date.now()+500,tries:0};
 }
-if(App&&typeof App.refresh==='function'&&!App.__stableRefresh){
-  var originalRefresh=App.refresh;
-  App.refresh=function(){
-    if(!restoring)beginScrollLock(document.activeElement);
-    var result=originalRefresh.apply(App,arguments);
-    restoreScroll();
-    return result;
-  };
-  App.__stableRefresh=true;
+function cancelItemPosition(){scrollAnchor=null;}
+function restoreItemPosition(){
+  restoreScheduled=false;
+  var p=scrollAnchor;if(!p||Date.now()>p.until){scrollAnchor=null;return;}
+  var node=document.querySelector(p.selector);
+  if(!node&&p.tries++<6){setTimeout(queuePositionRestore,32);return;}
+  scrollAnchor=null;
+  if(node){var delta=node.getBoundingClientRect().top-p.top;if(Math.abs(delta)>1&&typeof global.scrollBy==='function')global.scrollBy(0,delta);return;}
+  var maximum=Math.max(0,(document.documentElement.scrollHeight||0)-(global.innerHeight||0));
+  global.scrollTo(p.x,Math.min(p.y,maximum));
+}
+function queuePositionRestore(){
+  if(!scrollAnchor||restoreScheduled)return;restoreScheduled=true;
+  requestAnimationFrame(function(){requestAnimationFrame(restoreItemPosition);});
 }
 
 function hideLegacy(){
@@ -81,6 +85,26 @@ function activateItemView(view,doClick){
   }
   ensureItemHub();
 }
+function itemViewInfo(view){
+  var map={
+    'equipment:inventory':['Meu Inventário','Itens que a personagem possui. Equipe armas e proteções aqui.'],
+    'equipment:catalog':['Adicionar itens','Escolha no catálogo; o item será enviado ao Inventário.'],
+    'equipment:equipped':['Em uso','Veja mãos ocupadas, armadura, escudo, CA e ataques prontos.'],
+    'mythic:panoply':['Panóplia','Item mítico ligado à alma da personagem.'],
+    'mythic:consumables':['Consumíveis','Doses e usos disponíveis.'],
+    'mythic:relics':['Relíquias','Tesouros míticos conquistados.'],
+    'mythic:artifacts':['Artefatos','Peças que podem moldar a campanha.'],
+    'mythic:catalog:Panóplia':['Catálogo mítico','Consulte e registre itens míticos.']
+  };if(view.indexOf('mythic:catalog')===0)return ['Catálogo mítico','Consulte e registre itens míticos.'];
+  return map[view]||['Itens','Conteúdo selecionado logo abaixo.'];
+}
+function revealActiveContent(){
+  requestAnimationFrame(function(){requestAnimationFrame(function(){
+    var marker=document.querySelector('[data-items-current-view]'),center=itemView.indexOf('mythic:')===0?document.querySelector('[data-mythic-center]:not([hidden])'):document.querySelector('[data-equipment-center]:not([hidden])');
+    var target=marker||center;if(target&&typeof target.scrollIntoView==='function')target.scrollIntoView({block:'start',behavior:'auto'});
+    if(center){center.classList.add('items-view-changed');setTimeout(function(){center.classList.remove('items-view-changed');},420);}
+  });});
+}
 function itemNavButton(view,label,count){
   return '<button class="'+(itemView===view?'active ':'')+(view==='equipment:inventory'?'featured':'')+'" data-items-view="'+esc(view)+'"><span>'+esc(label)+'</span>'+(count!=null?'<b>'+count+'</b>':'')+'</button>';
 }
@@ -90,16 +114,18 @@ function ensureItemHub(){
   var old=document.querySelector('[data-items-hub]');
   var hubState=[itemView,(c.inventory||[]).length,JSON.stringify(c.equipmentSlots||{}),c.mythic&&c.mythic.panoplyId||'',(c.mythic&&c.mythic.consumables||[]).length,(c.mythic&&c.mythic.relics||[]).length,(c.mythic&&c.mythic.artifacts||[]).length].join('|');
   var slots=c.equipmentSlots||{},equippedCount=['armor','shield','mainHand','offHand'].filter(function(slot){return !!slots[slot];}).length;
-  var html='<section class="panel items-hub" data-items-hub data-items-state="'+esc(hubState)+'"><div class="items-hub-head"><div><span class="eyebrow">CENTRAL DE ITENS</span><h2>Inventário e itens</h2><p>Veja o que você possui, equipe o que está usando e adicione novos itens.</p></div><button class="secondary" data-open-item-compendium>Consultar Compêndio de Itens</button></div><nav class="items-master-tabs" aria-label="Inventário e itens">'+
+  var current=itemViewInfo(itemView);
+  var html='<section class="panel items-hub" data-items-hub data-items-state="'+esc(hubState)+'"><div class="items-hub-head"><div><span class="eyebrow">CENTRAL DE ITENS</span><h2>Inventário e itens</h2><p>Veja o que você possui, equipe o que está usando e adicione novos itens.</p></div><button class="secondary" data-open-item-compendium>Compêndio de Itens ↗</button></div><div class="items-nav-group"><span class="items-nav-label">INVENTÁRIO</span><nav class="items-master-tabs items-common-tabs" aria-label="Inventário e equipamentos">'+
     itemNavButton('equipment:inventory','Meu Inventário',(c.inventory||[]).length)+
     itemNavButton('equipment:catalog','+ Adicionar itens')+
     itemNavButton('equipment:equipped','Em uso',equippedCount)+
+    '</nav></div><details class="items-secondary-navigation" open><summary>Itens míticos e Forja</summary><nav class="items-master-tabs items-mythic-tabs" aria-label="Itens míticos e Forja">'+
     itemNavButton('mythic:panoply','Panóplia',c.mythic&&c.mythic.panoplyId?1:0)+
     itemNavButton('mythic:consumables','Consumíveis',(c.mythic&&c.mythic.consumables||[]).length)+
     itemNavButton('mythic:relics','Relíquias',(c.mythic&&c.mythic.relics||[]).length)+
     itemNavButton('mythic:artifacts','Artefatos',(c.mythic&&c.mythic.artifacts||[]).length)+
     itemNavButton('mythic:catalog:Panóplia','Catálogo mítico')+
-    '</nav><p class="items-hub-note"><strong>Como funciona:</strong> adicione ou compre um item → ele aparece em <strong>Meu Inventário</strong> → toque em <strong>Equipar</strong>. A aba “Em uso” mostra o resultado na CA e nos ataques.</p></section>';
+    '</nav></details><div class="items-current-view" data-items-current-view><span>EXIBINDO AGORA</span><strong>'+esc(current[0])+'</strong><small>'+esc(current[1])+'</small><b aria-hidden="true">↓</b></div><p class="items-hub-note"><strong>Como funciona:</strong> adicione ou compre um item → ele aparece em <strong>Meu Inventário</strong> → toque em <strong>Equipar</strong>. A aba “Em uso” mostra o resultado na CA e nos ataques.</p></section>';
   if(!old)equipment.insertAdjacentHTML('beforebegin',html);
   else if(old.dataset.itemsState!==hubState)old.outerHTML=html;
   setCentersVisibility();
@@ -158,23 +184,28 @@ function enhance(){
 }
 function schedule(){
   if(scheduled)return;scheduled=true;
-  setTimeout(function(){scheduled=false;enhance();restoreScroll();},0);
+  setTimeout(function(){scheduled=false;enhance();queuePositionRestore();},0);
 }
 
 document.addEventListener('pointerdown',function(e){
-  var target=e.target.closest(mutationSelectors);if(target)beginScrollLock(target);
+  var target=e.target.closest(mutationSelectors);if(target)rememberItemPosition(target);
 },true);
 document.addEventListener('click',function(e){
+  if(e.target.closest(mutationSelectors))queuePositionRestore();
   var master=e.target.closest('[data-items-view]');
-  if(master){beginScrollLock(master);activateItemView(master.dataset.itemsView,true);restoreScroll();return;}
+  if(master){cancelItemPosition();activateItemView(master.dataset.itemsView,true);revealActiveContent();return;}
+  var advanced=e.target.closest('[data-advanced-items]');
+  if(advanced){cancelItemPosition();setTimeout(function(){var panel=document.querySelector('[data-advanced-items-panel]');if(panel&&typeof panel.scrollIntoView==='function')panel.scrollIntoView({block:'start',behavior:'auto'});},0);return;}
   var open=e.target.closest('[data-open-mythic-catalog]');
   if(open){itemView='mythic:catalog:'+(open.dataset.openMythicCatalog||'Panóplia');setTimeout(function(){activateItemView(itemView,false);},0);}
   if(e.target.closest('[data-open-item-compendium]')){if(global.SemideusesItemCompendium&&global.SemideusesItemCompendium.open)global.SemideusesItemCompendium.open();}
 },false);
 
-global.addEventListener('semideuses:character-updated',function(){schedule();restoreScroll();});
+document.addEventListener('touchmove',cancelItemPosition,{passive:true});
+document.addEventListener('wheel',cancelItemPosition,{passive:true});
+global.addEventListener('semideuses:character-updated',function(){schedule();queuePositionRestore();});
 global.addEventListener('load',schedule);
-new MutationObserver(function(){schedule();restoreScroll();}).observe(document.documentElement,{childList:true,subtree:true});
+new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
 global.SemideusesItemsUX={open:function(view){activateItemView(view||'equipment:inventory',true);},toast:toast};
 schedule();
 })(window);

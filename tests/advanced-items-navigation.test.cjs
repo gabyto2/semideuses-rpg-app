@@ -5,7 +5,7 @@ const {JSDOM}=require('jsdom');
 const root=path.resolve(__dirname,'..');
 
 (async function(){
-  const dom=new JSDOM('<!doctype html><body><section data-items-hub><nav><button data-items-view="equipment:inventory">Inventário</button></nav></section><section data-equipment-center hidden></section><section data-advanced-panel="forge"><div class="advanced-head"><h3>Forja</h3></div></section></body>',{runScripts:'outside-only'});
+  const dom=new JSDOM('<!doctype html><body><section data-items-hub><nav><button data-items-view="equipment:inventory">Inventário</button></nav></section><section data-equipment-center hidden></section><section data-advanced-items-panel data-advanced-panel="forge"><div class="advanced-head"><h3>Forja</h3></div></section></body>',{runScripts:'outside-only'});
   const {window}=dom;
   window.Element.prototype.scrollIntoView=function(){};
   let exits=0;
