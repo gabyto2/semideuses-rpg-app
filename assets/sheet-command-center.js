@@ -13,7 +13,7 @@
   function signed(value){return Number(value)>=0?'+'+Number(value):String(Number(value));}
   function character(){var editing=App&&App.getEditing&&App.getEditing();return editing&&editing.id?Service.get(editing.id)||editing:null;}
   function stateKey(c){
-    return [c.id,c.level,c.divinePath,c.heroMark,JSON.stringify(c.skills||[]),JSON.stringify(c.talents||[]),
+    return [c.id,c.level,c.heroType,c.divinePath,c.heroMark,JSON.stringify(c.originChoices||{}),JSON.stringify(c.skills||[]),JSON.stringify(c.talents||[]),
       JSON.stringify(c.periciaProficiencies||[]),JSON.stringify(c.periciaExpertise||[]),
       JSON.stringify(c.session&&c.session.abilityUses||{}),JSON.stringify(c.session&&c.session.turnEconomy||{}),
       c.resources&&c.resources.primaryCurrent,c.resources&&c.resources.mpCurrent].join('|');
@@ -23,6 +23,7 @@
       c.rules.passivePerception,c.rules.abilityDC,c.rules.castingAttackBonus,c.rules.proficiency,c.rules.casting].join('|');
   }
   function topStats(c,key){
+    var magicLabel=c.rules.primaryResource&&c.rules.primaryResource.usesMana===false?'Habilidade':'Conjuração';
     var attr=Model.attributes.map(function(a){
       return '<article class="top-attribute" data-top-attribute="'+a+'"><span>'+a+'</span><strong>'+Number(c.attributes[a]||0)+'</strong><small>'+signed(Rules.modifier(c.attributes[a]))+'</small></article>';
     }).join('');
@@ -31,12 +32,14 @@
       '<article><span>Iniciativa</span><strong>'+signed(c.rules.initiative)+'</strong><small>DES + Reflexos de TDAH</small></article>'+
       '<article><span>Percepção Passiva</span><strong>'+c.rules.passivePerception+'</strong><small>10 + Percepção</small></article>'+
       '<article><span>CD de Habilidade</span><strong>'+c.rules.abilityDC+'</strong><small>8 + Prof. + '+esc(c.rules.casting)+'</small></article>'+
-      '<article><span>Ataque de Conjuração</span><strong>'+signed(c.rules.castingAttackBonus)+'</strong><small>Prof. + '+esc(c.rules.casting)+'</small></article>'+
+      '<article><span>Ataque de '+magicLabel+'</span><strong>'+signed(c.rules.castingAttackBonus)+'</strong><small>Prof. + '+esc(c.rules.casting)+'</small></article>'+
       '<article><span>Proficiência</span><strong>+'+c.rules.proficiency+'</strong><small>Nível '+c.level+'</small></article></section>';
   }
   function tabs(c){
     var path=(c.rules.paths||[]).find(function(item){return item.name===c.divinePath;});
     var labels=[['powers','Habilidades'],['path','Caminho'],['skills','Skills'],['talents','Talentos'],['pericias','Perícias']];
+    if(!(c.rules.paths||[]).length)labels=labels.filter(function(tab){return tab[0]!=='path';});
+    if(activeTab==='path'&&!(c.rules.paths||[]).length)activeTab='powers';
     return '<nav class="command-tabs">'+labels.map(function(tab){
       var count=tab[0]==='skills'?(c.skills||[]).length:
         tab[0]==='talents'?(c.talents||[]).length:
@@ -49,20 +52,21 @@
   function officialAbility(c,item){
     var a=item.ability,passive=/passiva|escolha permanente/i.test(String(a.rank)+' '+String(a.action));
     var check=Runtime&&Runtime.canUseOfficialAbility?Runtime.canUseOfficialAbility(c,item.key):{allowed:false,cost:Number(a.cost||0),reason:''};
+    var badge=passive?'Passiva':check.limit?String(check.remaining==null?check.limit.max:check.remaining)+'/'+check.limit.max+' usos':check.cost?check.cost+' '+esc(c.rules.primaryResource.label):'Sem custo';
     return '<details class="command-ability"><summary><span><strong>'+esc(a.name)+'</strong><small>Nv '+a.level+' · Rank '+esc(a.rank||'—')+' · '+esc(a.action||'—')+'</small></span><b>'+
-      (passive?'Passiva':(check.cost||0)+' '+esc(c.rules.primaryResource.label))+
+      badge+
       '</b></summary><div><p>'+esc(a.effect||'')+'</p>'+
       (passive?'':'<button class="primary" data-command-use-ability="'+esc(item.key)+'" '+(check.allowed?'':'disabled title="'+esc(check.reason||'Indisponível')+'"')+'>Usar habilidade</button>')+
       '</div></details>';
   }
   function powersTab(c){
     var list=Runtime?Runtime.abilityCatalog(c).filter(function(item){return item.group==='base';}):[];
-    return '<div class="command-tab-head"><div><span class="eyebrow">FILIAÇÃO</span><h3>'+esc(c.affiliation)+'</h3><p>'+
+    return '<div class="command-tab-head"><div><span class="eyebrow">'+(c.affiliation?'FILIAÇÃO E ORIGEM':'ORIGEM')+'</span><h3>'+esc(c.rules.heroSourceLabel||c.heroType||c.affiliation)+'</h3><p>'+
       esc(c.rules.signature&&c.rules.signature.name?'Assinatura: '+c.rules.signature.name:'Poderes desbloqueados no nível atual.')+
       '</p></div></div><div class="command-ability-list">'+list.map(function(item){return officialAbility(c,item);}).join('')+'</div>';
   }
   function pathTab(c){
-    if(c.level<3)return '<div class="command-empty"><strong>Caminho Divino</strong><p>Libera no nível 3.</p></div>';
+    if(c.level<3&&c.heroType!=='Legado')return '<div class="command-empty"><strong>Caminho Divino</strong><p>Libera no nível 3.</p></div>';
     var path=(c.rules.paths||[]).find(function(item){return item.name===c.divinePath;});
     if(!path)return '<div class="command-empty"><strong>Escolha de Caminho pendente</strong><p>Use Evoluir ficha ou Editar personagem para concluir a escolha.</p></div>';
     var list=Runtime?Runtime.abilityCatalog(c).filter(function(item){return item.group==='path';}):[];
@@ -73,26 +77,28 @@
   function skillsTab(c){
     var learned=c.skills||[];
     var available=(Database.listSkills?Database.listSkills():[]).filter(function(skill){
-      return skill.minLevel<=c.level&&!learned.some(function(item){return item.catalogId===skill.id||item.name===skill.name;});
+      var passive=/passiva/i.test(String(skill.action||'')+' '+String(skill.usage||''));
+      return skill.minLevel<=c.level&&(!c.rules.passiveSkillsOnly||passive)&&!learned.some(function(item){return item.catalogId===skill.id||item.name===skill.name;});
     });
     var trained=learned.filter(function(item){return item.sourceType==='trained';}).length;
     var limit=Service.trainedSkillLimit?Service.trainedSkillLimit(c):2+Math.floor(c.level/2);
-    var rankOptions=[['E',1],['D',1],['C',5],['B',5],['A',9],['S',13],['SS',17],['Lendário',17]].filter(function(entry){return c.level>=entry[1];});
+    var rankOrder=['E','D','C','B','A','S','SS','Lendário'],maxRank=rankOrder.indexOf(c.rules.maxSkillRank||'Lendário');
+    var rankOptions=[['E',1],['D',1],['C',5],['B',5],['A',9],['S',13],['SS',17],['Lendário',17]].filter(function(entry){return c.level>=entry[1]&&rankOrder.indexOf(entry[0])<=maxRank;});
     return '<div class="command-tab-head"><div><span class="eyebrow">TREINAMENTO</span><h3>Skills conhecidas</h3><p>Treinadas: '+trained+' / '+limit+'. Skills automáticas não ocupam este limite.</p></div></div>'+
       (learned.length?'<div class="command-skill-list">'+learned.map(function(skill){
-        var check=skillUsage(c,skill);
+        var check=skillUsage(c,skill),passive=/passiva/i.test(String(skill.action||''));
         return '<details><summary><span><strong>'+esc(skill.name)+'</strong><small>Rank '+esc(skill.rank||'—')+
           (skill.axis?' · '+esc(skill.axis):'')+(skill.sourceType==='automatic'?' · Automática':skill.sourceType==='trained'?' · Treinada':'')+
-          '</small></span><b>'+Number(check.cost==null?skill.cost||0:check.cost)+' '+esc(c.rules.primaryResource.label)+
+          '</small></span><b>'+(passive?'Passiva':Number(check.cost==null?skill.cost||0:check.cost)+' '+esc(c.rules.primaryResource.label))+
           '</b></summary><div><small>'+esc(skill.action||'')+'</small><p>'+esc(skill.description||'')+
-          '</p><div class="command-row-actions"><button class="primary" data-command-use-skill="'+skill.id+'" '+
+          '</p><div class="command-row-actions">'+(passive?'':'<button class="primary" data-command-use-skill="'+skill.id+'" '+
           (check.allowed===false?'disabled title="'+esc(check.reason||'Indisponível')+'"':'')+
-          '>Usar</button><button class="danger-link" data-command-remove-skill="'+skill.id+'">Remover</button></div></div></details>';
+          '>Usar</button>')+'<button class="danger-link" data-command-remove-skill="'+skill.id+'">Remover</button></div></div></details>';
       }).join('')+'</div>':'<div class="command-empty"><p>Nenhuma Skill registrada.</p></div>')+
       '<details class="command-add-box"><summary>+ Adicionar Skill do catálogo</summary><div><label><span>Skill</span><select data-command-skill-catalog><option value="">Escolha…</option>'+
       available.map(function(skill){return '<option value="'+skill.id+'">'+esc(skill.name+' · Rank '+skill.rank+' · '+skill.axis)+'</option>';}).join('')+
       '</select></label><label><span>Registrar como</span><select data-command-skill-source><option value="trained">Treinada</option><option value="automatic">Automática / ganho de nível</option></select></label><button class="secondary" data-command-learn-skill>Adicionar</button></div></details>'+
-      '<details class="command-add-box"><summary>+ Skill personalizada</summary><div><label><span>Nome</span><input data-command-custom-name placeholder="Nome da Skill"></label><label><span>Rank</span><select data-command-custom-rank>'+
+      '<details class="command-add-box"><summary>+ '+(c.rules.passiveSkillsOnly?'Skill passiva personalizada':'Skill personalizada')+'</summary><div>'+(c.rules.passiveSkillsOnly?'<div class="command-warning"><strong>Regra da origem</strong><p>'+esc(c.heroType)+' pode aprender apenas Skills passivas e sem custo de recurso.</p></div>':'')+'<label><span>Nome</span><input data-command-custom-name placeholder="Nome da Skill"></label><label><span>Rank</span><select data-command-custom-rank>'+
       rankOptions.map(function(entry){return '<option>'+entry[0]+'</option>';}).join('')+
       '</select></label><label class="full"><span>Descrição mecânica aprovada</span><textarea data-command-custom-description rows="3"></textarea></label><button class="secondary" data-command-add-custom>Registrar treinada</button></div></details>';
   }
@@ -103,7 +109,7 @@
       if(!talent.repeatable&&records.some(function(record){return record.catalogId===talent.id||record.name===talent.name;}))return false;
       return !Service.talentPrerequisite||!Service.talentPrerequisite(c,talent);
     });
-    return '<div class="command-tab-head"><div><span class="eyebrow">TALENTOS</span><h3>Treino e aptidão</h3><p>'+records.length+' Talento(s) registrado(s). Todo personagem recebe um Talento gratuito no nível 1.</p></div></div>'+
+    return '<div class="command-tab-head"><div><span class="eyebrow">TALENTOS</span><h3>Treino e aptidão</h3><p>'+records.length+' registrado(s). A origem garante ao menos '+Number(c.rules.talentEntitlement||1)+' no nível atual, além das escolhas gerais de evolução.</p></div></div>'+
       (records.length?'<div class="command-talent-list">'+records.map(function(record){
         var t=talentDefinition(record)||{name:record.name,category:record.category||'Talento',effect:'Detalhes não catalogados.'};
         return '<details><summary><span><strong>'+esc(t.name)+'</strong><small>'+esc(t.category)+(record.choice?' · '+esc(Array.isArray(record.choice)?record.choice.join(', '):record.choice):'')+
@@ -120,12 +126,12 @@
     var list=c.rules.pericias||[];
     return '<div class="command-tab-head"><div><span class="eyebrow">PERÍCIAS</span><h3>Testes automatizados</h3><p>P = Proficiência. E = Especialização, somando o Bônus de Proficiência duas vezes.</p></div></div><div class="pericia-grid">'+
       list.map(function(p){
-        return '<article class="pericia-card '+(p.expertise?'expert':p.proficient?'trained':'')+'"><div><strong>'+esc(p.name)+'</strong><small>'+p.attribute+(p.official?' · Filiação/Antecedente':'')+
+        return '<article class="pericia-card '+(p.expertise?'expert':p.proficient?'trained':'')+'"><div><strong>'+esc(p.name)+'</strong><small>'+p.attribute+(p.official?' · Origem/Filiação/Antecedente':'')+
           '</small></div><b>'+signed(p.bonus)+'</b><div class="pericia-state"><button class="'+(p.proficient?'active':'')+'" data-pericia-toggle="proficient" data-pericia="'+esc(p.name)+'" title="Proficiência">P</button><button class="'+(p.expertise?'active':'')+'" data-pericia-toggle="expertise" data-pericia="'+esc(p.name)+'" title="Especialização">E</button></div></article>';
       }).join('')+'</div>';
   }
-  function tabBody(c){if(activeTab==='path')return pathTab(c);if(activeTab==='skills')return skillsTab(c);if(activeTab==='talents')return talentsTab(c);if(activeTab==='pericias')return periciasTab(c);return powersTab(c);}
-  function affiliationResource(c){var definition=c.rules&&c.rules.primaryResource||{label:'MP'};return '<section class="command-resource-block"><div class="command-resource-heading"><div><span class="eyebrow">RECURSO DA FILIAÇÃO</span><h3>'+esc(definition.label||'MP')+'</h3><p>Recurso usado pelas habilidades abaixo.</p></div></div><div data-command-resource-slot></div></section>';}
+  function tabBody(c){if(activeTab==='path'&&(c.rules.paths||[]).length)return pathTab(c);if(activeTab==='skills')return skillsTab(c);if(activeTab==='talents')return talentsTab(c);if(activeTab==='pericias')return periciasTab(c);return powersTab(c);}
+  function affiliationResource(c){var definition=c.rules&&c.rules.primaryResource||{label:'MP'};if(definition.kind==='none')return '';return '<section class="command-resource-block"><div class="command-resource-heading"><div><span class="eyebrow">RECURSO '+(c.affiliation?'DE FILIAÇÃO':'DA ORIGEM')+'</span><h3>'+esc(definition.label||'MP')+'</h3><p>Recurso usado pelas habilidades abaixo.</p></div></div><div data-command-resource-slot></div></section>';}
   function hub(c,key){return '<section class="panel command-center" data-command-center data-state="'+esc(key)+'">'+affiliationResource(c)+tabs(c)+'<div class="command-tab-body">'+tabBody(c)+'</div></section>';}
   function releaseAffiliationResource(grid){var card=document.querySelector('[data-affiliation-resource]');if(card&&card.closest('[data-command-center]'))grid.appendChild(card);}
   function placeAffiliationResource(grid){var card=document.querySelector('[data-affiliation-resource]'),slot=document.querySelector('[data-command-resource-slot]');if(!card||!slot)return;slot.appendChild(card);grid.classList.add('vitality-only');}
@@ -178,7 +184,7 @@
     }
     if(event.target.closest('[data-command-add-custom]')){
       var name=document.querySelector('[data-command-custom-name]'),rank=document.querySelector('[data-command-custom-rank]'),description=document.querySelector('[data-command-custom-description]');
-      try{Service.addCustomSkill(c.id,{name:name&&name.value,rank:rank&&rank.value,description:description&&description.value});refresh();}catch(error){alert(error.message);}return;
+      try{Service.addCustomSkill(c.id,{name:name&&name.value,rank:rank&&rank.value,description:description&&description.value,action:c.rules.passiveSkillsOnly?'Passiva':''});refresh();}catch(error){alert(error.message);}return;
     }
     if(event.target.closest('[data-command-add-talent]')){
       var talent=document.querySelector('[data-command-talent]'),choice=document.querySelector('[data-command-talent-choice]');

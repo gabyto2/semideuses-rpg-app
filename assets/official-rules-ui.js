@@ -29,14 +29,12 @@
     var title=document.querySelector('.wizard-head h2');
     if(!title||title.textContent.trim()!=='Caminho')return;
     var character=findCharacter();
-    var db=database();
-    if(!character||!db||typeof db.getAffiliation!=='function')return;
-    var affiliation=db.getAffiliation(character.affiliation);
-    if(!affiliation||!Array.isArray(affiliation.paths))return;
+    var db=database(),fallback=character&&db&&db.getAffiliation&&db.getAffiliation(character.affiliation),paths=character&&character.rules&&character.rules.paths||fallback&&fallback.paths;
+    if(!character||!Array.isArray(paths))return;
 
     document.querySelectorAll('[data-path]').forEach(function(button){
       if(button.querySelector('.official-path-summary'))return;
-      var path=affiliation.paths.find(function(item){return item.name===button.dataset.path;});
+      var path=paths.find(function(item){return item.name===button.dataset.path;});
       if(!path||!path.summary)return;
       button.insertAdjacentHTML('beforeend','<small class="official-path-summary">'+esc(path.summary)+'</small>');
     });
@@ -52,10 +50,9 @@
     var ready=Array.prototype.some.call(document.querySelectorAll('.eyebrow'),function(element){return element.textContent.trim()==='FICHA PRONTA';});
     if(!ready)return;
     var character=findCharacter();
-    var db=database();
-    if(!character||!db||typeof db.getAffiliation!=='function')return;
-    var affiliation=db.getAffiliation(character.affiliation);
-    if(!affiliation)return;
+    var db=database(),fallback=character&&db&&db.getAffiliation&&db.getAffiliation(character.affiliation);
+    if(!character||(!character.rules&&!fallback))return;
+    var rules=character.rules||fallback,origin=global.SemideusesOriginCatalog&&global.SemideusesOriginCatalog.get(character.heroType);
 
     var savesPanel=Array.prototype.find.call(document.querySelectorAll('.panel'),function(panel){
       var heading=panel.querySelector('h3');
@@ -63,19 +60,20 @@
     });
     if(!savesPanel)return;
 
+    var title=(character.heroType||'Semideus Grego')+(character.affiliation?' · '+character.affiliation:'');
     var html='<details class="panel official-affiliation-panel sheet-reference-panel">'+
-      '<summary><span><strong>Regras da Filiação · '+esc(affiliation.name)+'</strong><small>Dado de Vida, proficiências e referência oficial</small></span><b>Detalhes</b></summary><div class="sheet-reference-body">'+
-      '<div class="official-rules-heading"><div><span class="eyebrow">REGRAS DA FILIAÇÃO</span><h3>'+esc(affiliation.name)+'</h3><p>'+esc(affiliation.profile||affiliation.domain||'')+'</p></div><span class="official-rules-icon">'+esc(affiliation.icon||'✦')+'</span></div>'+
+      '<summary><span><strong>Regras da Natureza · '+esc(title)+'</strong><small>Dado de Vida, proficiências e Livro do Jogador p. '+esc(rules.sourcePages||'19–29')+'</small></span><b>Detalhes</b></summary><div class="sheet-reference-body">'+
+      '<div class="official-rules-heading"><div><span class="eyebrow">REGRAS DA NATUREZA</span><h3>'+esc(title)+'</h3><p>'+esc(rules.profile||rules.domain||'')+'</p></div><span class="official-rules-icon">'+esc(rules.affiliationIcon||origin&&origin.icon||'✦')+'</span></div>'+
       '<div class="official-rules-core">'+
-        '<article><span>Atributo de Conjuração</span><strong>'+esc(affiliation.casting||'—')+'</strong></article>'+
-        '<article><span>Dado de Vida</span><strong>d'+esc(affiliation.hitDie||'—')+'</strong></article>'+
-        '<article><span>Resistências</span><strong>'+esc((affiliation.savingThrows||[]).join(' e ')||'—')+'</strong></article>'+
+        '<article><span>Atributo-chave</span><strong>'+esc(rules.casting||'—')+'</strong></article>'+
+        '<article><span>Dado de Vida</span><strong>d'+esc(rules.hitDie||'—')+'</strong></article>'+
+        '<article><span>Resistências</span><strong>'+esc((rules.savingThrows||[]).join(' e ')||'—')+'</strong></article>'+
       '</div>'+
-      (affiliation.overview?'<p class="official-rules-overview">'+esc(affiliation.overview)+'</p>':'')+
+      (rules.overview?'<p class="official-rules-overview">'+esc(rules.overview)+'</p>':'')+
       '<div class="official-rules-groups">'+
-        '<div><strong>Perícias</strong>'+listHtml(affiliation.skillProficiencies)+'</div>'+
-        '<div><strong>Armas</strong>'+listHtml(affiliation.weaponProficiencies)+'</div>'+
-        '<div><strong>Armaduras</strong>'+listHtml(affiliation.armorProficiencies)+'</div>'+
+        '<div><strong>Perícias</strong>'+listHtml(rules.affiliationSkillProficiencies||rules.originSkillProficiencies||rules.skillProficiencies)+'</div>'+
+        '<div><strong>Armas</strong>'+listHtml(rules.weaponProficiencies)+'</div>'+
+        '<div><strong>Armaduras</strong>'+listHtml(rules.armorProficiencies)+'</div>'+
       '</div>'+
     '</div></details>';
     savesPanel.insertAdjacentHTML('afterend',html);

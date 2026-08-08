@@ -32,6 +32,7 @@
     sourceType=sourceType||'trained';
     return Service.update(id,function(character){
       character=Model.normalize(character);var skill=db.getSkill&&db.getSkill(skillId);if(!skill)throw new Error('Skill do catálogo não encontrada.');
+      if(character.rules.passiveSkillsOnly&&!/passiva/i.test(String(skill.action||'')+' '+String(skill.usage||'')))throw new Error(character.heroType+' pode aprender apenas Skills passivas.');
       if(Number(character.level)<Number(skill.minLevel||1))throw new Error('Esta Skill exige nível '+skill.minLevel+'+.');
       if((character.skills||[]).some(function(item){return item.catalogId===skill.id||item.name===skill.name;}))throw new Error('Esta Skill já está na ficha.');
       if(sourceType==='trained'){
@@ -52,9 +53,11 @@
       character=Model.normalize(character);var rank=String(payload.rank||'E'),name=String(payload.name||'').trim();
       if(!name)throw new Error('Informe o nome da Skill personalizada.');
       var minimum={E:1,D:1,C:5,B:5,A:9,S:13,SS:17,'Lendário':17}[rank];if(!minimum)throw new Error('Rank inválido.');
+      var rankOrder=['E','D','C','B','A','S','SS','Lendário'];if(rankOrder.indexOf(rank)>rankOrder.indexOf(character.rules.maxSkillRank||'Lendário'))throw new Error(character.heroType+' não pode aprender Skills acima do Rank '+character.rules.maxSkillRank+'.');
       if(character.level<minimum)throw new Error('Rank '+rank+' exige nível '+minimum+'+.');
       var trained=(character.skills||[]).filter(function(item){return item.sourceType==='trained';}).length;if(trained>=trainedSkillLimit(character))throw new Error('Limite de Skills treinadas atingido: '+trainedSkillLimit(character)+'.');
-      character.skills=(character.skills||[]).concat([{id:Model.uid('skill'),name:name,rank:rank,cost:global.SemideusesRules.rankCost(rank,false)||0,resourceId:'primary',description:String(payload.description||'Skill personalizada aprovada pelo Mestre.'),action:String(payload.action||'Definida pelo jogador'),sourceType:'trained',automatic:false}]);
+      var passive=!!character.rules.passiveSkillsOnly;if(passive&&payload.action&&!/passiva/i.test(payload.action))throw new Error(character.heroType+' pode aprender apenas Skills passivas.');
+      character.skills=(character.skills||[]).concat([{id:Model.uid('skill'),name:name,rank:rank,cost:passive?0:global.SemideusesRules.rankCost(rank,false)||0,resourceId:'primary',description:String(payload.description||'Skill personalizada aprovada pelo Mestre.'),action:passive?'Passiva':String(payload.action||'Definida pelo jogador'),sourceType:'trained',automatic:false}]);
       return character;
     });
   }

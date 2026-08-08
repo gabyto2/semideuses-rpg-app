@@ -36,13 +36,14 @@ window.SemideusesCharacter={
   attributes:['FOR','DES','CON','INT','SAB','CAR'],conditions:['Saudável','Abalado'],clone,create:blank,calculate:value=>value,
   validate:value=>({valid:true,errors:[],character:value})
 };
-window.SemideusesOriginCatalog={list:()=>[
+const originDefinitions=[
   {id:'semideus-grego',name:'Semideus Grego',group:'Semideus',implemented:true,summary:'Semideus disponível.',sourcePages:'19–23'},
-  {id:'satiro-fauno',name:'Sátiro / Fauno',group:'Heróis Além do Sangue',implemented:false,summary:'Protetor da natureza.',sourcePages:'24–25'},
-  {id:'ciclope',name:'Ciclope',group:'Heróis Além do Sangue',implemented:false,summary:'Bruto da forja.',sourcePages:'25–26'},
-  {id:'mortal-vidente',name:'Mortal Vidente',group:'Heróis Além do Sangue',implemented:false,summary:'Humano que enxerga a Névoa.',sourcePages:'26–27'},
-  {id:'legado',name:'Legado',group:'Heróis Além do Sangue',implemented:false,summary:'Sangue diluído.',sourcePages:'27–29'}
-]};
+  {id:'satiro-fauno',name:'Sátiro / Fauno',group:'Heróis Além do Sangue',implemented:true,summary:'Protetor da natureza.',sourcePages:'24–25',choices:{expertise:['Atletismo','Acrobacia']},fixedPath:'Caminho da Natureza Selvagem'},
+  {id:'ciclope',name:'Ciclope',group:'Heróis Além do Sangue',implemented:true,summary:'Bruto da forja.',sourcePages:'25–26'},
+  {id:'mortal-vidente',name:'Mortal Vidente',group:'Heróis Além do Sangue',implemented:true,summary:'Humano que enxerga a Névoa.',sourcePages:'26–27',choices:{professions:['Investigador','Mecânico','Sobrevivente']}},
+  {id:'legado',name:'Legado',group:'Heróis Além do Sangue',implemented:true,requiresAffiliation:true,summary:'Sangue diluído.',sourcePages:'27–29'}
+];
+window.SemideusesOriginCatalog={list:()=>clone(originDefinitions),get:value=>clone(originDefinitions.find(origin=>origin.id===value||origin.name===value)||originDefinitions[0])};
 window.SemideusesRules={modifier:value=>Math.floor((Number(value)-10)/2)};
 window.SemideusesRulesDatabase={
   listCompleteAffiliations:()=>[{name:'Atena',icon:'🦉',domain:'Sabedoria'}],listBackgrounds:()=>[],heroMarks:[],
@@ -64,11 +65,13 @@ window.document.querySelector('[data-next]').click();
 assert.equal(window.document.querySelector('.wizard-head h2').textContent,'Identidade');
 window.document.querySelector('[data-next]').click();
 assert.equal(window.document.querySelector('.wizard-head h2').textContent,'Natureza','A criação deve preservar a etapa que futuramente muda o motor de origem.');
-const futureOrigins=[...window.document.querySelectorAll('[data-future-origin]')].map(option=>option.textContent);
-['Sátiro / Fauno','Ciclope','Mortal Vidente','Legado'].forEach(name=>assert(futureOrigins.some(text=>text.includes(name)),'A Natureza deve listar '+name+'.'));
-assert(window.document.querySelector('.wizard-card').textContent.includes('Estas opções são jogáveis no livro'));
+const availableOrigins=[...window.document.querySelectorAll('[data-origin]')].map(option=>option.textContent);
+['Semideus Grego','Sátiro / Fauno','Ciclope','Mortal Vidente','Legado'].forEach(name=>assert(availableOrigins.some(text=>text.includes(name)),'A Natureza deve disponibilizar '+name+'.'));
+assert.equal(window.document.querySelectorAll('[data-origin] .status.ready').length,5,'As cinco Naturezas oficiais devem estar disponíveis.');
+window.document.querySelector('[data-origin="ciclope"]').click();
 window.document.querySelector('[data-next]').click();
-assert.equal(window.document.querySelector('.wizard-head h2').textContent,'Filiação');
+assert.equal(window.document.querySelector('.wizard-head h2').textContent,'Detalhes da origem');
+assert(window.document.querySelector('.wizard-card').textContent.includes('não exige uma escolha adicional'));
 
 window.document.querySelector('[data-cancel]').click();
 window.document.querySelector('[data-open-sheet="atena-17"]').click();

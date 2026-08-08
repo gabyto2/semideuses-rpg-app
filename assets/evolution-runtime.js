@@ -10,7 +10,7 @@
   var ATTRIBUTE_AND_TALENT=[4];
   var ATTRIBUTE_OR_TALENT=[8,12,16,19];
   function clone(value){return Model.clone(value);}
-  function gainFor(level){return {level:level,requiresPath:level>=3,choosePath:level===3,requiresMark:level>=5,chooseMark:level===5,skillRank:SKILL_RANKS[level]||'',attributeAndTalent:ATTRIBUTE_AND_TALENT.indexOf(level)>=0,attributeOrTalent:ATTRIBUTE_OR_TALENT.indexOf(level)>=0,amplification:level===13,supreme:level===20};}
+  function gainFor(level,character){var type=character&&character.heroType||'Semideus Grego',requiresPath=type==='Legado'||(type==='Semideus Grego'&&level>=3);return {level:level,requiresPath:requiresPath,choosePath:(type==='Legado'&&!character.divinePath)||(type==='Semideus Grego'&&level===3),requiresMark:level>=5,chooseMark:level===5,skillRank:SKILL_RANKS[level]||'',attributeAndTalent:ATTRIBUTE_AND_TALENT.indexOf(level)>=0,attributeOrTalent:ATTRIBUTE_OR_TALENT.indexOf(level)>=0,originTalent:type==='Mortal Vidente'&&[6,11,16].indexOf(level)>=0,amplification:level===13,supreme:level===20};}
   function talentAllowed(character,talent,nextLevel){
     var draft=clone(character);draft.level=nextLevel;draft=Model.calculate(draft);
     if(talent.minLevel&&nextLevel<talent.minLevel)return false;
@@ -21,16 +21,18 @@
   }
   function preview(id){
     var character=Service.get(id);if(!character)throw new Error('Personagem não encontrado.');if(character.level>=20)throw new Error('Este personagem já está no nível máximo.');
-    var next=character.level+1,gain=gainFor(next),affiliation=Database.getAffiliation(character.affiliation),unlocks=[];
-    if(affiliation&&affiliation.progression&&affiliation.progression[next])unlocks=unlocks.concat(affiliation.progression[next]);
+    var next=character.level+1,gain=gainFor(next,character),unlocks=[];
+    if(character.rules&&character.rules.progression&&character.rules.progression[next])unlocks=unlocks.concat(character.rules.progression[next]);
     if(gain.skillRank)unlocks.push('Skill automática de Rank '+gain.skillRank);
     if(gain.attributeAndTalent)unlocks.push('+2 em um atributo e +1 Talento');
     if(gain.attributeOrTalent)unlocks.push('+2 em um atributo ou +1 Talento');
+    if(gain.originTalent)unlocks.push('+1 Talento extra de Engenhosidade Humana (registre na aba Talentos)');
     if(gain.amplification)unlocks.push('Amplificação disponível');
     var draft=clone(character);draft.level=next;draft=Model.calculate(draft);
-    var skills=gain.skillRank&&Database.skillsByRank?Database.skillsByRank(gain.skillRank).filter(function(skill){return Number(skill.minLevel||1)<=next;}):[];
+    var skills=gain.skillRank&&Database.skillsByRank?Database.skillsByRank(gain.skillRank).filter(function(skill){var passive=/passiva/i.test(String(skill.action||'')+' '+String(skill.usage||''));return Number(skill.minLevel||1)<=next&&(!draft.rules.passiveSkillsOnly||passive);}):[];
     var talents=Database.listTalents?Database.listTalents().filter(function(talent){return talentAllowed(character,talent,next);}):[];
-    return {character:character,nextLevel:next,gain:gain,unlocks:unlocks,pvIncrease:draft.rules.pvMax-character.rules.pvMax,primaryIncrease:draft.rules.primaryMax-character.rules.primaryMax,newPvMax:draft.rules.pvMax,newPrimaryMax:draft.rules.primaryMax,primaryLabel:draft.rules.primaryResource.label,paths:affiliation&&affiliation.paths||[],marks:Array.isArray(Database.heroMarks)?Database.heroMarks:[],skillOptions:skills,talentOptions:talents};
+    var allowedMarks=draft.rules.allowedHeroMarks||[];
+    return {character:character,nextLevel:next,gain:gain,unlocks:unlocks,pvIncrease:draft.rules.pvMax-character.rules.pvMax,primaryIncrease:draft.rules.primaryMax-character.rules.primaryMax,newPvMax:draft.rules.pvMax,newPrimaryMax:draft.rules.primaryMax,primaryLabel:draft.rules.primaryResource.label,primaryKind:draft.rules.primaryResource.kind,paths:draft.rules.paths||[],marks:(Array.isArray(Database.heroMarks)?Database.heroMarks:[]).filter(function(mark){return allowedMarks.indexOf(mark.name)>=0;}),skillOptions:skills,talentOptions:talents};
   }
   function selectedTalent(data,choices){return choices.talentId&&Database.getTalent?Database.getTalent(choices.talentId):null;}
   function validateChoice(previewData,choices){
@@ -50,7 +52,7 @@
   }
   function skillRecord(data,choices){
     if(!data.gain.skillRank)return null;
-    if(choices.skillMode==='custom')return {id:Model.uid('skill'),name:String(choices.customSkillName).trim(),rank:data.gain.skillRank,cost:Rules.rankCost(data.gain.skillRank,false)||0,resourceId:'primary',description:String(choices.customSkillDescription||'Skill personalizada aprovada pelo Mestre.'),action:'Definida pelo jogador',sourceType:'automatic',automatic:true};
+    if(choices.skillMode==='custom'){var passive=!!data.character.rules.passiveSkillsOnly;return {id:Model.uid('skill'),name:String(choices.customSkillName).trim(),rank:data.gain.skillRank,cost:passive?0:Rules.rankCost(data.gain.skillRank,false)||0,resourceId:'primary',description:String(choices.customSkillDescription||'Skill personalizada aprovada pelo Mestre.'),action:passive?'Passiva':'Definida pelo jogador',sourceType:'automatic',automatic:true};}
     var skill=Database.getSkill(choices.skillId);return {id:Model.uid('skill'),catalogId:skill.id,name:skill.name,rank:skill.rank,cost:skill.cost,resourceId:'primary',description:skill.effect,action:skill.action,axis:skill.axis,minLevel:skill.minLevel,usage:skill.usage||null,sourceType:'automatic',automatic:true};
   }
   function talentRecord(data,choices){var talent=selectedTalent(data,choices);if(!talent)return null;return {id:Model.uid('talent'),catalogId:talent.id,name:talent.name,category:talent.category,choice:choices.talentChoice||'',level:data.nextLevel};}
@@ -70,7 +72,7 @@
       character.evolutionHistory.push({from:data.nextLevel-1,to:data.nextLevel,at:new Date().toISOString(),choices:clone(choices),unlocks:data.unlocks.slice()});
       character=Model.calculate(character);
       character.resources.pvCurrent=Math.min(oldPv,character.rules.pvMax);
-      character=Model.setResource(character,'primary',Math.min(oldPrimary,character.rules.primaryMax));
+      if(character.rules.primaryResource.kind!=='none')character=Model.setResource(character,'primary',Math.min(oldPrimary,character.rules.primaryMax));
       return character;
     });
   }

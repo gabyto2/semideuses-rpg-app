@@ -13,10 +13,11 @@ context.SemideusesRules={
   maxHP:(level,die,con)=>Math.max(1,Number(die)+Math.floor((Number(con)-10)/2)+(level-1)*(Math.ceil(Number(die)/2)+Math.floor((Number(con)-10)/2))),
   maxMP:(level,score)=>Math.max(0,6+Math.floor((Number(score)-10)/2)+(level-1)*(2+Math.floor((Number(score)-10)/2)))
 };
-function ability(level,name,rank,cost,action,effect){return {level,name,rank,cost,action,effect};}
+function ability(level,name,rank,cost,action,effect,extra){return Object.assign({level,name,rank,cost,action,effect},extra||{});}
 const affiliations={
   Ares:{id:'ares',name:'Ares',mechanicalStatus:'complete',casting:'FOR',hitDie:12,savingThrows:[],skillProficiencies:[],weaponProficiencies:[],armorProficiencies:[],signature:{name:'Fúria'},progression:{},abilities:[
     ability(1,'Talho Brutal','E',1,'Ação','Ataque simples.'),
+    ability(1,'Reflexo de Teste','—',0,'Reação','Uma vez por rodada.',{usage:{max:1,scope:'round'}}),
     ability(5,'Investida Sangrenta','C',4,'Ação','2 usos por dia. Ataque de teste.'),
     ability(10,'Pele de Guerra','Passiva',null,'Passiva','Sempre ativa.')
   ],paths:[{id:'furia',name:'Caminho da Fúria',abilities:[ability(3,'Golpe Frenético','D',2,'Ação','Golpe do caminho.')]}]},
@@ -45,6 +46,10 @@ assert.equal(started.session.round,1);
 assert.equal(started.resources.special.fury.current,7);
 let catalog=Runtime.abilityCatalog(started);
 assert(catalog.some(item=>item.ability.name==='Golpe Frenético'));
+let reflexo=catalog.find(item=>item.ability.name==='Reflexo de Teste');
+let reflexoUsed=Runtime.useOfficialAbility(ares.id,reflexo.key);
+assert.equal(reflexoUsed.session.abilityUses.round[reflexo.key],1);
+assert.throws(()=>Runtime.useOfficialAbility(ares.id,reflexo.key),/Sem usos restantes/);
 let investida=catalog.find(item=>item.ability.name==='Investida Sangrenta');
 let check=Runtime.canUseOfficialAbility(started,investida.key);
 assert.equal(check.cost,3,'Marca reduz Rank C em 1');
@@ -60,6 +65,7 @@ assert.equal(undone.session.abilityUses.day[investida.key],1);
 assert.equal(undone.resources.primaryCurrent,beforePrimary-3);
 let round=Runtime.nextRound(ares.id);
 assert.equal(round.session.round,2);
+assert.equal(Runtime.canUseOfficialAbility(round,reflexo.key).allowed,true,'Usos por rodada devem voltar na rodada seguinte.');
 let ended=Runtime.endCombat(ares.id);
 assert.equal(ended.session.inCombat,false);
 assert.equal(ended.resources.special.fury.current,0);

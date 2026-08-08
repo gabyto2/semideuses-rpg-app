@@ -23,6 +23,7 @@
 
   function resourceId(character){return RESOURCE_IDS[character.affiliation]||'';}
   function triggers(character){return (TRIGGERS[character.affiliation]||[]).slice();}
+  function triggerGain(character,delta){delta=Number(delta||0);return character.rules&&character.rules.dilutedSignature&&delta>1?Math.ceil(delta/2):delta;}
   function signatureActions(character){
     var signature=character.rules&&character.rules.signature||{};
     var id=resourceId(character);
@@ -35,7 +36,7 @@
   function applyTrigger(id,triggerId){
     var character=Service.get(id);if(!character)throw new Error('Personagem não encontrado.');
     var trigger=triggers(character).find(function(item){return item.id===triggerId;});if(!trigger)throw new Error('Gatilho não encontrado.');
-    return Service.adjustSpecialResource(id,resourceId(character),trigger.delta);
+    return Service.adjustSpecialResource(id,resourceId(character),triggerGain(character,trigger.delta));
   }
   function spendAction(id,actionId){
     var character=Service.get(id);if(!character)throw new Error('Personagem não encontrado.');

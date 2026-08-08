@@ -38,7 +38,7 @@
     var c=Model.normalize(character);
     var list=[];
     (c.rules.abilities||[]).forEach(function(ability){
-      list.push({key:abilityKey('base','',ability),group:'base',pathId:'',pathName:'Filiação',ability:clone(ability)});
+      list.push({key:abilityKey('base','',ability),group:'base',pathId:'',pathName:c.rules.heroSourceLabel||c.affiliation||'Origem',ability:clone(ability)});
     });
     var selected=(c.rules.paths||[]).find(function(path){return path.name===c.divinePath;});
     if(selected){
@@ -62,12 +62,14 @@
     return rank==='passiva'||action.indexOf('passiva')>=0||action.indexOf('escolha permanente')>=0||action.indexOf('escolha após')>=0;
   }
   function usageLimit(ability){
+    if(ability&&ability.usage&&Number(ability.usage.max)>0)return {max:Number(ability.usage.max),scope:String(ability.usage.scope||'longRest')};
     var text=[ability&&ability.effect,ability&&ability.action].join(' ');
-    var match=text.match(/(\d+)\s*(?:uso|usos|×|x)\s*(?:por|\/)\s*(dia|combate|arco)/i);
+    var match=text.match(/(\d+)\s*(?:uso|usos|×|x)\s*(?:por|\/)\s*(dia|combate|arco|descanso curto|descanso longo|rodada)/i);
     if(!match)return null;
     var scope=match[2].toLowerCase();
-    return {max:Number(match[1]),scope:scope==='dia'?'day':scope==='combate'?'combat':'arc'};
+    return {max:Number(match[1]),scope:scope==='dia'?'day':scope==='combate'?'combat':scope==='arco'?'arc':scope==='rodada'?'round':scope==='descanso curto'?'shortRest':'longRest'};
   }
+  function scopeLabel(scope){return {day:'dia',combat:'combate',arc:'arco',round:'rodada',shortRest:'Descanso Curto',longRest:'Descanso Longo'}[scope]||scope;}
   function useCount(character,key,scope){
     var session=cleanSession(character);
     var bucket=session.abilityUses[scope]||{};
@@ -82,8 +84,9 @@
     var primary=Model.resourceState(c,'primary');
     if(cost>Number(primary.current||0))return {allowed:false,reason:primary.label+' insuficiente.',cost:cost,item:item};
     var limit=usageLimit(item.ability);
-    if(limit&&useCount(c,key,limit.scope)>=limit.max)return {allowed:false,reason:'Sem usos restantes ('+limit.max+' por '+(limit.scope==='day'?'dia':limit.scope==='combat'?'combate':'arco')+').',cost:cost,item:item,limit:limit};
-    return {allowed:true,reason:'',cost:cost,item:item,limit:limit};
+    var used=limit?useCount(c,key,limit.scope):0;
+    if(limit&&used>=limit.max)return {allowed:false,reason:'Sem usos restantes ('+limit.max+' por '+scopeLabel(limit.scope)+').',cost:cost,item:item,limit:limit,used:used,remaining:0};
+    return {allowed:true,reason:'',cost:cost,item:item,limit:limit,used:used,remaining:limit?Math.max(0,limit.max-used):null};
   }
   function incrementUse(character,key,limit){
     if(!limit)return;
@@ -143,6 +146,7 @@
       session.round=1;
       session.combatStartedAt=now();
       session.abilityUses.combat={};
+      session.abilityUses.round={};
       session.activeEffects=[];
       addHistory(c,'Iniciou combate','combat',before,'Rodada 1');
       return c;
@@ -157,6 +161,7 @@
       session.round=0;
       session.activeEffects=[];
       session.abilityUses.combat={};
+      session.abilityUses.round={};
       addHistory(c,'Encerrou combate','combat',before,'Recursos de combate reiniciados');
       return c;
     });
@@ -167,6 +172,7 @@
       var session=cleanSession(character);
       if(!session.inCombat)throw new Error('O personagem não está em combate.');
       session.round=Math.max(1,session.round+1);
+      session.abilityUses.round={};
       addHistory(character,'Avançou para a rodada '+session.round,'round',before,'');
       return character;
     });
@@ -178,6 +184,7 @@
     var maximum=c.rules.primaryMax;
     var amount=ResourceRules&&typeof ResourceRules.recoveryAmount==='function'?ResourceRules.recoveryAmount(rule,maximum):0;
     if(rule&&rule.type==='fractionMax'&&maximum>0)amount=Math.max(1,amount);
+    if(rule&&rule.type==='profession')amount=character.heroType==='Mortal Vidente'&&character.originChoices&&character.originChoices.profession==='Sobrevivente'?1:0;
     if(rule==='max')return Model.setResource(c,'primary',maximum);
     return Model.adjustResource(c,'primary',amount);
   }
@@ -188,6 +195,7 @@
       c=resetSpecial(c,function(definition){return definition.reset==='rest';},'short-rest');
       var session=cleanSession(c);
       session.abilityUses.shortRest={};
+      session.abilityUses.round={};
       addHistory(c,'Concluiu Descanso Curto','rest',before,'Recuperação do recurso principal; Dados de Vida continuam manuais');
       return c;
     });
@@ -209,7 +217,9 @@
       session.activeEffects=[];
       session.abilityUses.day={};
       session.abilityUses.shortRest={};
+      session.abilityUses.longRest={};
       session.abilityUses.combat={};
+      session.abilityUses.round={};
       addHistory(c,'Concluiu Descanso Longo','rest',before,'PV e recurso principal restaurados; metade dos Dados de Vida recuperada');
       return c;
     });

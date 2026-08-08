@@ -187,7 +187,7 @@
   if(!Model)return;
 
   var STEP_BY_HEADING={
-    'Conceito':0,'Identidade':1,'Natureza':2,'Filiação':3,'Atributos':4,
+    'Conceito':0,'Identidade':1,'Natureza':2,'Filiação':3,'Detalhes da origem':3,'Atributos':4,
     'Antecedente':5,'Caminho':6,'Marca':7,'Revisão':8
   };
 
@@ -235,6 +235,6 @@
   document.addEventListener('input',removePanel,true);
   document.addEventListener('change',removePanel,true);
   document.addEventListener('click',function(event){
-    if(event.target.closest('[data-aff],[data-bg],[data-path],[data-mark],[data-level-delta]'))removePanel();
+    if(event.target.closest('[data-origin],[data-origin-choice],[data-origin-skill],[data-aff],[data-bg],[data-path],[data-mark],[data-level-delta]'))removePanel();
   },true);
 })(window);
