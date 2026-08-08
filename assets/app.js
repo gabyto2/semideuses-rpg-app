@@ -136,7 +136,9 @@ function render(){
   var content=state.screen==='wizard'?wizard():state.screen==='characters'?listView():state.screen==='sheet'?sheet():state.section==='inicio'?home():moduleView();
   var selected=sections.find(function(section){return section.id===state.section;})||sections[0];
   var title=state.screen==='wizard'?'Criação':state.screen==='characters'?'Personagens':state.screen==='sheet'?'Ficha':selected.label;
-  app.innerHTML='<div class="app-shell"><header class="topbar"><div><span class="eyebrow">SEMIDEUSES RPG 3E</span><h1>'+title+'</h1></div><div class="brand-mark">S3</div></header>'+(state.message?'<div class="toast">'+esc(state.message)+'</div>':'')+'<main class="content">'+content+'</main>'+nav()+'</div>';bind();
+  app.innerHTML='<div class="app-shell"><header class="topbar"><div><span class="eyebrow">SEMIDEUSES RPG 3E</span><h1>'+title+'</h1></div><div class="brand-mark">S3</div></header>'+(state.message?'<div class="toast">'+esc(state.message)+'</div>':'')+'<main class="content">'+content+'</main>'+nav()+'</div>';
+  bind();
+  window.dispatchEvent(new CustomEvent('semideuses:rendered',{detail:{screen:state.screen,section:state.section}}));
 }
 function bind(){
   document.querySelectorAll('[data-go]').forEach(function(button){button.onclick=function(){state.section=button.dataset.go;state.screen='home';state.editing=null;renderAndTop();};});

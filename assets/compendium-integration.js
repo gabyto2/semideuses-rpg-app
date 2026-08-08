@@ -1,5 +1,6 @@
 (function(global){
 'use strict';
+var scheduled=false;
 function heading(){var h=document.querySelector('.wizard-head h2');return h?h.textContent.trim():'';}
 function appState(){var api=global.SemideusesApp;return api&&typeof api.getEditing==='function'?api.getEditing():null;}
 function open(name,tab,focus){if(!name)return;var api=global.SemideusesCompendium;if(api&&api.openOverlay)api.openOverlay(name,{tab:tab||'overview',focus:focus||''});else global.dispatchEvent(new CustomEvent('semideuses:open-compendium',{detail:{affiliation:name,tab:tab||'overview',focus:focus||'',overlay:true}}));}
@@ -23,8 +24,10 @@ function mountPath(){if(heading()!=='Caminho')return;var card=document.querySele
   }
 }
 function mountSheet(){var ready=Array.prototype.some.call(document.querySelectorAll('.eyebrow'),function(el){return el.textContent.trim()==='FICHA PRONTA';});if(!ready)return;var affiliation=selectedAffiliation();if(!affiliation)return;var target=document.querySelector('.sheet-identity-meta')||document.querySelector('.sheet-identity-hero')||document.querySelector('.section-heading');if(!target||document.querySelector('[data-compendium-sheet]'))return;var actions=document.createElement('div');actions.className='compendium-inline-actions';actions.dataset.compendiumSheet='true';actions.appendChild(button('Abrir regras de '+affiliation,affiliation,'overview',''));var pathText=document.querySelector('.sheet-badge:not(.mark)');if(pathText){var path=pathText.textContent.trim();actions.appendChild(button('Consultar '+path,affiliation,'paths','path-'+slug(path)));}target.insertAdjacentElement('afterend',actions);}
-function schedule(){setTimeout(function(){mountAffiliation();mountPath();mountSheet();},0);}
+function schedule(){if(scheduled)return;scheduled=true;setTimeout(function(){scheduled=false;mountAffiliation();mountPath();mountSheet();},0);}
 document.addEventListener('click',function(event){if(event.target.closest('[data-aff],[data-path],[data-next],[data-prev],[data-open-sheet],[data-edit-current]'))schedule();},false);
 window.addEventListener('semideuses:character-updated',schedule);
+window.addEventListener('semideuses:rendered',schedule);
 window.addEventListener('load',schedule);
+schedule();
 })(window);

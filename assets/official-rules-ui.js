@@ -5,7 +5,7 @@
   function service(){return global.SemideusesCharacterService||null;}
   function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(char){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char];});}
 
-  var currentId='';
+  var currentId='',scheduled=false;
 
   function findCharacter(){
     var api=global.SemideusesApp;
@@ -81,7 +81,11 @@
   }
 
   function enhance(){enhancePaths();enhanceSheet();}
-  function schedule(){setTimeout(enhance,0);}
+  function schedule(){
+    if(scheduled)return;
+    scheduled=true;
+    setTimeout(function(){scheduled=false;enhance();},0);
+  }
 
   document.addEventListener('click',function(event){
     var open=event.target.closest('[data-open-sheet]');
@@ -92,5 +96,7 @@
     if(event.detail&&event.detail.id)currentId=event.detail.id;
     schedule();
   });
+  global.addEventListener('semideuses:rendered',schedule);
   global.addEventListener('load',schedule);
+  schedule();
 })(window);
