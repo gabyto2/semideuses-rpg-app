@@ -2,7 +2,7 @@
 'use strict';
 var App=global.SemideusesApp,Service=global.SemideusesCharacterService,Model=global.SemideusesCharacter,Runtime=global.SemideusesSessionRuntime;if(!App||!Service||!Model)return;
 var scheduled=false,wrapped=false;
-function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c];});}
 function editingId(){var e=App.__originalGetEditing?App.__originalGetEditing():App.getEditing&&App.getEditing();return e&&e.id||'';}
 function character(){var id=editingId();return id?Service.get(id):null;}
 if(!App.__freshEditingV3&&typeof App.getEditing==='function'){
