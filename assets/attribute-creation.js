@@ -4,7 +4,7 @@ var ATTRS=['FOR','DES','CON','INT','SAB','CAR'];
 var ARRAY=[15,14,13,12,10,8];
 var EMPTY={FOR:'',DES:'',CON:'',INT:'',SAB:'',CAR:''};
 var castingMap={'Zeus':'CAR','Poseidon':'SAB','Hades':'INT','Atena':'INT','Ares':'FOR','Apolo':'CAR','Hermes':'DES','Hefesto':'INT','Afrodite':'CAR','Deméter':'SAB','Dionísio':'CAR','Ártemis':'SAB','Hécate':'INT','Íris':'CAR','Hipnos':'SAB','Morfeu':'INT','Tique':'CAR','Éolo':'SAB','Circe':'INT','Eros':'CAR','Nyx':'CAR','Nêmesis':'SAB','Nike':'CAR','Tânatos':'SAB','Perséfone':'SAB','Hebe':'CON'};
-var data=null,level=1,affiliation='',currentCharacterId='',pathChosen=false,markChosen=false;
+var data=null,level=1,affiliation='',currentCharacterId='',pathChosen=false,markChosen=false,mountScheduled=false,observer=null;
 function clone(value){return JSON.parse(JSON.stringify(value));}
 function esc(v){return String(v==null?'':v).replace(/[&<>\"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c];});}
 function signed(v){return v>=0?'+'+v:String(v);}
@@ -56,6 +56,7 @@ function publish(){var totals=values();if(!totals)return false;var payload={valu
 function updateDynamic(){ATTRS.forEach(function(a){var total=document.querySelector('[data-ac-total="'+a+'"]'),bonus=document.querySelector('[data-ac-bonus="'+a+'"]');if(total)total.textContent=totalLabel(a);if(bonus)bonus.textContent=bonusLabel(a);});publish();}
 function isAttributeStep(){return heading()==='Atributos';}
 function mount(){if(!isAttributeStep())return;ensureCharacterState();var card=document.querySelector('.wizard-card');if(!card||document.querySelector('.ac-wrap'))return;card.innerHTML=html();bindPanel();updateDynamic();}
+function scheduleMount(){if(mountScheduled)return;mountScheduled=true;setTimeout(function(){mountScheduled=false;mount();},0);}
 function rerenderPanel(){var card=document.querySelector('.wizard-card');if(!card||!isAttributeStep())return;card.innerHTML=html();bindPanel();updateDynamic();}
 function bindPanel(){
   document.querySelectorAll('[data-ac-method]').forEach(function(button){button.onclick=function(){data.method=button.dataset.acMethod;data.base=clone(EMPTY);data.plus2='';data.plus1='';data.milestones={};data.bonusesAlreadyIncluded=false;data.skipMilestones=false;rerenderPanel();};});
@@ -70,6 +71,7 @@ function selectedChoice(selector){return !!document.querySelector(selector+'.sel
 function validateCurrentStep(){var current=heading();if(current==='Atributos')return validateAttributes();if(current==='Caminho'&&level>=3&&!selectedChoice('[data-path]')){alert('Escolha o Caminho Divino antes de continuar.');return false;}if(current==='Marca'&&level>=5&&!selectedChoice('[data-mark]')){alert('Escolha a Marca do Herói antes de continuar.');return false;}return true;}
 document.addEventListener('input',function(event){if(event.target&&event.target.matches('[data-field="level"]'))level=Math.max(1,Math.min(20,Number(event.target.value||1)));},true);
 document.addEventListener('click',function(event){var target=event.target,delta=target.closest('[data-level-delta]');if(delta)level=Math.max(1,Math.min(20,level+Number(delta.dataset.levelDelta||0)));var selectedAffiliation=target.closest('[data-aff]');if(selectedAffiliation)affiliation=selectedAffiliation.dataset.aff||'';if(target.closest('[data-path]'))pathChosen=true;if(target.closest('[data-mark]'))markChosen=true;if(target.closest('[data-new]')){currentCharacterId='';data=null;pathChosen=false;markChosen=false;}var next=target.closest('[data-next]');if(next&&!validateCurrentStep()){event.preventDefault();event.stopImmediatePropagation();return;}var save=target.closest('[data-save]');if(save){if(level>=3&&!pathChosen){alert('A ficha de nível '+level+' precisa de um Caminho Divino. Volte à etapa Caminho.');event.preventDefault();event.stopImmediatePropagation();return;}if(level>=5&&!markChosen){alert('A ficha de nível '+level+' precisa de uma Marca do Herói. Volte à etapa Marca.');event.preventDefault();event.stopImmediatePropagation();return;}if(data&&!validateAttributes()){alert('Complete a distribuição de atributos e os ganhos do nível inicial.');event.preventDefault();event.stopImmediatePropagation();}}},true);
-document.addEventListener('click',function(event){if(event.target.closest('[data-next],[data-prev],[data-level-delta],[data-aff],[data-new],[data-edit]'))setTimeout(mount,0);},false);
-window.addEventListener('load',function(){setTimeout(mount,0);});
+document.addEventListener('click',function(event){if(event.target.closest('[data-next],[data-prev],[data-level-delta],[data-aff],[data-new],[data-edit]'))scheduleMount();},false);
+if(global.MutationObserver){var root=document.getElementById('app');if(root){observer=new MutationObserver(function(){if(isAttributeStep())scheduleMount();});observer.observe(root,{childList:true,subtree:true});}}
+window.addEventListener('load',scheduleMount);
 })(window);

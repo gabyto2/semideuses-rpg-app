@@ -72,6 +72,6 @@ store.ath.resources.pvCurrent=1;
 let healed=context.SemideusesBackgroundRuntime.use('ath');assert(healed.resources.pvCurrent>1);
 let lvl2=context.SemideusesCharacter.create({id:'lvl',affiliation:'Atena',background:'Atleta',level:2});lvl2.resources.pvCurrent=4;lvl2.resources.primaryCurrent=7;store.lvl=lvl2;
 let pv=context.SemideusesEvolutionRuntime.preview('lvl');assert.equal(pv.nextLevel,3);assert.equal(pv.gain.skillRank,'D');
-let evolved=context.SemideusesEvolutionRuntime.apply('lvl',{divinePath:'Caminho da Estratégia',skillName:'Tática Menor'});
+let evolved=context.SemideusesEvolutionRuntime.apply('lvl',{divinePath:'Caminho da Estratégia',skillMode:'custom',customSkillName:'Tática Menor'});
 assert.equal(evolved.level,3);assert.equal(evolved.resources.pvCurrent,4);assert.equal(evolved.resources.primaryCurrent,7);assert.equal(evolved.skills[0].rank,'D');
 console.log('player-flow-complete.test: OK');
