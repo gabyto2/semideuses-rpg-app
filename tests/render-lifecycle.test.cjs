@@ -118,11 +118,35 @@ async function commandCenterDoesNotLockScrolling(){
   dom.window.close();
 }
 
+async function sheetQuickNavigationFindsMajorSections(){
+  const character={id:'helena',resources:{pvCurrent:20,primaryCurrent:8,tempHp:0,hitDiceCurrent:3,hitDiceMax:3,exhaustionLevel:0},rules:{pvMax:20,primaryMax:10,hitDie:8,pericias:[],exhaustion:{}}};
+  const html='<section class="sheet-identity-hero"></section><section data-core-stats></section><section data-session-tools></section><section class="resource-grid"></section><section data-command-center></section><section data-items-hub></section><section data-multi-conditions><select data-condition-picker></select></section><section class="panel"><h3>Progressão</h3></section>';
+  const dom=new JSDOM('<!doctype html><div id="app"><main>'+html+'</main></div>',{url:'https://example.test/',runScripts:'outside-only',pretendToBeVisual:true});
+  const window=dom.window;
+  let destination=null,scrollToCalls=0;
+  window.scrollTo=()=>{scrollToCalls++;};
+  window.HTMLElement.prototype.scrollIntoView=function(){destination=this;};
+  window.SemideusesApp={getEditing:()=>character};
+  window.SemideusesCharacterService={get:()=>character};
+  window.SemideusesCharacter={};
+  window.eval(source('sheet-polish-v3.js'));
+  await wait(30);
+  const labels=[...window.document.querySelectorAll('[data-sheet-jump]')].map(button=>button.textContent.trim());
+  ['⌂Resumo','⚔Combate','✦Habilidades','◈Itens','●Estados','↑Progressão'].forEach(label=>assert(labels.includes(label),'A navegação rápida deve incluir '+label+'.'));
+  const items=window.document.querySelector('[data-sheet-jump="items"]');
+  items.click();
+  assert.equal(destination,window.document.querySelector('[data-items-hub]'),'O atalho Itens deve levar à Central de Itens.');
+  assert(items.classList.contains('active'),'O atalho usado deve ficar visualmente ativo.');
+  assert.equal(scrollToCalls,0,'Os atalhos não devem criar um novo bloqueio absoluto de rolagem.');
+  dom.window.close();
+}
+
 (async()=>{
   appLifecycle();
   await enhancementLifecycle();
   await unsupportedOriginHasNoDeadLinks();
   await pathSummaryIsNotDuplicated();
   await commandCenterDoesNotLockScrolling();
+  await sheetQuickNavigationFindsMajorSections();
   console.log('render-lifecycle.test: OK');
 })().catch(error=>{console.error(error);process.exitCode=1;});
