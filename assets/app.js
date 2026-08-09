@@ -138,6 +138,7 @@ function home(){
 }
 function moduleView(){
   if(state.section==='jogador')return listView();
+  if(state.section==='mestre'&&window.SemideusesMasterUI)return window.SemideusesMasterUI.view();
   return '<section class="panel empty"><span class="large-icon">'+(state.section==='mestre'?'⚑':'☷')+'</span><h2>'+esc(state.section==='mestre'?'Mestre':'Compêndio')+'</h2><p>Este módulo continuará sendo desenvolvido após a estabilização da ficha do jogador.</p></section>';
 }
 function listView(){
@@ -246,6 +247,7 @@ function bind(){
   var addSkill=document.querySelector('[data-skill-add]');if(addSkill)addSkill.onclick=function(){var name=document.getElementById('skill-name'),cost=document.getElementById('skill-cost'),text=String(name&&name.value||'').trim();if(!text){alert('Informe o nome da Skill ou habilidade.');if(name)name.focus();return;}try{updateEditing(Service.addSkill(state.editing.id,{name:text,cost:Math.max(0,Number(cost&&cost.value||0))}));render();}catch(error){alert(error.message);}};
   document.querySelectorAll('[data-skill-use]').forEach(function(button){button.onclick=function(){try{refreshResourceDom(Service.useSkill(state.editing.id,button.dataset.skillUse));}catch(error){alert(error.message);}};});
   document.querySelectorAll('[data-skill-delete]').forEach(function(button){button.onclick=function(){try{updateEditing(Service.removeSkill(state.editing.id,button.dataset.skillDelete));render();}catch(error){alert(error.message);}};});
+  if(state.section==='mestre'&&window.SemideusesMasterUI)window.SemideusesMasterUI.bind({refresh:render,notify:msg});
 }
 window.SemideusesApp={getEditing:function(){return state.editing?clone(state.editing):null;},isEditingPersisted:function(){return !!(state.editing&&Service.get(state.editing.id));},applyAttributeCreation:applyAttributeCreation,refresh:function(){if(state.editing){var current=Service.get(state.editing.id);if(current)state.editing=current;}render();},openSheet:function(id){var character=Service.get(id);if(character){state.section='jogador';state.editing=character;state.screen='sheet';renderAndTop();}},notify:msg};
 window.addEventListener('semideuses:character-updated',refreshCharacters);

@@ -102,6 +102,37 @@ Impedir a criação acima do nível 1 corrigia o salto indevido de Skills e Tale
 
 Não serão escolhidos automaticamente Talentos, Skills ou atributos, porque isso definiria a construção da personagem sem decisão do jogador.
 
+## Sprint atual — S3: Ferramentas do Mestre
+
+### Meta
+
+Transformar o módulo Mestre em uma ferramenta de uso durante a sessão, começando pelo fluxo mais frequente e sensível ao tempo: conduzir um encontro sem alternar entre várias fichas.
+
+### Fase 1 — Mesa de Sessão
+
+- [x] Preparação separada do encontro em andamento.
+- [x] Inclusão de personagens já salvos no aparelho, sem duplicar a ficha.
+- [x] Cadastro manual de inimigos e NPCs com nome, PV, CA, iniciativa e nota curta.
+- [x] Ordem automática por iniciativa e ajuste manual apenas para empates.
+- [x] Rodada, turno atual e comando grande de próximo turno.
+- [x] Dano, cura e condições sincronizados com a ficha do jogador.
+- [x] PV e condições locais para inimigos.
+- [x] Persistência automática do encontro no navegador.
+- [x] Estado final preservado ao encerrar o encontro.
+- [x] Teste automatizado de regras e integração com a interface.
+- [ ] Build, Deploy Preview e teste real no navegador.
+
+### Decisão de escopo da Fase 1
+
+O primeiro fluxo não inclui um bestiário improvisado. A Mesa aceita os valores informados pelo Mestre e reutiliza somente regras já implementadas, como PV, CA, iniciativa e condições. Criaturas prontas entram numa fase própria, depois de catalogar e validar a fonte oficial; isso evita publicar estatísticas inventadas como se fossem regra do livro.
+
+### Próximas fases propostas
+
+1. Bestiário pesquisável e fichas de criaturas, condicionado à fonte oficial validada.
+2. Modelos de encontro salvos e reutilizáveis.
+3. Painel de campanha: sessões, NPCs, locais, pistas e notas privadas.
+4. Recompensas e entrega controlada de itens aos personagens.
+
 ## S1 — ficha clara e estável no celular
 
 ### Meta
@@ -201,4 +232,4 @@ Um item só recebe `[x]` quando:
 
 ## Próxima ação
 
-Desenhar o primeiro fluxo da área do Mestre a partir das necessidades reais de sessão, mantendo o lado do Jogador estável no `develop`.
+Validar a Mesa de Sessão no Deploy Preview e, depois, mapear a fonte oficial necessária para iniciar o Bestiário sem inventar estatísticas.
