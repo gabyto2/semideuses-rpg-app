@@ -49,14 +49,24 @@
     return list.filter(function(item){return Number(item.ability.level||0)<=c.level;});
   }
   function findAbility(character,key){return abilityCatalog(character).find(function(item){return item.key===key;})||null;}
-  function numericCost(ability,character){
+  function hasActiveEffect(character,kind){
+    var effects=character&&character.session&&Array.isArray(character.session.activeEffects)?character.session.activeEffects:[];
+    return effects.some(function(effect){return effect&&effect.kind===kind;});
+  }
+  function legacyAwakeningFree(character,item){
+    var session=character&&character.session||{};
+    return !!(character&&character.heroType==='Legado'&&item&&item.group==='path'&&item.ability&&item.ability.rank==='A'&&hasActiveEffect(character,'legacy-awakening')&&!session.legacyAwakeningFreeUsed);
+  }
+  function numericCost(ability,character,item){
     var raw=ability&&ability.cost;
     var cost=typeof raw==='number'?raw:Number(raw);
     if(!Number.isFinite(cost)||cost<0)cost=0;
+    if(legacyAwakeningFree(character,item))return 0;
     if(character.heroMark==='Bônus de Conjuração'&&ability&&ability.rank==='C')cost=Math.max(1,cost-1);
     return cost;
   }
   function isPassive(ability){
+    if(ability&&ability.operational)return false;
     var rank=String(ability&&ability.rank||'').toLowerCase();
     var action=String(ability&&ability.action||'').toLowerCase();
     return rank==='passiva'||action.indexOf('passiva')>=0||action.indexOf('escolha permanente')>=0||action.indexOf('escolha após')>=0;
@@ -80,13 +90,14 @@
     var item=findAbility(c,key);
     if(!item)return {allowed:false,reason:'Habilidade não encontrada.',cost:0,item:null};
     if(isPassive(item.ability))return {allowed:false,reason:'Habilidade passiva.',cost:0,item:item};
-    var cost=numericCost(item.ability,c);
+    var legacyFree=legacyAwakeningFree(c,item);
+    var cost=numericCost(item.ability,c,item);
     var primary=Model.resourceState(c,'primary');
     if(cost>Number(primary.current||0))return {allowed:false,reason:primary.label+' insuficiente.',cost:cost,item:item};
     var limit=usageLimit(item.ability);
     var used=limit?useCount(c,key,limit.scope):0;
     if(limit&&used>=limit.max)return {allowed:false,reason:'Sem usos restantes ('+limit.max+' por '+scopeLabel(limit.scope)+').',cost:cost,item:item,limit:limit,used:used,remaining:0};
-    return {allowed:true,reason:'',cost:cost,item:item,limit:limit,used:used,remaining:limit?Math.max(0,limit.max-used):null};
+    return {allowed:true,reason:'',cost:cost,item:item,limit:limit,used:used,remaining:limit?Math.max(0,limit.max-used):null,legacyFree:legacyFree};
   }
   function incrementUse(character,key,limit){
     if(!limit)return;
@@ -99,6 +110,10 @@
     if(!/concentra[cç][aã]o/i.test(text))return null;
     return {id:'effect-'+Date.now(),abilityKey:key,name:ability.name,startedAt:now(),kind:'concentration'};
   }
+  function declaredEffect(ability,key){
+    if(!ability||!ability.activeEffect||!ability.activeEffect.kind)return null;
+    return {id:'effect-'+Date.now()+'-'+Math.random().toString(36).slice(2,6),abilityKey:key,name:ability.name,startedAt:now(),kind:ability.activeEffect.kind,duration:ability.activeEffect.duration||''};
+  }
   function useOfficialAbility(id,key){
     var current=Service.get(id);
     if(!current)throw new Error('Personagem não encontrado.');
@@ -108,13 +123,21 @@
       var before=snapshot(character);
       var result=check.cost?Model.adjustResource(character,'primary',-check.cost):Model.normalize(character);
       incrementUse(result,key,check.limit);
+      if(check.legacyFree)cleanSession(result).legacyAwakeningFreeUsed=true;
       var effect=concentrationEffect(check.item.ability,key);
       if(effect){
         var session=cleanSession(result);
         session.activeEffects=session.activeEffects.filter(function(item){return item.kind!=='concentration';});
         session.activeEffects.push(effect);
       }
-      addHistory(result,'Usou '+check.item.ability.name,'ability',before,(check.cost?'-'+check.cost+' '+result.rules.primaryResource.label:'Sem custo'));
+      var originEffect=declaredEffect(check.item.ability,key);
+      if(originEffect){
+        var originSession=cleanSession(result);
+        originSession.activeEffects=originSession.activeEffects.filter(function(item){return item.kind!==originEffect.kind;});
+        originSession.activeEffects.push(originEffect);
+        if(originEffect.kind==='legacy-awakening')originSession.legacyAwakeningFreeUsed=false;
+      }
+      addHistory(result,'Usou '+check.item.ability.name,'ability',before,(check.legacyFree?'Sangue que Desperta: sem custo':check.cost?'-'+check.cost+' '+result.rules.primaryResource.label:'Sem custo'));
       return result;
     });
   }
@@ -148,6 +171,7 @@
       session.abilityUses.combat={};
       session.abilityUses.round={};
       session.activeEffects=[];
+      session.legacyAwakeningFreeUsed=false;
       addHistory(c,'Iniciou combate','combat',before,'Rodada 1');
       return c;
     });
@@ -160,6 +184,7 @@
       session.inCombat=false;
       session.round=0;
       session.activeEffects=[];
+      session.legacyAwakeningFreeUsed=false;
       session.abilityUses.combat={};
       session.abilityUses.round={};
       addHistory(c,'Encerrou combate','combat',before,'Recursos de combate reiniciados');
@@ -215,6 +240,8 @@
       session.inCombat=false;
       session.round=0;
       session.activeEffects=[];
+      session.legacyAwakeningFreeUsed=false;
+      if(c.heroType==='Mortal Vidente'&&Number(c.level||1)>=2)session.professionChangeAvailable=true;
       session.abilityUses.day={};
       session.abilityUses.shortRest={};
       session.abilityUses.longRest={};
@@ -246,6 +273,7 @@
       var session=cleanSession(character);
       var effect=session.activeEffects.find(function(item){return item.id===effectId;});
       session.activeEffects=session.activeEffects.filter(function(item){return item.id!==effectId;});
+      if(effect&&effect.kind==='legacy-awakening')session.legacyAwakeningFreeUsed=false;
       addHistory(character,'Encerrou '+(effect&&effect.name||'efeito ativo'),'effect',before,'');
       return character;
     });

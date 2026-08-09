@@ -42,8 +42,8 @@
     });
   }
 
-  function listHtml(items){
-    if(!Array.isArray(items)||!items.length)return '<span class="official-rule-empty">Em catalogação</span>';
+  function listHtml(items,emptyLabel){
+    if(!Array.isArray(items)||!items.length)return '<span class="official-rule-empty">'+esc(emptyLabel||'Nenhuma concedida')+'</span>';
     return '<div class="official-rule-tags">'+items.map(function(item){return '<span>'+esc(item)+'</span>';}).join('')+'</div>';
   }
 
@@ -63,6 +63,11 @@
     if(!savesPanel)return;
 
     var title=(character.heroType||'Semideus Grego')+(character.affiliation?' · '+character.affiliation:'');
+    var primary=rules.primaryResource||{},resourceLabel=primary.kind==='none'?'Sem Mana · poderes por Descanso':primary.label||'MP';
+    var originChoice='';
+    if(character.heroType==='Sátiro / Fauno')originChoice='Especialização: '+(character.originChoices&&character.originChoices.expertise||'pendente');
+    if(character.heroType==='Mortal Vidente')originChoice='Atributo-chave: '+(character.originChoices&&character.originChoices.keyAttribute||rules.casting||'—')+' · Ofício: '+(character.originChoices&&character.originChoices.profession||'libera no nível 2');
+    if(character.heroType==='Legado')originChoice='Caminho herdado: '+(character.divinePath||'pendente')+' · Ranks máximos: S';
     var html='<details class="panel official-affiliation-panel sheet-reference-panel">'+
       '<summary><span><strong>Regras da Natureza · '+esc(title)+'</strong><small>Dado de Vida, proficiências e Livro do Jogador p. '+esc(rules.sourcePages||'19–29')+'</small></span><b>Detalhes</b></summary><div class="sheet-reference-body">'+
       '<div class="official-rules-heading"><div><span class="eyebrow">REGRAS DA NATUREZA</span><h3>'+esc(title)+'</h3><p>'+esc(rules.profile||rules.domain||'')+'</p></div><span class="official-rules-icon">'+esc(rules.affiliationIcon||origin&&origin.icon||'✦')+'</span></div>'+
@@ -70,8 +75,10 @@
         '<article><span>Atributo-chave</span><strong>'+esc(rules.casting||'—')+'</strong></article>'+
         '<article><span>Dado de Vida</span><strong>d'+esc(rules.hitDie||'—')+'</strong></article>'+
         '<article><span>Resistências</span><strong>'+esc((rules.savingThrows||[]).join(' e ')||'—')+'</strong></article>'+
+        '<article><span>Recurso</span><strong>'+esc(resourceLabel)+'</strong></article>'+
       '</div>'+
       (rules.overview?'<p class="official-rules-overview">'+esc(rules.overview)+'</p>':'')+
+      (originChoice?'<p class="official-rules-overview"><strong>Escolhas da Natureza:</strong> '+esc(originChoice)+'</p>':'')+
       '<div class="official-rules-groups">'+
         '<div><strong>Perícias</strong>'+listHtml(rules.affiliationSkillProficiencies||rules.originSkillProficiencies||rules.skillProficiencies)+'</div>'+
         '<div><strong>Armas</strong>'+listHtml(rules.weaponProficiencies)+'</div>'+

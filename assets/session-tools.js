@@ -50,7 +50,7 @@
         '<button class="secondary" data-session-action="long-rest">Descanso Longo</button>'+
         '<button class="secondary" data-session-action="undo" '+(history.length?'':'disabled')+'>Desfazer última ação</button>'+
       '</div>'+
-      (effects.length?'<div class="active-effects"><strong>Efeitos ativos</strong>'+effects.map(function(effect){return '<button data-dismiss-effect="'+esc(effect.id)+'"><span>'+esc(effect.name)+'</span><small>'+esc(effect.kind==='concentration'?'Concentração':'Ativo')+'</small> ×</button>';}).join('')+'</div>':'')+
+      (effects.length?'<div class="active-effects"><strong>Efeitos ativos</strong>'+effects.map(function(effect){return '<button data-dismiss-effect="'+esc(effect.id)+'"><span>'+esc(effect.name)+'</span><small>'+esc(effect.kind==='concentration'?'Concentração':effect.duration||'Ativo')+'</small> ×</button>';}).join('')+'</div>':'')+
       (history.length?'<details class="session-history"><summary>Histórico recente</summary><div>'+history.slice(0,6).map(function(item){return '<article><strong>'+esc(item.label)+'</strong><small>'+esc(item.detail||'')+'</small></article>';}).join('')+'</div></details>':'')+
     '</section>';
   }
@@ -68,7 +68,7 @@
   function abilityCard(character,item){
     var ability=item.ability;
     var check=Runtime.canUseOfficialAbility(character,item.key);
-    var passive=/passiva/i.test(String(ability.rank)+' '+String(ability.action));
+    var passive=!ability.operational&&/passiva/i.test(String(ability.rank)+' '+String(ability.action));
     var usage=usageText(character,item,check);
     return '<details class="official-ability-card" data-ability-card="'+esc(item.key)+'"><summary><span><strong>'+esc(ability.name)+'</strong><small>Nível '+esc(ability.level)+' · Rank '+esc(ability.rank||'—')+(item.group==='path'?' · '+esc(item.pathName):'')+'</small></span><span class="ability-cost">'+esc(passive?'Passiva':costText(character,item,check))+'</span></summary><div class="official-ability-body"><div class="ability-meta"><span>'+esc(ability.action||'—')+'</span>'+(usage?'<span>'+esc(usage)+'</span>':'')+'</div><p>'+esc(ability.effect||'')+'</p>'+(passive?'<span class="ability-passive-label">Sempre ativa</span>':'<button class="primary" data-use-official="'+esc(item.key)+'" '+(check.allowed?'':'disabled title="'+esc(check.reason)+'"')+'>Usar habilidade</button>')+'</div></details>';
   }

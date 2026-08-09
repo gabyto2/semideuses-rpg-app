@@ -101,9 +101,23 @@
     (origin.rules&&origin.rules.talentBonusLevels||[]).forEach(function(unlock){if(level>=unlock)base++;});
     return base;
   }
+  function hasActiveOriginEffect(character,kind){
+    var effects=character&&character.session&&Array.isArray(character.session.activeEffects)?character.session.activeEffects:[];
+    return effects.some(function(effect){return effect&&effect.kind===kind;});
+  }
   function abilityRules(character,origin,originRules,affiliation){
     var abilities=clone(originRules.abilities||[]);
     var paths=clone(originRules.paths||[]);
+    if(origin.id==='mortal-vidente'){
+      abilities=abilities.map(function(ability){
+        if(ability.name!=='Ofício de Mortal')return ability;
+        var profession=character.originChoices&&character.originChoices.profession||'';
+        if(profession==='Investigador')return Object.assign({},ability,{rank:'Ofício',cost:0,action:'1 minuto · examinar cena',effect:'Você possui Especialização em Investigação. Ao examinar uma cena por 1 minuto, o Mestre responde a uma pergunta de sim ou não sobre o que aconteceu ali.',operational:true});
+        if(profession==='Mecânico')return Object.assign({},ability,{rank:'Ofício',cost:0,action:'Especial',effect:'Você monta, dirige e sabota qualquer máquina mortal com Vantagem. Uma vez por dia, improvise um dispositivo que resolva um problema concreto da cena.',usage:{max:1,scope:'day'},operational:true});
+        if(profession==='Sobrevivente')return Object.assign({},ability,{effect:'Você recupera 1 Ponto de Sorte ao terminar um Descanso Curto e, ao gastar um Ponto de Sorte, soma 1d4 ao resultado além da rerrolagem.'});
+        return ability;
+      });
+    }
     if(origin.id==='legado'&&affiliation){
       abilities=(affiliation.abilities||[]).filter(function(ability){return Number(ability.level||1)<=1;}).map(clone).concat(abilities);
       paths=(affiliation.paths||[]).map(function(path){return pathWithDelayedLevels(path,originRules.pathLevelMap||{});});
@@ -151,11 +165,14 @@
     var originExpertise=[];
     if(origin.id==='satiro-fauno'&&choices.expertise)originExpertise.push(choices.expertise);
     if(origin.id==='mortal-vidente'&&choices.profession==='Investigador')originExpertise.push('Investigação');
-    c.periciaExpertise=unique((c.periciaExpertise||[]).concat(originExpertise));
+    var previousOriginExpertise=raw&&raw.rules&&Array.isArray(raw.rules.originExpertise)?raw.rules.originExpertise:[];
+    c.periciaExpertise=unique((c.periciaExpertise||[]).filter(function(name){return previousOriginExpertise.indexOf(name)<0;}).concat(originExpertise));
 
     var primary=primaryFor(c,origin,originRules);
     var fullSpecial=origin.id==='legado'?clone(c.rules.specialResources||[]):[];
-    var specialDefinitions=origin.id==='legado'?dilutedSpecialDefinitions(fullSpecial):[];
+    var legacyAwakened=origin.id==='legado'&&hasActiveOriginEffect(raw,'legacy-awakening');
+    var legacyFullGain=legacyAwakened||(origin.id==='legado'&&hasActiveOriginEffect(raw,'legacy-full-signature-gain'));
+    var specialDefinitions=origin.id==='legado'?(legacyAwakened?fullSpecial:dilutedSpecialDefinitions(fullSpecial)):[];
     var hitDie=Number(originRules.hitDie||8);
     var newPvMax=Rules.maxHP(c.level,hitDie,c.attributes.CON);
     var rawPv=raw&&raw.resources&&raw.resources.pvCurrent;
@@ -171,7 +188,9 @@
       affiliationIcon:affiliation&&affiliation.icon||origin.icon||'',domain:affiliation&&affiliation.domain||'',
       profile:originRules.profile||origin.summary,overview:originRules.title||origin.summary,
       casting:originRules.casting||'SAB',hitDie:hitDie,savingThrows:unique(originRules.savingThrows||[]),
-      skillProficiencies:originSkills,originSkillProficiencies:originSkills.slice(),
+      skillProficiencies:originSkills,
+      affiliationSkillProficiencies:affiliation?clone(affiliation.skillProficiencies||[]):[],
+      originSkillProficiencies:originSkills.filter(function(name){return !affiliation||(affiliation.skillProficiencies||[]).indexOf(name)<0;}),
       weaponProficiencies:clone(originRules.weaponProficiencies||[]),armorProficiencies:clone(originRules.armorProficiencies||[]),
       progression:clone(originRules.progression||{}),signature:origin.id==='legado'&&affiliation?clone(affiliation.signature||null):null,
       abilities:abilityData.abilities,paths:abilityData.paths,resourceSystem:null,
@@ -181,7 +200,8 @@
       carryingMultiplier:Number(originRules.carryingMultiplier||1),unarmedDamage:originRules.unarmedDamage||'',
       improvisedDamage:originRules.improvisedDamage||'',passiveSkillsOnly:!!originRules.passiveSkillsOnly,
       fixedPath:origin.fixedPath||'',pathLevelMap:clone(originRules.pathLevelMap||null),
-      dilutedSignature:!!originRules.dilutedSignature,maxSkillRank:originRules.maxSkillRank||'Lendário',
+      dilutedSignature:!!originRules.dilutedSignature,signatureGainRate:legacyFullGain?'full':(originRules.dilutedSignature?'diluted':'full'),
+      legacyAwakened:legacyAwakened,maxSkillRank:originRules.maxSkillRank||'Lendário',
       talentEntitlement:talentEntitlement(origin,c.level),originExpertise:originExpertise.slice()
     });
 

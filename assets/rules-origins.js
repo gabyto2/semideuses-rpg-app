@@ -21,13 +21,13 @@
         title:'O protetor da natureza e busca-sangue',profile:'Mobilidade, exploração, controle de terreno e apoio.',
         casting:'SAB',hitDie:8,savingThrows:['DES','SAB'],skillProficiencies:[],weaponProficiencies:[],armorProficiencies:['Armaduras leves'],
         primary:{id:'mp',label:'MP Natural',kind:'pool',usesMana:true,costLabel:'MP',formula:'mana',recovery:{shortRest:{type:'fractionMax',value:.25},longRest:'max'}},
-        speed:9,talentBase:1,
+        speed:12,talentBase:1,
         progression:{1:['Pés de Bode','Empatia Selvagem','Busca-Sangue'],2:['Trilha do Bosque'],3:['Cipós Agarrantes','Canção do Pânico'],5:['Marca do Herói'],7:['Bênção da Floresta'],12:['Fúria de Pã'],15:['O Rebanho de Pã'],17:['Coração da Mata'],20:['Coração de Pã']},
         abilities:[
           ability(1,'Pés de Bode','Passiva',null,'Passiva','Sua velocidade aumenta em 3 m, você ignora terreno difícil natural e tem deslocamento de escalada igual à sua velocidade. Você recebe Especialização em Atletismo ou Acrobacia.'),
           ability(1,'Empatia Selvagem','Passiva',null,'Passiva','Você fala com animais e plantas e tem Vantagem em Lidar com Animais e Natureza. Animais comuns raramente o veem como ameaça.'),
           ability(1,'Busca-Sangue','Passiva',null,'Passiva','Você sente a presença de semideuses e monstros a até 1 km e pode rastrear o cheiro divino deles.'),
-          ability(2,'Trilha do Bosque','Passiva',null,'Passiva','Ao viajar por mata, montanha ou campo, você e até 5 companheiros ignoram terreno difícil natural e não podem ser surpreendidos por criaturas terrestres. Uma vez por dia, aponte a direção do abrigo, água potável ou saída mais próxima; o Mestre responde a verdade. Na primeira rodada de combate, sua velocidade é dobrada.'),
+          ability(2,'Trilha do Bosque','Passiva',0,'Especial · consulta diária','Ao viajar por mata, montanha ou campo, você e até 5 companheiros ignoram terreno difícil natural e não podem ser surpreendidos por criaturas terrestres. Uma vez por dia, aponte a direção do abrigo, água potável ou saída mais próxima; o Mestre responde a verdade. Na primeira rodada de combate, sua velocidade é dobrada.',{usage:usage(1,'day'),operational:true}),
           ability(20,'Coração de Pã','Feito de origem',0,'Ação · 1 minuto','Por 1 minuto, a vegetação obedece a você em 18 m: terreno difícil para inimigos, cobertura e cura de 2d8 por turno para aliados que terminam o turno na área.',{usage:usage(1,'day')})
         ],
         paths:[{id:'natureza-selvagem',name:'Caminho da Natureza Selvagem',summary:'A mata viva atrasa, assusta, cura e transforma o terreno em aliado.',abilities:[
@@ -77,7 +77,7 @@
         progression:{1:['Visão Clara','Sorte do Mortal','Engenhosidade Humana','Improviso'],2:['Ofício de Mortal'],3:['Reflexo de Sobrevivência'],5:['Marca do Herói: Ataque Extra'],7:['Adrenalina'],12:['Olho do Caçador'],15:['O Plano B'],17:['Lenda Improvável'],20:['Olhos Totalmente Abertos']},
         abilities:[
           ability(1,'Visão Clara','Passiva',null,'Passiva','Você enxerga através da Névoa, vê monstros e deuses como realmente são, tem Vantagem contra ilusões e nunca é enganado por disfarces da Névoa.'),
-          ability(1,'Sorte do Mortal','Passiva',null,'Passiva','Você tem Pontos de Sorte iguais ao Bônus de Proficiência, recuperados no Descanso Longo. Gaste 1 para rolar novamente qualquer d20 seu ou forçar um inimigo a rolar novamente um ataque contra você.'),
+          ability(1,'Sorte do Mortal','Passiva',1,'Especial · após a rolagem','Você tem Pontos de Sorte iguais ao Bônus de Proficiência, recuperados no Descanso Longo. Gaste 1 para rolar novamente qualquer d20 seu ou forçar um inimigo a rolar novamente um ataque contra você.',{operational:true}),
           ability(1,'Engenhosidade Humana','Passiva',null,'Passiva','Você começa com 2 Talentos no nível 1, ganha um Talento extra nos níveis 6, 11 e 16 e possui duas perícias treinadas adicionais.'),
           ability(1,'Improviso','Passiva',null,'Passiva','Você tem proficiência com armas e ferramentas improvisadas e Vantagem ao usar tecnologia mortal de forma criativa contra o sobrenatural.'),
           ability(2,'Ofício de Mortal','Passiva',null,'Escolha após Descanso Longo','Escolha Investigador, Mecânico ou Sobrevivente. Investigador recebe Especialização em Investigação e pode examinar uma cena por 1 minuto para obter uma resposta de sim ou não. Mecânico opera e sabota máquinas com Vantagem e improvisa um dispositivo 1 vez por dia. Sobrevivente recupera 1 Ponto de Sorte no Descanso Curto e soma 1d4 ao gastar Sorte.'),
@@ -106,8 +106,8 @@
           ability(1,'Versatilidade Romana','Passiva',null,'Passiva','Você ganha 1 Talento extra no nível 1, duas perícias treinadas adicionais e pode escolher Talentos de qualquer categoria.'),
           ability(1,'Disciplina de Legião','Passiva',null,'Passiva','Você tem Vantagem em Testes de Resistência contra medo e em testes para manter a compostura sob pressão.'),
           ability(2,'Escudo do Camarada','—',0,'Reação','Quando um aliado a até 1,5 m for alvo de um ataque, tome o ataque para si ou conceda +2 na CA contra ele. Se errar por causa disso, você e o aliado recebem +1 em ataques até o fim do seu próximo turno.',{usage:usage(1,'round')}),
-          ability(15,'A Águia da Legião','A',8,'Ação','Finca um estandarte a até 9 m até o fim do combate (CA 16, 40 PV). Em 9 m, aliados são imunes a Apavorado, recebem +1 em ataques e Testes de Resistência e recuperam 1d6 PV no início do turno. Sua Assinatura gera recurso no ritmo cheio, mantendo o teto pela metade.'),
-          ability(20,'Sangue que Desperta','Feito de origem',0,'Ação Bônus · 1 minuto','Por 1 minuto, a Assinatura Diluída opera com os tetos cheios da Filiação e, uma vez, você usa uma habilidade de Rank A da Filiação sem pagar MP.',{usage:usage(1,'day')})
+          ability(15,'A Águia da Legião','A',8,'Ação','Finca um estandarte a até 9 m até o fim do combate (CA 16, 40 PV). Em 9 m, aliados são imunes a Apavorado, recebem +1 em ataques e Testes de Resistência e recuperam 1d6 PV no início do turno. Sua Assinatura gera recurso no ritmo cheio, mantendo o teto pela metade.',{activeEffect:{kind:'legacy-full-signature-gain',duration:'combat'}}),
+          ability(20,'Sangue que Desperta','Feito de origem',0,'Ação Bônus · 1 minuto','Por 1 minuto, a Assinatura Diluída opera com os tetos cheios da Filiação e, uma vez, você usa uma habilidade de Rank A da Filiação sem pagar MP.',{usage:usage(1,'day'),activeEffect:{kind:'legacy-awakening',duration:'1 minuto'}})
         ]
       }
     }

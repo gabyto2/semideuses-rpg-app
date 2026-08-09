@@ -19,9 +19,11 @@
     var background=getBackground(c.background);
     c.rules=c.rules||{};
     c.rules.background=background?clone(background):null;
-    c.rules.affiliationSkillProficiencies=(c.rules.skillProficiencies||[]).slice();
+    var hasOriginSources=Array.isArray(c.rules.originSkillProficiencies);
+    c.rules.affiliationSkillProficiencies=hasOriginSources?(c.rules.affiliationSkillProficiencies||[]).slice():(c.rules.skillProficiencies||[]).slice();
+    c.rules.originSkillProficiencies=hasOriginSources?c.rules.originSkillProficiencies.slice():[];
     c.rules.backgroundSkillProficiencies=background?(background.skillProficiencies||[]).slice():[];
-    c.rules.skillProficiencies=unique(c.rules.affiliationSkillProficiencies.concat(c.rules.backgroundSkillProficiencies));
+    c.rules.skillProficiencies=unique(c.rules.affiliationSkillProficiencies.concat(c.rules.originSkillProficiencies,c.rules.backgroundSkillProficiencies));
     c.rules.toolProficiencies=background&&background.toolProficiency?[background.toolProficiency]:[];
     c.rules.backgroundTrait=background?clone(background.trait):null;
     c.rules.backgroundBond=background&&background.bond||'';

@@ -16,6 +16,7 @@
     return [c.id,c.level,c.heroType,c.divinePath,c.heroMark,JSON.stringify(c.originChoices||{}),JSON.stringify(c.skills||[]),JSON.stringify(c.talents||[]),
       JSON.stringify(c.periciaProficiencies||[]),JSON.stringify(c.periciaExpertise||[]),
       JSON.stringify(c.session&&c.session.abilityUses||{}),JSON.stringify(c.session&&c.session.turnEconomy||{}),
+      JSON.stringify(c.session&&c.session.activeEffects||[]),c.session&&c.session.professionChangeAvailable,
       c.resources&&c.resources.primaryCurrent,c.resources&&c.resources.mpCurrent].join('|');
   }
   function statsKey(c){
@@ -31,6 +32,7 @@
       '<article class="ca-main"><span>CA</span><strong>'+c.rules.armorClass+'</strong><small>'+esc(c.rules.armorClassFormula)+' · regra do projeto</small></article>'+
       '<article><span>Iniciativa</span><strong>'+signed(c.rules.initiative)+'</strong><small>DES + Reflexos de TDAH</small></article>'+
       '<article><span>Percepção Passiva</span><strong>'+c.rules.passivePerception+'</strong><small>10 + Percepção</small></article>'+
+      '<article><span>Deslocamento</span><strong>'+Number(c.rules.speed||9)+' m</strong><small>'+(c.heroType==='Sátiro / Fauno'?'Pés de Bode incluído':'Base terrestre')+'</small></article>'+
       '<article><span>CD de Habilidade</span><strong>'+c.rules.abilityDC+'</strong><small>8 + Prof. + '+esc(c.rules.casting)+'</small></article>'+
       '<article><span>Ataque de '+magicLabel+'</span><strong>'+signed(c.rules.castingAttackBonus)+'</strong><small>Prof. + '+esc(c.rules.casting)+'</small></article>'+
       '<article><span>Proficiência</span><strong>+'+c.rules.proficiency+'</strong><small>Nível '+c.level+'</small></article></section>';
@@ -50,7 +52,7 @@
     }).join('')+'</nav>';
   }
   function officialAbility(c,item){
-    var a=item.ability,passive=/passiva|escolha permanente/i.test(String(a.rank)+' '+String(a.action));
+    var a=item.ability,passive=!a.operational&&/passiva|escolha permanente/i.test(String(a.rank)+' '+String(a.action));
     var check=Runtime&&Runtime.canUseOfficialAbility?Runtime.canUseOfficialAbility(c,item.key):{allowed:false,cost:Number(a.cost||0),reason:''};
     var badge=passive?'Passiva':check.limit?String(check.remaining==null?check.limit.max:check.remaining)+'/'+check.limit.max+' usos':check.cost?check.cost+' '+esc(c.rules.primaryResource.label):'Sem custo';
     return '<details class="command-ability"><summary><span><strong>'+esc(a.name)+'</strong><small>Nv '+a.level+' · Rank '+esc(a.rank||'—')+' · '+esc(a.action||'—')+'</small></span><b>'+
@@ -61,9 +63,16 @@
   }
   function powersTab(c){
     var list=Runtime?Runtime.abilityCatalog(c).filter(function(item){return item.group==='base';}):[];
+    var profession='';
+    if(c.heroType==='Mortal Vidente'){
+      var current=c.originChoices&&c.originChoices.profession||'Pendente';
+      var available=c.session&&c.session.professionChangeAvailable;
+      var descriptions={Investigador:'Especialização em Investigação e leitura de cenas.',Mecânico:'Máquinas, sabotagem e dispositivo improvisado.',Sobrevivente:'Recupera Sorte no Descanso Curto e soma 1d4.'};
+      profession='<div class="command-warning mortal-profession"><strong>Ofício de Mortal · '+esc(current)+'</strong><p>'+(available?'O Descanso Longo liberou uma troca. Escolha o novo Ofício ou mantenha o atual.':'A troca fica disponível depois de um Descanso Longo.')+'</p>'+(available?'<div class="command-row-actions">'+['Investigador','Mecânico','Sobrevivente'].map(function(name){return '<button class="secondary" data-command-profession="'+name+'" '+(name===current?'disabled':'')+' title="'+esc(descriptions[name])+'">'+name+'</button>';}).join('')+'</div>':'')+'</div>';
+    }
     return '<div class="command-tab-head"><div><span class="eyebrow">'+(c.affiliation?'FILIAÇÃO E ORIGEM':'ORIGEM')+'</span><h3>'+esc(c.rules.heroSourceLabel||c.heroType||c.affiliation)+'</h3><p>'+
       esc(c.rules.signature&&c.rules.signature.name?'Assinatura: '+c.rules.signature.name:'Poderes desbloqueados no nível atual.')+
-      '</p></div></div><div class="command-ability-list">'+list.map(function(item){return officialAbility(c,item);}).join('')+'</div>';
+      '</p></div></div>'+profession+'<div class="command-ability-list">'+list.map(function(item){return officialAbility(c,item);}).join('')+'</div>';
   }
   function pathTab(c){
     if(c.level<3&&c.heroType!=='Legado')return '<div class="command-empty"><strong>Caminho Divino</strong><p>Libera no nível 3.</p></div>';
@@ -169,6 +178,7 @@
     var c=character();if(!c)return;
     var tab=event.target.closest('[data-command-tab]');if(tab){activeTab=tab.dataset.commandTab;render(true);return;}
     var ability=event.target.closest('[data-command-use-ability]');if(ability){try{Runtime.useOfficialAbility(c.id,ability.dataset.commandUseAbility);refresh();}catch(error){alert(error.message);}return;}
+    var profession=event.target.closest('[data-command-profession]');if(profession){try{Service.setMortalProfession(c.id,profession.dataset.commandProfession);refresh();}catch(error){alert(error.message);}return;}
     var skill=event.target.closest('[data-command-use-skill]');if(skill){try{if(Runtime&&Runtime.useLearnedSkill)Runtime.useLearnedSkill(c.id,skill.dataset.commandUseSkill);else Service.useSkill(c.id,skill.dataset.commandUseSkill);refresh();}catch(error){alert(error.message);}return;}
     var removeSkill=event.target.closest('[data-command-remove-skill]');if(removeSkill){if(confirm('Remover esta Skill da ficha?'))try{Service.removeSkill(c.id,removeSkill.dataset.commandRemoveSkill);refresh();}catch(error){alert(error.message);}return;}
     var pericia=event.target.closest('[data-pericia-toggle]');

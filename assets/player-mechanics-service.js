@@ -91,6 +91,20 @@
     });
   }
   function removeTalent(id,talentRecordId){return Service.update(id,function(character){character.talents=(character.talents||[]).filter(function(item){return item.id!==talentRecordId;});return character;});}
+  function setMortalProfession(id,profession){
+    var allowed=['Investigador','Mecânico','Sobrevivente'];
+    if(allowed.indexOf(profession)<0)throw new Error('Ofício de Mortal inválido.');
+    return Service.update(id,function(character){
+      character=Model.normalize(character);
+      if(character.heroType!=='Mortal Vidente')throw new Error('Apenas o Mortal Vidente escolhe Ofício de Mortal.');
+      character.session=character.session||{};
+      if(character.originChoices&&character.originChoices.profession&&!character.session.professionChangeAvailable)throw new Error('O Ofício só pode ser trocado após um Descanso Longo.');
+      character.originChoices=character.originChoices||{};
+      character.originChoices.profession=profession;
+      character.session.professionChangeAvailable=false;
+      return character;
+    });
+  }
 
   Service.version='3e-service-0.5.0';
   Service.setPericiaState=setPericiaState;
@@ -100,4 +114,5 @@
   Service.talentPrerequisite=talentPrerequisite;
   Service.addTalent=addTalent;
   Service.removeTalent=removeTalent;
+  Service.setMortalProfession=setMortalProfession;
 })(window);
