@@ -93,10 +93,36 @@ async function pathSummaryIsNotDuplicated(){
   dom.window.close();
 }
 
+async function commandCenterDoesNotLockScrolling(){
+  const character={id:'helena',resources:{pvCurrent:20,primaryCurrent:8},rules:{pvMax:20,primaryMax:10}};
+  const center='<section data-command-center><details open><summary><strong>Espinho</strong></summary><button data-command-use-ability="base:espinho">Usar</button></details></section><span data-resource-display="pv"></span><span data-resource-display="mp"></span>';
+  const dom=new JSDOM('<!doctype html><div id="app">'+center+'</div>',{url:'https://example.test/',runScripts:'outside-only',pretendToBeVisual:true});
+  const window=dom.window;
+  let changed=false,scrollByCalls=0,scrollToCalls=0;
+  window.scrollBy=()=>{scrollByCalls++;};window.scrollTo=()=>{scrollToCalls++;};
+  window.HTMLElement.prototype.getBoundingClientRect=function(){if(this.matches&&this.matches('[data-command-center] details'))return {top:changed?120:220};return {top:0};};
+  window.SemideusesApp={getEditing:()=>character};
+  window.SemideusesCharacterService={get:()=>character};
+  window.SemideusesCharacter={};
+  window.SemideusesRulesDatabase={listTalents:()=>[]};
+  window.SemideusesSessionRuntime={useOfficialAbility:()=>{changed=true;window.document.querySelector('[data-command-center]').innerHTML='<details><summary><strong>Espinho</strong></summary><button data-command-use-ability="base:espinho">Usar</button></details>';}};
+  window.eval(source('command-center-stability-v2.js'));
+  window.document.querySelector('[data-command-use-ability]').click();
+  await wait(30);
+  assert.equal(scrollByCalls,1,'Usar uma habilidade deve corrigir a posição do cartão uma única vez.');
+  assert.equal(scrollToCalls,0,'A Central de Habilidades não pode prender a tela em uma coordenada absoluta.');
+  assert(window.document.querySelector('[data-command-center] details').open,'O cartão que estava aberto deve continuar aberto.');
+  window.dispatchEvent(new window.CustomEvent('semideuses:character-updated'));
+  await wait(20);
+  assert.equal(scrollByCalls,1,'Atualizações posteriores não podem repetir a correção de rolagem.');
+  dom.window.close();
+}
+
 (async()=>{
   appLifecycle();
   await enhancementLifecycle();
   await unsupportedOriginHasNoDeadLinks();
   await pathSummaryIsNotDuplicated();
+  await commandCenterDoesNotLockScrolling();
   console.log('render-lifecycle.test: OK');
 })().catch(error=>{console.error(error);process.exitCode=1;});
