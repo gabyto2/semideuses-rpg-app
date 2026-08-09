@@ -126,6 +126,22 @@ Transformar o módulo Mestre em uma ferramenta de uso durante a sessão, começa
 
 O primeiro fluxo não inclui um bestiário improvisado. A Mesa aceita os valores informados pelo Mestre e reutiliza somente regras já implementadas, como PV, CA, iniciativa e condições. Criaturas prontas entram numa fase própria, depois de catalogar e validar a fonte oficial; isso evita publicar estatísticas inventadas como se fossem regra do livro.
 
+### Complemento do jogador — Diário da ficha
+
+- [x] Atalho `Anotações` incluído na navegação rápida da ficha.
+- [x] Entradas vinculadas individualmente ao personagem, sem misturar jogadores.
+- [x] Tipos `Sessão`, `Profecia`, `Ideia` e `Geral` com filtros próprios.
+- [x] Título opcional, data, texto, edição e exclusão.
+- [x] Campo antigo de notas preservado e migrável sem perda.
+- [x] Anotações incluídas no mesmo armazenamento e exportação da ficha.
+- [ ] Validação real no celular pelo usuário.
+
+### Fontes oficiais aprovadas
+
+O cânone mecânico do aplicativo é formado exclusivamente pelo **Livro do Jogador 3e** e pelo **Livro do Mestre 3e**. Bestiário, criaturas, regras, dificuldades, recompensas e quaisquer números devem ser transcritos e referenciados a partir desses livros. O app não completa lacunas por analogia, memória ou regra de outro sistema.
+
+Quando os dois livros tratarem do mesmo assunto de forma diferente, a discrepância deve ser registrada e apresentada antes de escolher qual comportamento implementar. Conteúdo criado para uma campanha pode existir, mas precisa aparecer claramente como `Personalizado`, nunca como regra oficial.
+
 ### Próximas fases propostas
 
 1. Bestiário pesquisável e fichas de criaturas, condicionado à fonte oficial validada.
@@ -214,6 +230,7 @@ Os testes atuais cobrem regras, DOM, navegação e build, mas não reproduzem pe
 - PV temporários e Dados de Vida ficam junto dos PV.
 - Recursos de Filiação ficam junto das Habilidades.
 - Heróis Além do Sangue disponíveis: Sátiro/Fauno, Ciclope, Mortal Vidente e Legado.
+- Livro do Jogador 3e e Livro do Mestre 3e são as únicas fontes oficiais de regras e Bestiário.
 - Informações secundárias podem iniciar recolhidas, mas funções de sessão devem permanecer fáceis de encontrar.
 - Produção não acompanha automaticamente cada commit do `develop`.
 
@@ -232,4 +249,4 @@ Um item só recebe `[x]` quando:
 
 ## Próxima ação
 
-Validar a Mesa de Sessão no Deploy Preview e, depois, mapear a fonte oficial necessária para iniciar o Bestiário sem inventar estatísticas.
+Validar a Mesa de Sessão e o Diário da ficha no Deploy Preview. Depois, catalogar o Bestiário diretamente do Livro do Mestre e cruzar cada criatura com qualquer regra complementar do Livro do Jogador.
