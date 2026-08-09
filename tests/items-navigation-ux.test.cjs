@@ -79,8 +79,25 @@ async function inventoryIsPrimaryAndEquips(){
   dom.window.close();
 }
 
+async function creationReviewRemainsVisible(){
+  const dom=new JSDOM('<!doctype html><main><section class="wizard-head"><h2>Revisão</h2></section><section class="panel wizard-card"><h3>Revisão</h3><div class="review-grid">Ficha completa</div><h3>Atributos</h3></section><section data-equipment-center></section></main>',{url:'https://example.test/',runScripts:'outside-only',pretendToBeVisual:true});
+  const window=dom.window;
+  window.scrollTo=()=>{};window.scrollBy=()=>{};
+  window.SemideusesCharacter={};
+  window.SemideusesRulesDatabase={listEquipment:()=>[]};
+  window.SemideusesCharacterService={get:()=>null};
+  window.SemideusesApp={getEditing:()=>null};
+  window.eval(source('stability-items-ux.js'));
+  await wait(30);
+  const review=window.document.querySelector('.wizard-card');
+  assert(!review.classList.contains('legacy-attributes-duplicate'),'O resumo da criação não pode ser confundido com o painel antigo de Atributos.');
+  assert.notEqual(review.getAttribute('aria-hidden'),'true','A revisão final precisa permanecer visível antes de salvar.');
+  dom.window.close();
+}
+
 (async()=>{
   await compendiumReturnsToSheet();
   await inventoryIsPrimaryAndEquips();
+  await creationReviewRemainsVisible();
   console.log('items-navigation-ux.test: OK');
 })().catch(error=>{console.error(error);process.exitCode=1;});

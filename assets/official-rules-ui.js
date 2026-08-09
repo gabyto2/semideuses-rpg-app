@@ -36,6 +36,8 @@
       if(button.querySelector('.official-path-summary'))return;
       var path=paths.find(function(item){return item.name===button.dataset.path;});
       if(!path||!path.summary)return;
+      var existing=Array.prototype.find.call(button.querySelectorAll('small'),function(small){return small.textContent.trim()===String(path.summary).trim();});
+      if(existing){existing.classList.add('official-path-summary');return;}
       button.insertAdjacentHTML('beforeend','<small class="official-path-summary">'+esc(path.summary)+'</small>');
     });
   }

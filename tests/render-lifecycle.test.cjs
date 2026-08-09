@@ -77,9 +77,26 @@ async function unsupportedOriginHasNoDeadLinks(){
   dom.window.close();
 }
 
+async function pathSummaryIsNotDuplicated(){
+  const character={id:'helena',affiliation:'Deméter',divinePath:'',rules:{paths:[{name:'Caminho das Estações',summary:'O ciclo eterno alterna cura, dano e controle.'}]}};
+  const html='<section class="wizard-head"><h2>Caminho</h2></section><section class="wizard-card"><button data-path="Caminho das Estações"><strong>Caminho das Estações</strong><small>O ciclo eterno alterna cura, dano e controle.</small></button></section>';
+  const dom=new JSDOM('<!doctype html><div id="app">'+html+'</div>',{url:'https://example.test/',runScripts:'outside-only',pretendToBeVisual:true});
+  const window=dom.window;
+  window.SemideusesApp={getEditing:()=>character};
+  window.SemideusesCharacterService={get:()=>character,list:()=>[character]};
+  window.SemideusesRulesDatabase={getAffiliation:()=>({paths:character.rules.paths})};
+  window.eval(source('official-rules-ui.js'));
+  await wait(20);
+  const summaries=window.document.querySelectorAll('[data-path] small');
+  assert.equal(summaries.length,1,'O resumo do Caminho deve aparecer uma única vez na criação.');
+  assert(summaries[0].classList.contains('official-path-summary'),'O resumo já renderizado deve ser reconhecido pela melhoria oficial.');
+  dom.window.close();
+}
+
 (async()=>{
   appLifecycle();
   await enhancementLifecycle();
   await unsupportedOriginHasNoDeadLinks();
+  await pathSummaryIsNotDuplicated();
   console.log('render-lifecycle.test: OK');
 })().catch(error=>{console.error(error);process.exitCode=1;});

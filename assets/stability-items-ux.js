@@ -48,6 +48,9 @@ function queuePositionRestore(){
 }
 
 function hideLegacy(){
+  var wizard=document.querySelector('.wizard-card.legacy-attributes-duplicate');
+  if(wizard){wizard.classList.remove('legacy-attributes-duplicate');wizard.removeAttribute('aria-hidden');}
+  if(document.querySelector('.wizard-head')||!document.querySelector('.resource-grid'))return;
   Array.prototype.forEach.call(document.querySelectorAll('.panel > h3'),function(h){
     if(h.textContent.trim()==='Atributos'){
       var p=h.closest('.panel');if(p){p.classList.add('legacy-attributes-duplicate');p.setAttribute('aria-hidden','true');}
