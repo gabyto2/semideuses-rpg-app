@@ -90,5 +90,27 @@
       return character;
     });
   }
-  global.SemideusesEvolutionRuntime={version:'3e-evolution-runtime-0.2.0',gainFor:gainFor,preview:preview,validateChoice:validateChoice,apply:apply,talentAllowed:talentAllowed};
+  function finalizeCreation(id,targetLevel){
+    return Service.update(id,function(character){
+      character=Model.calculate(character);
+      character.resources.pvCurrent=character.rules.pvMax;
+      character.resources.hitDiceCurrent=Number(character.resources.hitDiceMax||character.level||1);
+      if(character.rules.primaryResource&&character.rules.primaryResource.kind!=='none')character=Model.setResource(character,'primary',character.rules.primaryMax);
+      character.creationTargetLevel=0;
+      character.creationCompletedAt=new Date().toISOString();
+      return character;
+    });
+  }
+  function advanceToDecision(id,targetLevel){
+    var target=Math.max(1,Math.min(20,Number(targetLevel||1))),skipped=[],character=Service.get(id);
+    if(!character)throw new Error('Personagem não encontrado.');
+    while(character.level<target){
+      var data=preview(id),errors=validateChoice(data,{});
+      if(errors.length)return {complete:false,targetLevel:target,character:character,data:data,skippedLevels:skipped,errors:errors};
+      character=apply(id,{});skipped.push(character.level);
+    }
+    character=finalizeCreation(id,target);
+    return {complete:true,targetLevel:target,character:character,data:null,skippedLevels:skipped,errors:[]};
+  }
+  global.SemideusesEvolutionRuntime={version:'3e-evolution-runtime-0.3.0',gainFor:gainFor,preview:preview,validateChoice:validateChoice,apply:apply,advanceToDecision:advanceToDecision,finalizeCreation:finalizeCreation,talentAllowed:talentAllowed};
 })(window);

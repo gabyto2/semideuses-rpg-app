@@ -9,5 +9,8 @@
 .origin-skill-grid .choice{padding:10px;min-height:66px}
 .origin-attribute-grid{grid-template-columns:repeat(6,minmax(0,1fr))}
 .origin-attribute-grid .choice{text-align:center}
+.creation-level-control{grid-template-columns:1fr minmax(110px,180px) 56px}
+.creation-level-control select{width:100%;height:42px;border:1px solid var(--line);border-radius:10px;padding:0 12px;background:#fff;color:var(--blue);font-size:16px;font-weight:800}
+.level-readonly{grid-template-columns:1fr 56px}
 @media(max-width:700px){.origin-skill-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.origin-attribute-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:560px){.nature-choice-head{align-items:flex-start}.nature-choice-head .status{white-space:nowrap}}
+@media(max-width:560px){.nature-choice-head{align-items:flex-start}.nature-choice-head .status{white-space:nowrap}.creation-level-control{grid-template-columns:1fr 90px 50px}.creation-level-control select{grid-column:auto}.level-readonly{grid-template-columns:1fr 50px}}

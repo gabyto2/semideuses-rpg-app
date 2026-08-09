@@ -60,12 +60,15 @@ assert(!window.document.querySelector('[data-open-characters]'),'Não deve exist
 
 window.document.querySelector('[data-new]').click();
 assert.equal(window.document.querySelector('.wizard-head h2').textContent,'Conceito');
-assert.equal(window.document.querySelector('.wizard-head small').textContent,'Passo 1 de 9');
+assert.equal(window.document.querySelector('.wizard-head small').textContent,'Passo 1 de 7','Caminho e Marca bloqueados não devem contar como etapas no nível 1.');
 window.document.querySelector('[data-next]').click();
 assert.equal(window.document.querySelector('.wizard-head h2').textContent,'Identidade');
-assert.equal(window.document.querySelectorAll('[data-level-delta]').length,0,'Ficha nova não deve pular escolhas de evolução por um seletor de nível inicial.');
-assert.equal(window.document.querySelector('[data-field="level"]'),null,'Nível só pode subir pelo fluxo Evoluir ficha.');
-assert(window.document.querySelector('.wizard-card').textContent.includes('Novas fichas começam no nível 1'));
+const targetLevel=window.document.querySelector('[data-target-level]');
+assert(targetLevel,'A criação deve permitir escolher o nível da campanha.');
+targetLevel.value='5';targetLevel.dispatchEvent(new window.Event('change',{bubbles:true}));
+assert.equal(window.document.querySelector('[data-level-display]').textContent,'5');
+assert(window.document.querySelector('.wizard-card').textContent.includes('níveis sem decisão serão aplicados automaticamente'));
+window.document.querySelector('[data-target-level]').value='1';window.document.querySelector('[data-target-level]').dispatchEvent(new window.Event('change',{bubbles:true}));
 window.document.querySelector('[data-next]').click();
 assert.equal(window.document.querySelector('.wizard-head h2').textContent,'Natureza','A criação deve preservar a etapa que futuramente muda o motor de origem.');
 const availableOrigins=[...window.document.querySelectorAll('[data-origin]')].map(option=>option.textContent);
@@ -75,6 +78,13 @@ window.document.querySelector('[data-origin="ciclope"]').click();
 window.document.querySelector('[data-next]').click();
 assert.equal(window.document.querySelector('.wizard-head h2').textContent,'Detalhes da origem');
 assert(window.document.querySelector('.wizard-card').textContent.includes('não exige uma escolha adicional'));
+window.document.querySelector('[data-next]').click();
+assert.equal(window.document.querySelector('.wizard-head h2').textContent,'Atributos');
+window.document.querySelector('[data-next]').click();
+assert.equal(window.document.querySelector('.wizard-head h2').textContent,'Antecedente');
+window.document.querySelector('[data-next]').click();
+assert.equal(window.document.querySelector('.wizard-head h2').textContent,'Revisão','Ciclope de nível 1 deve pular Caminho e Marca sem mostrar telas bloqueadas.');
+assert.equal(window.document.querySelector('.wizard-head small').textContent,'Passo 7 de 7');
 
 window.document.querySelector('[data-cancel]').click();
 window.document.querySelector('[data-open-sheet="atena-17"]').click();

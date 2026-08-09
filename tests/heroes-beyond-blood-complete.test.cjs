@@ -84,6 +84,48 @@ assert(Evolution.validateChoice(level6,{skillMode:'custom',customSkillName:'Prep
 level5=Evolution.apply('mortal-5',{skillMode:'custom',customSkillName:'Preparação Improvável',originTalentId:talent.id});
 assert(level5.talents.some(item=>item.source==='Engenhosidade Humana'),'O Talento extra deve ser salvo pela evolução.');
 
+function rapidChoices(data){
+  const choices={};
+  if(data.gain.skillRank)Object.assign(choices,{skillMode:'custom',customSkillName:'Skill rápida Rank '+data.gain.skillRank});
+  if(data.gain.attributeAndTalent){
+    const eligible=data.talentOptions.find(item=>!item.choice);
+    assert(eligible,'A criação rápida precisa oferecer um Talento sem escolha complementar para o teste.');
+    Object.assign(choices,{attribute:'FOR',talentId:eligible.id});
+  }
+  if(data.gain.attributeOrTalent)Object.assign(choices,{advancementChoice:'attribute',attribute:'FOR'});
+  return choices;
+}
+function finishRapid(id,targetLevel){
+  let decisions=0;
+  for(let guard=0;guard<25;guard++){
+    const progress=Evolution.advanceToDecision(id,targetLevel);
+    if(progress.complete)return {character:progress.character,decisions};
+    decisions++;
+    Evolution.apply(id,rapidChoices(progress.data));
+  }
+  throw new Error('A criação acelerada não chegou ao nível alvo.');
+}
+let quick5=Model.create({...base,id:'quick-5',heroType:'Semideus Grego',affiliation:'Atena',divinePath:'Caminho da Estratégia',heroMark:'Ataque Extra',level:1,creationTargetLevel:5});
+store['quick-5']=quick5;
+const quick5Result=finishRapid('quick-5',5);
+assert.equal(quick5Result.character.level,5);
+assert.equal(quick5Result.decisions,2,'Do nível 1 ao 5, só Skill do nível 3 e atributo/Talento do nível 4 devem interromper a criação.');
+assert.equal(quick5Result.character.creationTargetLevel,0);
+assert.equal(quick5Result.character.resources.pvCurrent,quick5Result.character.rules.pvMax,'Personagem recém-criado deve terminar com PV cheios no nível alvo.');
+
+let quick15=Model.create({...base,id:'quick-15',heroType:'Semideus Grego',affiliation:'Atena',divinePath:'Caminho da Estratégia',heroMark:'Ataque Extra',level:1,creationTargetLevel:15});
+store['quick-15']=quick15;
+const quick15Result=finishRapid('quick-15',15);
+assert.equal(quick15Result.character.level,15);
+assert.equal(quick15Result.decisions,7,'Uma ficha de nível 15 deve pedir 4 Skills e 3 escolhas de atributo/Talento, não 14 evoluções.');
+
+let quick20=Model.create({...base,id:'quick-20',heroType:'Semideus Grego',affiliation:'Atena',divinePath:'Caminho da Estratégia',heroMark:'Ataque Extra',level:1,creationTargetLevel:20});
+store['quick-20']=quick20;
+const quick20Result=finishRapid('quick-20',20);
+assert.equal(quick20Result.character.level,20);
+assert.equal(quick20Result.decisions,10,'Uma ficha de nível 20 deve pedir apenas as 5 Skills e as 5 escolhas de atributo/Talento, não 19 evoluções.');
+assert.equal(quick20Result.character.skills.length,5);
+
 let legacy=Model.create({...base,id:'legacy',heroType:'Legado',affiliation:'Atena',divinePath:'Caminho da Estratégia',level:20,heroMark:'Ataque Extra',originChoices:{skills:['Percepção','Atletismo']}});
 store.legacy=legacy;
 const commandBefore=legacy.rules.specialResources.find(item=>item.id==='command').max;

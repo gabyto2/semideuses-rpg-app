@@ -88,9 +88,18 @@ Concluir Sátiro/Fauno, Ciclope, Mortal Vidente e Legado em todo o lado do jogad
 
 A área do Mestre não começa enquanto houver opção de Natureza que apenas exiba texto sem aplicar a escolha, ação limitada sem rastreamento, evolução que pule ganho obrigatório, botão de regra sem destino ou regressão de persistência.
 
-### Discrepância resolvida
+### Criação em nível de campanha
 
-Uma criação acima do nível 1 pulava escolhas intermediárias de Skills e Talentos do fluxo `Evoluir ficha`. A decisão de produto da S2 é iniciar novas fichas no nível 1 e concentrar toda progressão no assistente de evolução. Um assistente de criação avançada só deve voltar ao backlog se houver necessidade real de cadastrar campanhas já iniciadas.
+Impedir a criação acima do nível 1 corrigia o salto indevido de Skills e Talentos, mas tornava campanhas já iniciadas e one-shots desnecessariamente cansativas. A solução adotada separa duas coisas:
+
+- a ficha-base sempre nasce mecanicamente no nível 1, preservando a ordem correta das regras;
+- o jogador escolhe na criação o nível da campanha, de 1 a 20;
+- níveis sem decisão são aplicados automaticamente;
+- o assistente interrompe somente quando há uma escolha real, como Skill, Talento, atributo ou Ofício;
+- Caminho e Marca aparecem na criação apenas quando o nível e a Natureza realmente os exigem;
+- se a criação acelerada for pausada, a ficha mantém a meta e permite continuar depois.
+
+Não serão escolhidos automaticamente Talentos, Skills ou atributos, porque isso definiria a construção da personagem sem decisão do jogador.
 
 ## S1 — ficha clara e estável no celular
 
