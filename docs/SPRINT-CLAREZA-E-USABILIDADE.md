@@ -83,6 +83,7 @@ Concluir Sátiro/Fauno, Ciclope, Mortal Vidente e Legado em todo o lado do jogad
 - [x] Testes específicos e testes centrais passam.
 - [x] Build e Deploy Preview passam.
 - [x] Fluxos principais são conferidos no preview.
+- [x] Ficha recém-criada inicializa a economia de ações sem erros repetidos no navegador.
 
 ### Portão para a área do Mestre
 

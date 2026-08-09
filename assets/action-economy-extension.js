@@ -14,9 +14,9 @@
   Session.startCombat=function(id){oldStart(id);return Service.update(id,function(c){return reset(c);});};
   Session.nextRound=function(id){oldNext(id);return Service.update(id,function(c){return reset(c);});};
   Session.endCombat=function(id){oldEnd(id);return Service.update(id,function(c){return reset(c);});};
-  Session.turnEconomy=function(character){var c=Model.normalize(character);return Object.assign({inCombat:!!c.session.inCombat},clean(c));};
+  Session.turnEconomy=function(character){var c=Model.normalize(character),economy=clean(c);return Object.assign({inCombat:!!c.session.inCombat},economy);};
   Session.actionInfo=actionInfo;
   Session.markAction=function(id,type,used){if(['action','bonus','reaction'].indexOf(type)<0)throw new Error('Tipo de ação inválido.');return Service.update(id,function(c){var e=clean(c);e[type]=used!==false;return c;});};
   if(Signatures&&Signatures.spendAction){var oldSpend=Signatures.spendAction;Signatures.spendAction=function(id,actionId){var before=Service.get(id),action=(Signatures.actions(before)||[]).find(function(x){return x.id===actionId;});if(!action)return oldSpend(id,actionId);var explicit=(before.affiliation==='Atena'&&action.name==='Ofensiva Total')?actionInfo(before,'Ação',''):{allowed:true,type:'',mode:'free',reason:''};if(explicit.type&&!explicit.allowed)throw new Error(explicit.reason);var saved=oldSpend(id,actionId);if(before.affiliation==='Hermes'&&action.name==='Impulso')saved=Service.update(id,function(c){clean(c).extraBonus+=1;return c;});if(explicit.type)saved=consume(id,explicit,'Consumiu Ação');return saved;};}
-  Session.version='3e-session-runtime-0.3.0';
+  Session.version='3e-session-runtime-0.3.1';
 })(window);

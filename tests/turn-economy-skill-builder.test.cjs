@@ -17,6 +17,9 @@ context.SemideusesCharacterService={get:id=>JSON.parse(JSON.stringify(store[id])
 context.SemideusesSessionRuntime={canUseOfficialAbility(c){return {allowed:true,reason:'',item:{ability:c.rules.abilities[0]},cost:4};},useOfficialAbility(id){return context.SemideusesCharacterService.update(id,c=>{c.resources.primaryCurrent-=4;return c;});},canUseLearnedSkill(){return {allowed:true,skill:{id:'s',rank:'E',action:'Ação'},cost:1};},useLearnedSkill(id){return context.SemideusesCharacterService.update(id,c=>c);},startCombat:id=>context.SemideusesCharacterService.update(id,c=>{c.session.inCombat=true;return c;}),nextRound:id=>context.SemideusesCharacterService.update(id,c=>{c.session.round++;return c;}),endCombat:id=>context.SemideusesCharacterService.update(id,c=>{c.session.inCombat=false;return c;})};
 context.SemideusesSignatureRuntime={actions:()=>[],spendAction(){}};
 load('assets/action-economy-extension.js');
+const freshEconomy=context.SemideusesSessionRuntime.turnEconomy({id:'novo',level:1});
+assert.equal(freshEconomy.inCombat,false,'Ficha recém-criada sem sessão inicializada deve abrir sem erro.');
+assert.equal(freshEconomy.action,false);
 let c=context.SemideusesCharacterService.get('a');assert(context.SemideusesSessionRuntime.canUseOfficialAbility(c,'x').allowed);
 context.SemideusesSessionRuntime.useOfficialAbility('a','x');c=context.SemideusesCharacterService.get('a');let check=context.SemideusesSessionRuntime.canUseOfficialAbility(c,'x');assert.equal(check.allowed,false);assert(/Ação já usada/.test(check.reason));
 context.SemideusesSessionRuntime.nextRound('a');c=context.SemideusesCharacterService.get('a');assert(context.SemideusesSessionRuntime.canUseOfficialAbility(c,'x').allowed,'novo turno recupera Ação');
