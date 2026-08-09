@@ -73,24 +73,24 @@ Concluir Sátiro/Fauno, Ciclope, Mortal Vidente e Legado em todo o lado do jogad
 
 ### Matriz de conclusão
 
-- [ ] Fonte oficial das páginas 24–29 conferida e catalogada.
-- [ ] Sátiro/Fauno: Especialização substituível sem bônus preso, deslocamento de 12 m, MP Natural, consulta diária da Trilha, Caminho fixo e progressão completa.
-- [ ] Ciclope: CA natural, Resistência a Concussivo, carga dobrada, ataques de origem, Mãos de Forja, poderes por Descanso e progressão completa.
-- [ ] Mortal Vidente: perícias extras, Sorte utilizável, Ofício escolhido no nível 2 e trocável após Descanso Longo, Talentos extras obrigatórios e poderes por Descanso.
-- [ ] Legado: Filiação e Caminho herdados, Dado de Vida reduzido, MP diluído, Assinatura pela metade, progressão atrasada e despertares temporários.
-- [ ] Compêndio lista as quatro Naturezas com visão geral, progressão, poderes e Caminho apenas quando existe.
-- [ ] Fichas antigas normalizam sem preservar bônus de origem que já não deveriam existir.
-- [ ] Testes específicos e testes centrais passam.
-- [ ] Build e Deploy Preview passam.
-- [ ] Fluxos principais são conferidos no preview.
+- [x] Fonte oficial das páginas 24–29 conferida e catalogada.
+- [x] Sátiro/Fauno: Especialização substituível sem bônus preso, deslocamento de 12 m, MP Natural, consulta diária da Trilha, Caminho fixo e progressão completa.
+- [x] Ciclope: CA natural, Resistência a Concussivo, carga dobrada, ataques de origem, Mãos de Forja, poderes por Descanso e progressão completa.
+- [x] Mortal Vidente: perícias extras, Sorte utilizável, Ofício escolhido no nível 2 e trocável após Descanso Longo, Talentos extras obrigatórios e poderes por Descanso.
+- [x] Legado: Filiação e Caminho herdados, Dado de Vida reduzido, MP diluído, Assinatura pela metade, progressão atrasada e despertares temporários.
+- [x] Compêndio lista as quatro Naturezas com visão geral, progressão, poderes e Caminho apenas quando existe.
+- [x] Fichas antigas normalizam sem preservar bônus de origem que já não deveriam existir.
+- [x] Testes específicos e testes centrais passam.
+- [x] Build e Deploy Preview passam.
+- [x] Fluxos principais são conferidos no preview.
 
 ### Portão para a área do Mestre
 
 A área do Mestre não começa enquanto houver opção de Natureza que apenas exiba texto sem aplicar a escolha, ação limitada sem rastreamento, evolução que pule ganho obrigatório, botão de regra sem destino ou regressão de persistência.
 
-### Discrepância em observação
+### Discrepância resolvida
 
-A criação ainda permite iniciar uma ficha acima do nível 1. Isso pode pular escolhas intermediárias de Skills e Talentos que normalmente passam pelo fluxo `Evoluir ficha`. Antes da produção, será necessário escolher entre um assistente de criação em nível avançado ou exigir início no nível 1; não devemos fingir que os dois fluxos já são equivalentes.
+Uma criação acima do nível 1 pulava escolhas intermediárias de Skills e Talentos do fluxo `Evoluir ficha`. A decisão de produto da S2 é iniciar novas fichas no nível 1 e concentrar toda progressão no assistente de evolução. Um assistente de criação avançada só deve voltar ao backlog se houver necessidade real de cadastrar campanhas já iniciadas.
 
 ## S1 — ficha clara e estável no celular
 
@@ -191,4 +191,4 @@ Um item só recebe `[x]` quando:
 
 ## Próxima ação
 
-Finalizar a validação no Deploy Preview da S2 e fechar o portão dos Heróis Além do Sangue antes de desenhar os fluxos da área do Mestre.
+Desenhar o primeiro fluxo da área do Mestre a partir das necessidades reais de sessão, mantendo o lado do Jogador estável no `develop`.

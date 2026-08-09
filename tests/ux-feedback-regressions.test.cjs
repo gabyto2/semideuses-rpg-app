@@ -63,6 +63,9 @@ assert.equal(window.document.querySelector('.wizard-head h2').textContent,'Conce
 assert.equal(window.document.querySelector('.wizard-head small').textContent,'Passo 1 de 9');
 window.document.querySelector('[data-next]').click();
 assert.equal(window.document.querySelector('.wizard-head h2').textContent,'Identidade');
+assert.equal(window.document.querySelectorAll('[data-level-delta]').length,0,'Ficha nova não deve pular escolhas de evolução por um seletor de nível inicial.');
+assert.equal(window.document.querySelector('[data-field="level"]'),null,'Nível só pode subir pelo fluxo Evoluir ficha.');
+assert(window.document.querySelector('.wizard-card').textContent.includes('Novas fichas começam no nível 1'));
 window.document.querySelector('[data-next]').click();
 assert.equal(window.document.querySelector('.wizard-head h2').textContent,'Natureza','A criação deve preservar a etapa que futuramente muda o motor de origem.');
 const availableOrigins=[...window.document.querySelectorAll('[data-origin]')].map(option=>option.textContent);
