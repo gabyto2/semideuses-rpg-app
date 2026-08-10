@@ -24,12 +24,13 @@
   }
   function normalizeCombatant(raw,index){
     raw=raw&&typeof raw==='object'?raw:{};
-    var kind=raw.kind==='player'?'player':'enemy',maximum=Math.max(1,number(raw.pvMax,1));
+    var kind=raw.kind==='player'?'player':raw.kind==='hero'?'hero':'enemy',maximum=Math.max(1,number(raw.pvMax,1)),rawConditions=Array.isArray(raw.conditions)?raw.conditions:[],exhaustionLevel=raw.exhaustionLevel==null?(rawConditions.indexOf('Exausto')>=0?1:0):Math.max(0,Math.min(6,Math.floor(number(raw.exhaustionLevel,0))));
+    var normalizedConditions=rawConditions.filter(function(value,pos,list){return typeof value==='string'&&value!=='Saudável'&&value!=='Exausto'&&list.indexOf(value)===pos;});if(exhaustionLevel>0)normalizedConditions.push('Exausto');
     return {
-      id:String(raw.id||uid(kind)),kind:kind,characterId:kind==='player'?String(raw.characterId||''):'',
+      id:String(raw.id||uid(kind)),kind:kind,characterId:kind==='player'?String(raw.characterId||''):'',partyMemberId:kind==='hero'?String(raw.partyMemberId||''):'',trackVitals:kind==='hero'?raw.trackVitals!==false:true,role:kind==='enemy'&&['enemy','npc','scenario'].indexOf(raw.role)>=0?raw.role:'enemy',
       name:String(raw.name||'Participante'),initiative:raw.initiative==null||raw.initiative===''?null:number(raw.initiative,0),
       pvCurrent:Math.max(0,Math.min(maximum,number(raw.pvCurrent,maximum))),pvMax:maximum,ca:Math.max(0,number(raw.ca,0)),
-      conditions:Array.isArray(raw.conditions)?raw.conditions.filter(function(value,pos,list){return typeof value==='string'&&list.indexOf(value)===pos;}):[],
+      conditions:normalizedConditions,exhaustionLevel:exhaustionLevel,
       notes:String(raw.notes||''),order:number(raw.order,index),
       bestiaryId:kind==='enemy'?String(raw.bestiaryId||''):'',nd:kind==='enemy'?String(raw.nd||''):'',sourcePage:kind==='enemy'&&raw.sourcePage!=null?Math.max(0,Math.floor(number(raw.sourcePage,0))):null,
       trackers:kind==='enemy'&&Array.isArray(raw.trackers)?raw.trackers.map(normalizeTracker):[]
@@ -62,10 +63,14 @@
   function update(mutator){var state=read(),result=mutator(clone(state))||state;return write(result);}
   function find(state,id){var item=state.combatants.find(function(combatant){return combatant.id===id;});if(!item)throw new Error('Participante não encontrado.');return item;}
   function live(item){
-    var result=clone(item),character=item.kind==='player'&&item.characterId?Service.get(item.characterId):null;
+    var result=clone(item),character=item.kind==='player'&&item.characterId?Service.get(item.characterId):null,Campaign=global.SemideusesMasterCampaign,partyMember=null;
     if(item.kind==='player'){
       result.missing=!character;
-      if(character){result.name=character.name||item.name;result.pvCurrent=number(character.resources&&character.resources.pvCurrent,0);result.pvMax=Math.max(1,number(character.rules&&character.rules.pvMax,1));result.ca=Math.max(0,number(character.rules&&character.rules.armorClass,0));result.conditions=Array.isArray(character.resources&&character.resources.conditions)?character.resources.conditions.slice():[];result.level=number(character.level,1);result.heroType=character.heroType||'Semideus Grego';}
+      if(character){result.name=character.name||item.name;result.pvCurrent=number(character.resources&&character.resources.pvCurrent,0);result.pvMax=Math.max(1,number(character.rules&&character.rules.pvMax,1));result.ca=Math.max(0,number(character.rules&&character.rules.armorClass,0));result.conditions=Array.isArray(character.resources&&character.resources.conditions)?character.resources.conditions.slice():[];result.exhaustionLevel=Math.max(0,Math.min(6,Math.floor(number(character.resources&&character.resources.exhaustionLevel,result.conditions.indexOf('Exausto')>=0?1:0))));result.level=number(character.level,1);result.heroType=character.heroType||'Semideus Grego';}
+    }else if(item.kind==='hero'){
+      if(Campaign&&typeof Campaign.read==='function')partyMember=Campaign.read().party.find(function(member){return member.id===item.partyMemberId;});
+      result.missing=!partyMember;
+      if(partyMember){result.name=partyMember.name;result.trackVitals=partyMember.trackVitals;result.pvCurrent=partyMember.pvCurrent;result.pvMax=partyMember.pvMax;result.ca=partyMember.ca;result.conditions=partyMember.conditions.slice();result.exhaustionLevel=partyMember.exhaustionLevel;result.notes=partyMember.notes;}
     }
     return result;
   }
@@ -79,12 +84,22 @@
       state.combatants.push(normalizeCombatant({id:uid('player'),kind:'player',characterId:characterId,name:character.name||'Personagem',initiative:initiative,pvCurrent:character.resources.pvCurrent,pvMax:character.rules.pvMax,ca:character.rules.armorClass,order:state.combatants.length},state.combatants.length));return state;
     });
   }
+  function addPartyMember(member,initiative){
+    member=member&&typeof member==='object'?member:{};var memberId=String(member.id||''),name=String(member.name||'').trim();
+    if(!memberId||!name)throw new Error('Herói do grupo inválido.');
+    return update(function(state){
+      if(state.status!=='preparing')throw new Error('Adicione participantes antes de iniciar o encontro.');
+      if(state.combatants.some(function(item){return item.partyMemberId===memberId;}))throw new Error('Este herói já está no encontro.');
+      state.combatants.push(normalizeCombatant({id:uid('hero'),kind:'hero',partyMemberId:memberId,trackVitals:member.trackVitals,name:name,initiative:initiative,pvCurrent:member.pvCurrent,pvMax:member.pvMax,ca:member.ca,conditions:member.conditions,exhaustionLevel:member.exhaustionLevel,notes:member.notes,order:state.combatants.length},state.combatants.length));return state;
+    });
+  }
+  function addPartyMembers(members){(Array.isArray(members)?members:[]).forEach(function(member){var state=read();if(!state.combatants.some(function(item){return item.partyMemberId===member.id;}))addPartyMember(member,null);});return view();}
   function addEnemy(payload){
-    payload=payload||{};var name=String(payload.name||'').trim(),maximum=Math.max(1,Math.floor(number(payload.pvMax,0))),armor=Math.max(0,Math.floor(number(payload.ca,0)));
-    if(!name)throw new Error('Informe o nome do inimigo.');if(!number(payload.pvMax,0))throw new Error('Informe os PV máximos do inimigo.');
+    payload=payload||{};var name=String(payload.name||'').trim(),maximum=Math.max(1,Math.floor(number(payload.pvMax,0))),hasArmor=payload.ca!=null&&payload.ca!==''&&Number.isFinite(Number(payload.ca))&&Number(payload.ca)>=0,armor=Math.max(0,Math.floor(number(payload.ca,0)));
+    if(!name)throw new Error('Informe o nome do inimigo ou NPC.');if(!number(payload.pvMax,0))throw new Error('Informe os PV máximos do inimigo ou NPC.');if(!hasArmor)throw new Error('Informe a CA do inimigo ou NPC.');
     return update(function(state){
       if(state.status!=='preparing')throw new Error('Adicione inimigos antes de iniciar o encontro.');
-      state.combatants.push(normalizeCombatant({id:uid('enemy'),kind:'enemy',name:name,initiative:payload.initiative,pvCurrent:maximum,pvMax:maximum,ca:armor,notes:payload.notes,bestiaryId:payload.bestiaryId,nd:payload.nd,sourcePage:payload.sourcePage,trackers:payload.trackers,order:state.combatants.length},state.combatants.length));return state;
+      state.combatants.push(normalizeCombatant({id:uid('enemy'),kind:'enemy',role:payload.role,name:name,initiative:payload.initiative,pvCurrent:maximum,pvMax:maximum,ca:armor,notes:payload.notes,bestiaryId:payload.bestiaryId,nd:payload.nd,sourcePage:payload.sourcePage,trackers:payload.trackers,order:state.combatants.length},state.combatants.length));return state;
     });
   }
   function remove(id){return update(function(state){if(state.status==='active')throw new Error('Encerre o encontro antes de remover participantes.');state.combatants=state.combatants.filter(function(item){return item.id!==id;});if(state.currentTurnId===id)state.currentTurnId='';return state;});}
@@ -108,17 +123,33 @@
       if(!Service.get(item.characterId))throw new Error('A ficha vinculada não está mais disponível.');
       if(amount<0)Service.applyDamage(item.characterId,-amount);else Service.adjustResource(item.characterId,'pv',amount);
       return view();
+    }else if(item.kind==='hero'){
+      var Campaign=global.SemideusesMasterCampaign,member=Campaign&&Campaign.read().party.find(function(value){return value.id===item.partyMemberId;});
+      if(member){Campaign.editPartyMember(member.id,{pvCurrent:Math.max(0,Math.min(member.pvMax,member.pvCurrent+amount))});return view();}
     }
     update(function(draft){var enemy=find(draft,id);enemy.pvCurrent=Math.max(0,Math.min(enemy.pvMax,enemy.pvCurrent+amount));return draft;});return view();
   }
   function toggleCondition(id,condition){
-    condition=String(condition||'');if(!condition||condition==='Saudável'||(Model.conditions||[]).indexOf(condition)<0)throw new Error('Escolha uma condição válida.');
+    condition=String(condition||'');if(!condition||condition==='Saudável'||condition==='Exausto'||(Model.conditions||[]).indexOf(condition)<0)throw new Error('Escolha uma condição válida.');
     var state=read(),item=find(state,id);
     if(item.kind==='player'){
       if(!Service.get(item.characterId))throw new Error('A ficha vinculada não está mais disponível.');
       Service.toggleCondition(item.characterId,condition);return view();
+    }else if(item.kind==='hero'){
+      var Campaign=global.SemideusesMasterCampaign,member=Campaign&&Campaign.read().party.find(function(value){return value.id===item.partyMemberId;});if(member){var list=member.conditions.filter(function(value){return value!=='Exausto';}),memberIndex=list.indexOf(condition);if(memberIndex>=0)list.splice(memberIndex,1);else list.push(condition);Campaign.editPartyMember(member.id,{conditions:list});return view();}
     }
     update(function(draft){var enemy=find(draft,id),index=enemy.conditions.indexOf(condition);if(index>=0)enemy.conditions.splice(index,1);else enemy.conditions.push(condition);return draft;});return view();
+  }
+  function setExhaustion(id,level){
+    level=Math.max(0,Math.min(6,Math.floor(number(level,0))));var state=read(),item=find(state,id);
+    if(item.kind==='player'){
+      if(!Service.get(item.characterId))throw new Error('A ficha vinculada não está mais disponível.');
+      if(typeof Service.setExhaustionLevel!=='function')throw new Error('O controle de Exaustão da ficha não está disponível.');Service.setExhaustionLevel(item.characterId,level);return view();
+    }
+    if(item.kind==='hero'){
+      var Campaign=global.SemideusesMasterCampaign,member=Campaign&&Campaign.read().party.find(function(value){return value.id===item.partyMemberId;});if(member){Campaign.editPartyMember(member.id,{exhaustionLevel:level});return view();}
+    }
+    update(function(draft){var target=find(draft,id);target.exhaustionLevel=level;target.conditions=target.conditions.filter(function(value){return value!=='Exausto';});if(level>0)target.conditions.push('Exausto');return draft;});return view();
   }
   function adjustTracker(id,trackerId,delta,segmentIndex){
     delta=number(delta,0);if(!delta)return view();
@@ -132,5 +163,5 @@
     return {current:current,history:history};
   }
 
-  global.SemideusesMasterRuntime={version:'master-session-0.3.1',storageKey:KEY,historyKey:HISTORY_KEY,read:read,view:view,history:function(){return clone(readHistory());},exportData:exportData,restoreData:restoreData,setTitle:setTitle,addCharacter:addCharacter,addEnemy:addEnemy,remove:remove,setInitiative:setInitiative,start:start,nextTurn:nextTurn,moveTie:moveTie,end:end,reset:reset,adjustPv:adjustPv,toggleCondition:toggleCondition,adjustTracker:adjustTracker,deleteHistory:deleteHistory};
+  global.SemideusesMasterRuntime={version:'master-session-0.4.0',storageKey:KEY,historyKey:HISTORY_KEY,read:read,view:view,history:function(){return clone(readHistory());},exportData:exportData,restoreData:restoreData,setTitle:setTitle,addCharacter:addCharacter,addPartyMember:addPartyMember,addPartyMembers:addPartyMembers,addEnemy:addEnemy,remove:remove,setInitiative:setInitiative,start:start,nextTurn:nextTurn,moveTie:moveTie,end:end,reset:reset,adjustPv:adjustPv,toggleCondition:toggleCondition,setExhaustion:setExhaustion,adjustTracker:adjustTracker,deleteHistory:deleteHistory};
 })(window);

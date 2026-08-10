@@ -219,6 +219,21 @@ Quando os dois livros tratarem do mesmo assunto de forma diferente, a discrepân
 - [x] Testes automatizados cobrem nome, dimensões dos ícones, instalação nativa, instrução do iPhone e modo já instalado.
 - [x] Deploy Preview validado em produção de preview: página, manifesto, script, estilos e todos os ícones respondem `200`; os fluxos Android, iPhone e modo instalado permanecem cobertos pelos testes automatizados.
 
+### Fase 8 — Mesa independente das fichas dos jogadores
+
+- [ ] `Grupo da campanha` torna-se o caminho principal para incluir heróis na Mesa.
+- [ ] O Mestre cadastra o grupo uma vez e o adiciona inteiro a novos encontros com uma ação.
+- [ ] Somente o nome é obrigatório; PV e CA são opcionais e nunca recebem valores aparentes inventados.
+- [ ] Heróis sem PV e CA entram apenas na ordem de turnos, com essa limitação comunicada na preparação, no combate e no estado final.
+- [ ] Fichas salvas no aparelho continuam disponíveis em uma área secundária e explicitamente opcional.
+- [ ] Herói do grupo, ficha local, inimigo, NPC e cenário recebem identificação própria.
+- [ ] Combatentes fora do turno iniciam compactos; o turno atual abre automaticamente.
+- [ ] Condições exibem o efeito oficial antes de aplicar e Exaustão usa níveis cumulativos de 0 a 6.
+- [ ] Controles especiais e referências preservam o estado aberto após uma ação.
+- [ ] Rascunhos narrativos sobrevivem a outras ações da Mesa e a visão geral salva durante a digitação.
+- [ ] Alvos de toque essenciais têm ao menos 44 px e a barra fixa respeita a área segura do celular.
+- [ ] Testes automatizados, build, Deploy Preview e conferência real concluídos.
+
 ### Discrepância oficial registrada
 
 `Mortal com Conhecimento` apresenta no livro apenas as faixas ND 1–4, PV 32–72 e CA 12–16. Como não há distribuição oficial de valores por ND, a entrada é consultável como modelo, mas não pode ser enviada automaticamente à calculadora. O Mestre deve escolher valores concretos no cadastro manual. O aplicativo não interpola nem inventa números.
@@ -231,7 +246,7 @@ Quando os dois livros tratarem do mesmo assunto de forma diferente, a discrepân
 
 ### Próximas fases propostas
 
-1. Revisão de clareza do módulo Mestre no celular, incluindo rolagem, seções recolhíveis e teste com usuário que não conhece a organização interna.
+1. Validação final da Fase 8 em Android e iPhone com um Mestre que não conhece a organização interna.
 2. Vinculação local entre sessões narrativas e encontros encerrados do próprio Mestre.
 3. Preparação de lançamento: migração, recuperação e redução do risco acumulado entre `develop` e `main`.
 
@@ -328,6 +343,9 @@ Os testes atuais cobrem regras, DOM, navegação e build, mas não reproduzem pe
 - Usando somente Netlify e GitHub, dados de campanha continuam locais ao navegador; backup em arquivo protege a troca de aparelho, mas não cria sincronização automática.
 - O Mestre não consegue entregar itens diretamente a fichas abertas em outros aparelhos. Essa função exigiria contas, campanhas compartilhadas e armazenamento online; um botão local daria uma falsa impressão de conexão.
 - Uma futura transferência sem contas só poderia ser manual, por arquivo ou QR aceito pelo jogador, e não deve ser descrita como entrega direta.
+- O fluxo principal da Mesa usa um `Grupo da campanha` local e reutilizável, porque exigir que o Mestre importe ou recrie todas as fichas dos jogadores seria cansativo e sugeriria uma conexão que não existe.
+- No Grupo da campanha, somente o nome é obrigatório. PV e CA são um par opcional: se ficarem vazios, a Mesa controla a ordem de turnos sem fingir que acompanha vida ou defesa.
+- Vincular uma ficha salva no mesmo aparelho continua útil para sincronizar PV e condições, mas permanece como alternativa secundária, nunca como requisito do combate.
 
 ## Definição de pronto para cada item
 
@@ -344,4 +362,4 @@ Um item só recebe `[x]` quando:
 
 ## Próxima ação
 
-Auditar todo o módulo Mestre no celular antes de acrescentar outra ferramenta, começando por navegação, hierarquia visual, rolagem e clareza das ações durante uma sessão.
+Concluir a Fase 8 no Deploy Preview e validar o fluxo `cadastrar grupo → adicionar grupo → completar inimigos → iniciar encontro` em viewport móvel antes de criar outra ferramenta do Mestre.

@@ -77,7 +77,7 @@
       for(var index=1;index<=item.quantity;index++){
         var base=item.creature.name,name=item.quantity>1?base+' '+index:base,suffix=index;
         while(names.indexOf(name)>=0){suffix+=1;name=base+' '+suffix;}
-        Runtime.addEnemy({name:name,pvMax:item.creature.pv,ca:item.creature.ca,initiative:null,notes:'ND '+item.creature.nd+' · Bestiário p. '+item.creature.page+(item.creature.scenarioNote?' · '+item.creature.scenarioNote:''),bestiaryId:item.creature.id,nd:item.creature.nd,sourcePage:item.creature.page,trackers:item.creature.encounterTrackers||[]});names.push(name);
+        Runtime.addEnemy({name:name,pvMax:item.creature.pv,ca:item.creature.ca,initiative:null,role:item.creature.environmental?'scenario':'enemy',notes:'ND '+item.creature.nd+' · Bestiário p. '+item.creature.page+(item.creature.scenarioNote?' · '+item.creature.scenarioNote:''),bestiaryId:item.creature.id,nd:item.creature.nd,sourcePage:item.creature.page,trackers:item.creature.encounterTrackers||[]});names.push(name);
       }
     });
     clear();return Runtime.view();

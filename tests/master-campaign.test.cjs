@@ -27,21 +27,31 @@ function campaignRules(){
   assert.throws(()=>Campaign.add('threads',{title:''}),/título da pista/i);
 
   Campaign.setOverview({name:'Maré de Tífon',summary:'Uma guerra se aproxima.',privateNotes:'O oráculo mentiu.'});
+  Campaign.addPartyMember({name:'Helena',pvMax:32,ca:15,notes:'Filha de Deméter'});
   Campaign.add('sessions',{title:'O primeiro presságio',date:'2026-08-10',summary:'O grupo encontrou uma moeda partida.'});
   Campaign.add('npcs',{name:'Íris',role:'Mensageira',status:'Aliado',notes:'Sabe mais do que revela.'});
   Campaign.add('locations',{name:'Templo Afundado',region:'Mar Egeu',status:'Inacessível',notes:'Abre na lua nova.'});
   Campaign.add('threads',{title:'A moeda partida',kind:'Profecia',status:'Revelada',notes:'Falta a segunda metade.'});
   let state=Campaign.read();
   assert.equal(state.sessions.length,1);
+  assert.equal(state.party.length,1);
+  assert.equal(state.party[0].pvCurrent,32,'Herói novo deve iniciar com PV completos.');
   assert.equal(state.npcs[0].status,'Aliado');
   assert.equal(state.locations[0].region,'Mar Egeu');
   assert.equal(state.threads[0].kind,'Profecia');
 
   Campaign.edit('npcs',state.npcs[0].id,{name:'Íris',role:'Aliada divina',status:'Desaparecido',notes:'Sem resposta.'});
+  Campaign.editPartyMember(state.party[0].id,{pvCurrent:21,exhaustionLevel:2,conditions:['Abalado']});
   state=Campaign.read();
   assert.equal(state.npcs[0].status,'Desaparecido');
+  assert.equal(state.party[0].pvCurrent,21);
+  assert(state.party[0].conditions.includes('Exausto'),'Nível de Exaustão deve permanecer associado ao herói do grupo.');
   Campaign.remove('locations',state.locations[0].id);
   assert.equal(Campaign.read().locations.length,0);
+  Campaign.addPartyMember({name:'Hana'});
+  state=Campaign.read();
+  assert.equal(state.party[1].trackVitals,false,'O cadastro do grupo deve aceitar apenas o nome do herói.');
+  assert.equal(state.party[1].name,'Hana');
   assert(JSON.parse(window.localStorage.getItem(Campaign.storageKey)).threads.length===1,'A campanha deve persistir no navegador.');
   dom.window.close();
 }
@@ -51,6 +61,7 @@ function backupAndUi(){
   window.eval(source('master-campaign.js'));
   const Campaign=window.SemideusesMasterCampaign;
   Campaign.setOverview({name:'O Labirinto Vivo',summary:'Campanha de teste.',privateNotes:'Dédalo observa o grupo.'});
+  Campaign.addPartyMember({name:'Orion',pvMax:38,ca:16});
   Campaign.add('sessions',{title:'Entrada no Labirinto',date:'2026-08-10',summary:'O grupo atravessou o primeiro portão.'});
 
   let restoredEncounters=null,restoredCalculator=null;
@@ -71,6 +82,7 @@ function backupAndUi(){
   const saved=Backup.payload();
   assert.equal(saved.format,'semideuses-mestre-3e');
   assert.equal(saved.campaign.name,'O Labirinto Vivo');
+  assert.equal(saved.campaign.party.length,1);
   assert.equal(saved.encounters.history.length,1);
   assert.equal(saved.calculator.savedEncounters.length,1);
   assert.throws(()=>Backup.parse({format:'outro'}),/incompatível/i);
@@ -80,7 +92,7 @@ function backupAndUi(){
   assert.equal(Campaign.read().name,'O Labirinto Vivo');
   assert.equal(restoredEncounters.current.title,'Minotauro');
   assert.equal(restoredCalculator.groupLevel,5);
-  assert.deepEqual(result,{sessions:1,history:1,savedEncounters:1});
+  assert.deepEqual(result,{party:1,sessions:1,history:1,savedEncounters:1});
 
   window.eval(source('master-campaign-ui.js'));
   const UI=window.SemideusesMasterCampaignUI;
@@ -93,11 +105,19 @@ function backupAndUi(){
   assert(window.document.querySelector('[data-master-campaign]'));
   assert.equal(window.document.querySelector('.campaign-shell').open,false,'O arquivo narrativo deve iniciar recolhido.');
   const shell=window.document.querySelector('.campaign-shell');shell.open=true;shell.ontoggle();
+  const privateNotes=window.document.querySelector('[data-campaign-field="privateNotes"]');privateNotes.value='Rascunho salvo durante o turno.';privateNotes.oninput();
+  render();
+  assert.equal(Campaign.read().privateNotes,'Rascunho salvo durante o turno.','Visão da campanha deve salvar sem depender de botão.');
+  assert.equal(window.document.querySelector('[data-campaign-field="privateNotes"]').value,'Rascunho salvo durante o turno.');
   const sessions=window.document.querySelector('[data-campaign-toggle="sessions"]');sessions.open=true;sessions.ontoggle();
-  const form=window.document.querySelector('[data-campaign-new="sessions"]');
+  let form=window.document.querySelector('[data-campaign-new="sessions"]');
   form.querySelector('[data-campaign-field="title"]').value='A porta sem saída';
   form.querySelector('[data-campaign-field="date"]').value='2026-08-11';
   form.querySelector('[data-campaign-field="summary"]').value='Uma nova passagem foi descoberta.';
+  form.querySelector('[data-campaign-field="summary"]').oninput();
+  render();
+  form=window.document.querySelector('[data-campaign-new="sessions"]');
+  assert.equal(form.querySelector('[data-campaign-field="title"]').value,'A porta sem saída','Rascunho de novo registro deve sobreviver a outra ação da Mesa.');
   form.querySelector('[data-campaign-add="sessions"]').click();
   assert.equal(Campaign.read().sessions.length,2);
   assert(window.document.querySelector('.campaign-shell').open,'O painel deve continuar aberto depois de salvar.');
