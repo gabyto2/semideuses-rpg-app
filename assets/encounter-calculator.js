@@ -14,12 +14,12 @@
 
   function clone(value){return JSON.parse(JSON.stringify(value));}
   function integer(value,fallback){var parsed=Math.floor(Number(value));return Number.isFinite(parsed)?parsed:Number(fallback||0);}
-  function empty(){return {groupLevel:1,partySize:4,query:'',ndFilter:'all',quantities:{}};}
+  function empty(){return {groupLevel:1,partySize:4,query:'',ndFilter:'all',catalogOpen:false,quantities:{}};}
   function normalize(raw){
     raw=raw&&typeof raw==='object'?raw:{};var state=empty();
     state.groupLevel=Math.max(1,Math.min(20,integer(raw.groupLevel,1)));
     state.partySize=Math.max(1,Math.min(12,integer(raw.partySize,4)));
-    state.query=String(raw.query||'').slice(0,80);state.ndFilter=String(raw.ndFilter||'all');
+    state.query=String(raw.query||'').slice(0,80);state.ndFilter=String(raw.ndFilter||'all');state.catalogOpen=Boolean(raw.catalogOpen);
     if(['all','1/2','1','2','3','4'].indexOf(state.ndFilter)<0)state.ndFilter='all';
     var quantities=raw.quantities&&typeof raw.quantities==='object'?raw.quantities:{};
     Object.keys(quantities).forEach(function(id){var creature=Bestiary.get(id),quantity=Math.max(0,Math.min(99,integer(quantities[id],0)));if(creature&&!creature.scalable&&quantity)state.quantities[id]=quantity;});
@@ -46,7 +46,7 @@
     if(count){if(adjusted<=budgets.easy){difficulty='Fácil';tone='easy';}else if(adjusted<=budgets.medium){difficulty='Médio';tone='medium';}else if(adjusted<=budgets.hard){difficulty='Difícil';tone='hard';}else if(adjusted<=budgets.epic){difficulty='Épico';tone='epic';}else{difficulty='Acima do Épico';tone='over';}}
     return {state:state,selected:selected,count:count,rawThreat:raw,multiplier:multiplier,adjustedThreat:adjusted,budgets:budgets,difficulty:difficulty,tone:tone};
   }
-  function setConfig(patch){patch=patch||{};return update(function(state){if(patch.groupLevel!=null)state.groupLevel=patch.groupLevel;if(patch.partySize!=null)state.partySize=patch.partySize;if(patch.query!=null)state.query=patch.query;if(patch.ndFilter!=null)state.ndFilter=patch.ndFilter;return state;});}
+  function setConfig(patch){patch=patch||{};return update(function(state){if(patch.groupLevel!=null)state.groupLevel=patch.groupLevel;if(patch.partySize!=null)state.partySize=patch.partySize;if(patch.query!=null)state.query=patch.query;if(patch.ndFilter!=null)state.ndFilter=patch.ndFilter;if(patch.catalogOpen!=null)state.catalogOpen=Boolean(patch.catalogOpen);return state;});}
   function adjust(id,delta){var creature=Bestiary.get(id);if(!creature)throw new Error('Criatura não encontrada no Bestiário.');if(creature.scalable||creature.pv==null||creature.ca==null||creature.threat==null)throw new Error('Este modelo exige que o Mestre defina ND, PV e CA no cadastro manual.');return update(function(state){var next=Math.max(0,Math.min(99,integer(state.quantities[id],0)+integer(delta,0)));if(next)state.quantities[id]=next;else delete state.quantities[id];return state;});}
   function add(id){return adjust(id,1);}
   function clear(){return update(function(state){state.quantities={};return state;});}

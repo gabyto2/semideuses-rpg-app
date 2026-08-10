@@ -20,6 +20,8 @@ const Runtime=window.SemideusesMasterRuntime;
 const Calculator=window.SemideusesEncounterCalculator;
 const creatures=Bestiary.all();
 
+assert.equal(Calculator.read().catalogOpen,false,'O catálogo extenso deve iniciar recolhido.');
+
 assert.equal(creatures.length,27,'A primeira fase deve catalogar as 27 entradas das páginas 83–94.');
 assert(creatures.every(creature=>creature.page>=83&&creature.page<=94),'Toda entrada deve apontar para uma página do trecho oficial catalogado.');
 const incomplete=creatures.filter(creature=>creature.pv==null||creature.ca==null);
