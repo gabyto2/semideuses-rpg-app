@@ -177,7 +177,7 @@ Quando os dois livros tratarem do mesmo assunto de forma diferente, a discrepân
 - [x] A calculadora continua usando o VA oficial dos encontros ambientais, mas a nota enviada à Mesa evita tratá-los como inimigos convencionais.
 - [x] Apêndice A conferido e usado para recuperar oficialmente o ND 5 do Basilisco sem inventar os outros valores ausentes.
 - [x] Testes do catálogo, paginação, filtros, VA e integração com a Mesa atualizados para 64 entradas.
-- [ ] Deploy Preview e validação real no navegador.
+- [x] Deploy Preview validado: zero fichas quando recolhido, 12 por página, filtros ND 9–12, busca com foco preservado, Drakon na calculadora/Mesa e Cila identificada como cenário.
 - [ ] Fase final do catálogo oficial: ND 13, 14, 15 e 17.
 
 ### Discrepância oficial registrada
