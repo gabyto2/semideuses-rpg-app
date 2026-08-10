@@ -20,9 +20,9 @@
     state.groupLevel=Math.max(1,Math.min(20,integer(raw.groupLevel,1)));
     state.partySize=Math.max(1,Math.min(12,integer(raw.partySize,4)));
     state.query=String(raw.query||'').slice(0,80);state.ndFilter=String(raw.ndFilter||'all');state.catalogOpen=Boolean(raw.catalogOpen);
-    if(['all','1/2','1','2','3','4'].indexOf(state.ndFilter)<0)state.ndFilter='all';
+    if(['all','1/2','1','2','3','4','5','6','7','8'].indexOf(state.ndFilter)<0)state.ndFilter='all';
     var quantities=raw.quantities&&typeof raw.quantities==='object'?raw.quantities:{};
-    Object.keys(quantities).forEach(function(id){var creature=Bestiary.get(id),quantity=Math.max(0,Math.min(99,integer(quantities[id],0)));if(creature&&!creature.scalable&&quantity)state.quantities[id]=quantity;});
+    Object.keys(quantities).forEach(function(id){var creature=Bestiary.get(id),quantity=Math.max(0,Math.min(99,integer(quantities[id],0)));if(creature&&!creature.scalable&&creature.pv!=null&&creature.ca!=null&&creature.threat!=null&&quantity)state.quantities[id]=quantity;});
     return state;
   }
   function read(){try{return normalize(JSON.parse(localStorage.getItem(KEY)||'null'));}catch(error){return empty();}}
@@ -38,7 +38,7 @@
   function quantityMultiplier(count){count=Math.max(0,integer(count,0));if(count<=1)return 1;if(count===2)return 1.5;if(count<=6)return 2;if(count<=10)return 2.5;if(count<=15)return 3;return 4;}
   function selection(state){
     state=normalize(state||read());var selected=[];
-    Object.keys(state.quantities).forEach(function(id){var creature=Bestiary.get(id),quantity=state.quantities[id];if(creature&&!creature.scalable&&quantity)selected.push({creature:creature,quantity:quantity,subtotal:creature.threat*quantity});});
+    Object.keys(state.quantities).forEach(function(id){var creature=Bestiary.get(id),quantity=state.quantities[id];if(creature&&!creature.scalable&&creature.pv!=null&&creature.ca!=null&&creature.threat!=null&&quantity)selected.push({creature:creature,quantity:quantity,subtotal:creature.threat*quantity});});
     return selected;
   }
   function calculate(state){

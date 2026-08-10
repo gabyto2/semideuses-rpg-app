@@ -120,7 +120,7 @@ Transformar o módulo Mestre em uma ferramenta de uso durante a sessão, começa
 - [x] Persistência automática do encontro no navegador.
 - [x] Estado final preservado ao encerrar o encontro.
 - [x] Teste automatizado de regras e integração com a interface.
-- [ ] Build, Deploy Preview e teste real no navegador.
+- [x] Build, Deploy Preview e teste real no navegador.
 
 ### Decisão de escopo da Fase 1
 
@@ -154,16 +154,30 @@ Quando os dois livros tratarem do mesmo assunto de forma diferente, a discrepân
 - [x] Envio das criaturas selecionadas direto para a Mesa, preservando ND e página da fonte.
 - [x] Ficha oficial da criatura consultável durante o combate.
 - [x] Testes automatizados do catálogo, dos cálculos e da integração com a Mesa.
+- [x] Deploy Preview e validação real em tela móvel.
+
+### Fase 3 — ND 5 a 8
+
+- [x] 25 novas entradas das páginas 95–112 catalogadas; o total oficial passa a 52 criaturas e modelos.
+- [x] Filtros ampliados até ND 8 e busca incluindo ações, reações, notas de chefe e Ações Lendárias.
+- [x] Criaturas com valores completos entram na calculadora e na Mesa preservando ND, PV, CA e página.
+- [x] Fichas detalhadas exibem Reações, Ações Lendárias e regras de chefe sem misturá-las às ações comuns.
+- [x] Basilisco e Semideus Veterano ficam consultáveis, mas são bloqueados na calculadora por lacunas da fonte.
+- [x] Testes do catálogo, filtros, VA e integração atualizados para as 52 entradas.
 - [ ] Deploy Preview e validação real em tela móvel.
-- [ ] Fase seguinte do catálogo: criaturas de ND 5 em diante.
+- [ ] Fase seguinte do catálogo: criaturas de ND 9 em diante.
 
 ### Discrepância oficial registrada
 
 `Mortal com Conhecimento` apresenta no livro apenas as faixas ND 1–4, PV 32–72 e CA 12–16. Como não há distribuição oficial de valores por ND, a entrada é consultável como modelo, mas não pode ser enviada automaticamente à calculadora. O Mestre deve escolher valores concretos no cadastro manual. O aplicativo não interpola nem inventa números.
 
+`Basilisco` começa na página 95 já na tabela de atributos. O PDF oficial não apresenta seu cabeçalho com ND, PV, CA e deslocamento. A criatura permanece pesquisável no grupo ND 5 por sua posição no catálogo, mas o app mostra os quatro campos como não informados e bloqueia sua inclusão automática. Estatísticas de outros sistemas não serão usadas como substituição silenciosa.
+
+`Semideus Veterano` apresenta apenas as faixas ND 8–12, PV 160–220 e CA 17–19. O livro não relaciona valores específicos a cada ND e ainda exige que o Mestre escolha Filiação, 4–6 habilidades e 3–4 Talentos. A entrada é um modelo manual; o app não interpola números nem escolhe a construção do adversário.
+
 ### Próximas fases propostas
 
-1. Bestiário pesquisável e fichas de criaturas, condicionado à fonte oficial validada.
+1. Continuar o Bestiário em blocos fechados e validados a partir do ND 9.
 2. Modelos de encontro salvos e reutilizáveis.
 3. Painel de campanha: sessões, NPCs, locais, pistas e notas privadas.
 4. Recompensas e entrega controlada de itens aos personagens.
