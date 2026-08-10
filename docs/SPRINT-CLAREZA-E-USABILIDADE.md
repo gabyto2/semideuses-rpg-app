@@ -205,7 +205,7 @@ Quando os dois livros tratarem do mesmo assunto de forma diferente, a discrepân
 - [x] Restauração substitui o conjunto completo do Mestre, evitando misturar duas campanhas silenciosamente.
 - [x] Fichas dos jogadores permanecem fora desse arquivo e continuam com seu backup próprio.
 - [x] Testes automatizados de validação, persistência, interface, backup e restauração.
-- [ ] Deploy Preview e fluxo real no navegador validados.
+- [x] Deploy Preview validado: quatro categorias cadastradas, preferências de abertura preservadas, cópia local confirmada e painel recolhido conferido visualmente.
 
 ### Discrepância oficial registrada
 
@@ -330,4 +330,4 @@ Um item só recebe `[x]` quando:
 
 ## Próxima ação
 
-Validar no Deploy Preview o arquivo narrativo em preparação e combate, cadastrar um registro de cada categoria e conferir backup/restauração. Depois, iniciar recompensas e entrega controlada de itens sem permitir que o Mestre altere uma ficha silenciosamente.
+Iniciar recompensas e entrega controlada de itens. O Mestre deve preparar a recompensa, escolher uma ficha disponível e confirmar a entrega; nenhuma ficha pode ser alterada silenciosamente nem receber item duplicado por repetição acidental do comando.
