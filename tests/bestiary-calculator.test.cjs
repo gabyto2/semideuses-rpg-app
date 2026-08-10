@@ -14,6 +14,7 @@ window.SemideusesCharacterService={list:()=>[],get:()=>null};
 window.eval(source('rules-bestiary-nd04.js'));
 window.eval(source('rules-bestiary-nd08.js'));
 window.eval(source('rules-bestiary-nd12.js'));
+window.eval(source('rules-bestiary-final.js'));
 window.eval(source('master-runtime.js'));
 window.eval(source('encounter-calculator.js'));
 
@@ -24,16 +25,18 @@ const creatures=Bestiary.all();
 
 assert.equal(Calculator.read().catalogOpen,false,'O catálogo extenso deve iniciar recolhido.');
 
-assert.equal(creatures.length,64,'O catálogo deve reunir 27 entradas até ND 4, 25 até ND 8 e 12 até ND 12.');
+assert.equal(creatures.length,71,'O catálogo deve reunir todas as 71 entradas oficiais até ND 17.');
 assert.equal(creatures.slice(27,52).length,25,'O bloco ND 5–8 deve manter suas 25 entradas.');
-assert.equal(creatures.slice(52).length,12,'O bloco ND 9–12 deve conter 12 entradas oficiais.');
-assert(creatures.every(creature=>creature.page>=83&&creature.page<=118),'Toda ficha deve apontar para sua página no trecho oficial catalogado.');
+assert.equal(creatures.slice(52,64).length,12,'O bloco ND 9–12 deve conter 12 entradas oficiais.');
+assert.equal(creatures.slice(64).length,7,'O bloco final ND 13–17 deve conter as sete entradas oficiais.');
+assert(creatures.every(creature=>creature.page>=83&&creature.page<=123),'Toda ficha deve apontar para sua página no trecho oficial catalogado.');
 const incomplete=creatures.filter(creature=>creature.pv==null||creature.ca==null);
 assert.deepEqual(incomplete.map(creature=>creature.id),['mortal-conhecimento','basilisco','semideus-veterano'],'Somente as três lacunas explicitamente documentadas podem ficar sem valores exatos.');
 assert.equal(Bestiary.get('estrige').threat,100,'ND 1/2 deve valer 100 VA.');
 assert.equal(Bestiary.get('lestrigao').threat,1100,'ND 4 deve valer 1.100 VA.');
 assert.equal(Bestiary.get('talos').threat,3900,'ND 8 deve valer 3.900 VA.');
 assert.equal(Bestiary.get('drakon').threat,7200,'ND 12 deve valer 7.200 VA.');
+assert.equal(Bestiary.get('aspecto-tifon').threat,13000,'ND 17 deve valer 13.000 VA.');
 assert.equal(Bestiary.get('basilisco').catalogNd,'5','O Basilisco deve continuar localizável no bloco em que aparece.');
 assert.equal(Bestiary.get('basilisco').threat,1800,'O Apêndice A deve corrigir o ND do Basilisco para 5.');
 assert.equal(Bestiary.get('basilisco').pv,null,'O Apêndice não pode ser usado para inventar PV ausentes.');
@@ -44,7 +47,11 @@ assert.equal(Bestiary.list({nd:'9'}).length,6,'O filtro ND 9 deve devolver as se
 assert.equal(Bestiary.list({nd:'10'}).length,2,'O filtro ND 10 deve devolver as duas entradas oficiais.');
 assert.equal(Bestiary.list({nd:'11'}).length,3,'O filtro ND 11 deve devolver as três entradas oficiais.');
 assert.equal(Bestiary.list({nd:'12'}).length,1,'O filtro ND 12 deve devolver o Drakon.');
-assert.equal(Bestiary.list({query:'Mesa'}).filter(creature=>creature.environmental).length,3,'A busca deve encontrar os três encontros ambientais pelas orientações da Mesa.');
+assert.equal(Bestiary.list({nd:'13'}).length,2,'O filtro ND 13 deve devolver Caríbdis Desperta e Gegenes.');
+assert.equal(Bestiary.list({nd:'14'}).length,2,'O filtro ND 14 deve devolver Campe e Cérbero.');
+assert.equal(Bestiary.list({nd:'15'}).length,2,'O filtro ND 15 deve devolver Cólera e Titã Menor.');
+assert.equal(Bestiary.list({nd:'17'}).length,1,'O filtro ND 17 deve devolver o Aspecto de Tífon.');
+assert.equal(Bestiary.list({query:'Mesa'}).filter(creature=>creature.environmental).length,4,'A busca deve encontrar os quatro encontros ambientais pelas orientações da Mesa.');
 assert.equal(Bestiary.threatFor('30'),155000,'A tabela oficial de VA deve permanecer pronta até ND 30.');
 
 const levelEight=Calculator.budgetFor(8,4);
@@ -89,10 +96,30 @@ assert.equal(Calculator.calculate().rawThreat,7200);
 Calculator.commitToEncounter();
 assert(Runtime.read().combatants.some(enemy=>enemy.bestiaryId==='drakon'&&enemy.pvMax===230&&enemy.ca===18),'O Drakon deve entrar com PV e CA oficiais.');
 
+Calculator.setConfig({groupLevel:17,partySize:5,ndFilter:'17'});
+Calculator.add('aspecto-tifon');
+Calculator.saveEncounter('Final contra Tífon');
+assert.equal(Calculator.read().savedEncounters.length,1,'A preparação deve ser salva no aparelho.');
+Calculator.clear();
+Calculator.loadEncounter(Calculator.read().savedEncounters[0].id);
+assert.equal(Calculator.calculate().rawThreat,13000,'Carregar um encontro deve restaurar as criaturas e o orçamento.');
+assert.equal(Calculator.read().ndFilter,'17','O filtro final deve persistir até ND 17.');
+Calculator.clear();
+
 Calculator.add('cila');
 Calculator.commitToEncounter();
 const cila=Runtime.read().combatants.find(enemy=>enemy.bestiaryId==='cila');
 assert(cila.notes.includes('seis cabeças'),'A Mesa deve preservar a orientação ambiental da Cila.');
+assert.equal(cila.trackers[0].values.length,6,'A Mesa deve criar seis cabeças independentes.');
+assert.equal(cila.trackers[0].values[0],25);
+Runtime.adjustTracker(cila.id,'cabecas',-7,0);
+assert.equal(Runtime.read().combatants.find(enemy=>enemy.id===cila.id).trackers[0].values[0],18,'O dano em uma cabeça deve persistir separadamente.');
+
+Calculator.add('caribdis-desperta');
+Calculator.commitToEncounter();
+const awakened=Runtime.read().combatants.find(enemy=>enemy.bestiaryId==='caribdis-desperta');
+assert.equal(awakened.ca,10,'A CA 10 deve representar apenas o intervalo vulnerável oficial.');
+assert.equal(awakened.trackers.find(item=>item.id==='succao-devastadora').current,3,'Os três usos diários devem chegar à Mesa.');
 
 dom.window.close();
 console.log('bestiary-calculator.test: OK');

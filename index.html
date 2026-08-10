@@ -9,6 +9,14 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Semideuses 3e" />
   <title>Semideuses RPG 3e</title>
+  <script>
+    (function(){
+      var preview=/^deploy-preview-\d+--/.test(location.hostname),params=new URLSearchParams(location.search);
+      if(preview&&!params.has('ntl-drawer-state')){
+        var clean=new URL(location.href);clean.searchParams.set('ntl-drawer-state','hidden');location.replace(clean.toString());
+      }
+    })();
+  </script>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180.png" />
   <link rel="stylesheet" href="/assets/app.css" />
@@ -41,6 +49,7 @@
   <link rel="stylesheet" href="/assets/player-sheet-finalization.css" />
   <link rel="stylesheet" href="/assets/sheet-polish-v3.css" />
   <link rel="stylesheet" href="/assets/master-session.css" />
+  <link rel="stylesheet" href="/assets/master-tools.css" />
   <link rel="stylesheet" href="/assets/bestiary.css" />
   <link rel="stylesheet" href="/assets/player-notes.css" />
 </head>
@@ -52,6 +61,7 @@
   <script defer src="/assets/rules-bestiary-nd04.js"></script>
   <script defer src="/assets/rules-bestiary-nd08.js"></script>
   <script defer src="/assets/rules-bestiary-nd12.js"></script>
+  <script defer src="/assets/rules-bestiary-final.js"></script>
   <script defer src="/assets/rules-origins.js"></script>
   <script defer src="/assets/rules-database.js"></script>
   <script defer src="/assets/rules-hades.js"></script>

@@ -14,15 +14,25 @@
 
   function clone(value){return JSON.parse(JSON.stringify(value));}
   function integer(value,fallback){var parsed=Math.floor(Number(value));return Number.isFinite(parsed)?parsed:Number(fallback||0);}
-  function empty(){return {groupLevel:1,partySize:4,query:'',ndFilter:'all',catalogOpen:false,catalogPage:1,quantities:{}};}
+  function empty(){return {groupLevel:1,partySize:4,query:'',ndFilter:'all',catalogOpen:false,catalogPage:1,quantities:{},savedEncounters:[]};}
+  function validQuantities(raw){
+    var saved={},quantities=raw&&typeof raw==='object'?raw:{};
+    Object.keys(quantities).forEach(function(id){var creature=Bestiary.get(id),quantity=Math.max(0,Math.min(99,integer(quantities[id],0)));if(creature&&!creature.scalable&&creature.pv!=null&&creature.ca!=null&&creature.threat!=null&&quantity)saved[id]=quantity;});
+    return saved;
+  }
+  function normalizeTemplate(raw,index){
+    raw=raw&&typeof raw==='object'?raw:{};var quantities=validQuantities(raw.quantities),count=Object.keys(quantities).reduce(function(sum,id){return sum+quantities[id];},0);
+    if(!count)return null;
+    return {id:String(raw.id||('encontro-'+Date.now()+'-'+index)),name:String(raw.name||'Encontro salvo').slice(0,80),groupLevel:Math.max(1,Math.min(20,integer(raw.groupLevel,1))),partySize:Math.max(1,Math.min(12,integer(raw.partySize,4))),quantities:quantities,createdAt:String(raw.createdAt||new Date().toISOString())};
+  }
   function normalize(raw){
     raw=raw&&typeof raw==='object'?raw:{};var state=empty();
     state.groupLevel=Math.max(1,Math.min(20,integer(raw.groupLevel,1)));
     state.partySize=Math.max(1,Math.min(12,integer(raw.partySize,4)));
     state.query=String(raw.query||'').slice(0,80);state.ndFilter=String(raw.ndFilter||'all');state.catalogOpen=Boolean(raw.catalogOpen);state.catalogPage=Math.max(1,Math.min(99,integer(raw.catalogPage,1)));
-    if(['all','1/2','1','2','3','4','5','6','7','8','9','10','11','12'].indexOf(state.ndFilter)<0)state.ndFilter='all';
-    var quantities=raw.quantities&&typeof raw.quantities==='object'?raw.quantities:{};
-    Object.keys(quantities).forEach(function(id){var creature=Bestiary.get(id),quantity=Math.max(0,Math.min(99,integer(quantities[id],0)));if(creature&&!creature.scalable&&creature.pv!=null&&creature.ca!=null&&creature.threat!=null&&quantity)state.quantities[id]=quantity;});
+    if(['all','1/2','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','17'].indexOf(state.ndFilter)<0)state.ndFilter='all';
+    state.quantities=validQuantities(raw.quantities);
+    state.savedEncounters=(Array.isArray(raw.savedEncounters)?raw.savedEncounters:[]).map(normalizeTemplate).filter(Boolean).slice(-20);
     return state;
   }
   function read(){try{return normalize(JSON.parse(localStorage.getItem(KEY)||'null'));}catch(error){return empty();}}
@@ -50,6 +60,14 @@
   function adjust(id,delta){var creature=Bestiary.get(id);if(!creature)throw new Error('Criatura não encontrada no Bestiário.');if(creature.scalable||creature.pv==null||creature.ca==null||creature.threat==null)throw new Error('Este modelo exige que o Mestre defina ND, PV e CA no cadastro manual.');return update(function(state){var next=Math.max(0,Math.min(99,integer(state.quantities[id],0)+integer(delta,0)));if(next)state.quantities[id]=next;else delete state.quantities[id];return state;});}
   function add(id){return adjust(id,1);}
   function clear(){return update(function(state){state.quantities={};return state;});}
+  function saveEncounter(name){
+    name=String(name||'').trim();if(!name)throw new Error('Dê um nome para salvar este encontro.');var result=calculate();if(!result.count)throw new Error('Adicione criaturas antes de salvar.');
+    return update(function(state){state.savedEncounters.push({id:'encontro-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),name:name.slice(0,80),groupLevel:state.groupLevel,partySize:state.partySize,quantities:clone(state.quantities),createdAt:new Date().toISOString()});state.savedEncounters=state.savedEncounters.slice(-20);return state;});
+  }
+  function loadEncounter(id){
+    return update(function(state){var saved=state.savedEncounters.find(function(item){return item.id===id;});if(!saved)throw new Error('Encontro salvo não encontrado.');state.groupLevel=saved.groupLevel;state.partySize=saved.partySize;state.quantities=clone(saved.quantities);state.catalogPage=1;return state;});
+  }
+  function deleteEncounter(id){return update(function(state){state.savedEncounters=state.savedEncounters.filter(function(item){return item.id!==id;});return state;});}
   function commitToEncounter(){
     var encounter=Runtime.read();if(encounter.status!=='preparing')throw new Error('Adicione criaturas antes de iniciar o encontro.');
     var result=calculate(),items=result.selected;if(!items.length)throw new Error('Adicione pelo menos uma criatura à calculadora.');
@@ -59,11 +77,11 @@
       for(var index=1;index<=item.quantity;index++){
         var base=item.creature.name,name=item.quantity>1?base+' '+index:base,suffix=index;
         while(names.indexOf(name)>=0){suffix+=1;name=base+' '+suffix;}
-        Runtime.addEnemy({name:name,pvMax:item.creature.pv,ca:item.creature.ca,initiative:null,notes:'ND '+item.creature.nd+' · Bestiário p. '+item.creature.page+(item.creature.scenarioNote?' · '+item.creature.scenarioNote:''),bestiaryId:item.creature.id,nd:item.creature.nd,sourcePage:item.creature.page});names.push(name);
+        Runtime.addEnemy({name:name,pvMax:item.creature.pv,ca:item.creature.ca,initiative:null,notes:'ND '+item.creature.nd+' · Bestiário p. '+item.creature.page+(item.creature.scenarioNote?' · '+item.creature.scenarioNote:''),bestiaryId:item.creature.id,nd:item.creature.nd,sourcePage:item.creature.page,trackers:item.creature.encounterTrackers||[]});names.push(name);
       }
     });
     clear();return Runtime.view();
   }
 
-  global.SemideusesEncounterCalculator={version:'encounter-calculator-0.1.0',storageKey:KEY,bands:clone(BANDS),read:read,write:write,budgetFor:budgetFor,quantityMultiplier:quantityMultiplier,calculate:calculate,setConfig:setConfig,adjust:adjust,add:add,clear:clear,commitToEncounter:commitToEncounter};
+  global.SemideusesEncounterCalculator={version:'encounter-calculator-0.2.0',storageKey:KEY,bands:clone(BANDS),read:read,write:write,budgetFor:budgetFor,quantityMultiplier:quantityMultiplier,calculate:calculate,setConfig:setConfig,adjust:adjust,add:add,clear:clear,saveEncounter:saveEncounter,loadEncounter:loadEncounter,deleteEncounter:deleteEncounter,commitToEncounter:commitToEncounter};
 })(window);

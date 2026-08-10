@@ -178,7 +178,20 @@ Quando os dois livros tratarem do mesmo assunto de forma diferente, a discrepân
 - [x] Apêndice A conferido e usado para recuperar oficialmente o ND 5 do Basilisco sem inventar os outros valores ausentes.
 - [x] Testes do catálogo, paginação, filtros, VA e integração com a Mesa atualizados para 64 entradas.
 - [x] Deploy Preview validado: zero fichas quando recolhido, 12 por página, filtros ND 9–12, busca com foco preservado, Drakon na calculadora/Mesa e Cila identificada como cenário.
-- [ ] Fase final do catálogo oficial: ND 13, 14, 15 e 17.
+- [x] Fase final do catálogo oficial: ND 13, 14, 15 e 17.
+
+### Fase 5 — catálogo completo e gestão reutilizável
+
+- [x] Sete entradas finais das páginas 119–123 catalogadas; o Bestiário chega a 71 criaturas e modelos oficiais.
+- [x] Filtros concluídos para ND 13, 14, 15 e 17, com VA oficial até o Aspecto de Tífon.
+- [x] Caríbdis Desperta marcada como encontro de cenário e CA 10 explicitamente limitada ao intervalo vulnerável.
+- [x] Cabeças de Cila e Cila das Profundezas recebem PV individuais na Mesa.
+- [x] PV internos, usos de sucção, poderes de domínio, Ações Lendárias e Resistências Lendárias recebem contadores persistentes.
+- [x] Ações Lendárias configuradas renovam automaticamente no início de cada rodada; Resistências Lendárias não renovam.
+- [x] Preparações da calculadora podem ser nomeadas, salvas, carregadas e excluídas no aparelho.
+- [x] Encontros encerrados entram automaticamente no histórico da campanha, preservando rodada e estado final.
+- [x] Controles densos, encontros salvos e histórico iniciam recolhidos para não alongar a tela no celular.
+- [x] Deploy Preview força o Netlify Drawer oculto em novas abas sem afetar produção.
 
 ### Discrepância oficial registrada
 
@@ -188,14 +201,13 @@ Quando os dois livros tratarem do mesmo assunto de forma diferente, a discrepân
 
 `Semideus Veterano` apresenta apenas as faixas ND 8–12, PV 160–220 e CA 17–19. O livro não relaciona valores específicos a cada ND e ainda exige que o Mestre escolha Filiação, 4–6 habilidades e 3–4 Talentos. A entrada é um modelo manual; o app não interpola números nem escolhe a construção do adversário.
 
-`Cila`, `Caríbdis` e `Cila das Profundezas` são encontros ambientais com partes ou objetivos que a linha comum de PV da Mesa não representa sozinha. Elas entram no orçamento pelo ND oficial e podem ser enviadas à iniciativa, mas recebem identificação de cenário, orientação visível e nota persistida. Durante o combate, o Mestre deve abrir a ficha detalhada para rastrear cabeças, interior, sucção ou travessia; transformar esses elementos em subcontadores próprios fica registrado como evolução futura da Mesa.
+`Cila`, `Caríbdis`, `Cila das Profundezas` e `Caríbdis Desperta` são encontros ambientais com partes ou objetivos que a linha comum de PV da Mesa não representa sozinha. Elas entram no orçamento pelo ND oficial e recebem identificação de cenário, orientação visível e controles próprios. Cabeças e PV internos são rastreados separadamente; sucção e intervalo vulnerável recebem contadores. Distância individual de cada personagem até o centro e manobras de navio continuam sendo decisões do Mestre, porque não existe um mapa tático no aplicativo.
 
 ### Próximas fases propostas
 
-1. Continuar o Bestiário em blocos fechados e validados a partir do ND 9.
-2. Modelos de encontro salvos e reutilizáveis.
-3. Painel de campanha: sessões, NPCs, locais, pistas e notas privadas.
-4. Recompensas e entrega controlada de itens aos personagens.
+1. Painel de campanha: sessões, NPCs, locais, pistas e notas privadas.
+2. Recompensas e entrega controlada de itens aos personagens.
+3. Exportação e importação conjunta dos dados do Mestre para troca de aparelho.
 
 ## S1 — ficha clara e estável no celular
 
@@ -301,4 +313,4 @@ Um item só recebe `[x]` quando:
 
 ## Próxima ação
 
-Publicar Bestiário, calculadora e ficha recolhível no `develop`, validar o Deploy Preview em tela móvel e então iniciar a catalogação de ND 5 em diante.
+Validar no Deploy Preview o catálogo completo, os controles especiais, os encontros salvos, o histórico e a ocultação do Netlify Drawer. Depois, iniciar o painel narrativo da campanha sem misturar regras oficiais com conteúdo criado pelo Mestre.

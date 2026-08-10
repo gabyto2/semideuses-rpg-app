@@ -16,6 +16,7 @@ const index=read('index.html');
 assert(index.includes('rel="apple-touch-icon"'),'O iPhone precisa de um ícone dedicado para a tela inicial.');
 assert(index.includes('name="apple-mobile-web-app-capable" content="yes"'),'O modo de aplicativo do iOS deve estar habilitado.');
 assert(index.includes('src="/assets/pwa.js"'),'O registrador do service worker deve ser carregado.');
+assert(index.includes("ntl-drawer-state','hidden"),'O Deploy Preview deve esconder automaticamente a barra de colaboração do Netlify.');
 Array.from(index.matchAll(/\b(?:src|href)=["']\/([^"']+)["']/g)).forEach(match=>assert(fs.existsSync(path.join(root,match[1])),'O recurso pré-cacheado precisa existir: /'+match[1]));
 
 const sw=read('sw.js');
