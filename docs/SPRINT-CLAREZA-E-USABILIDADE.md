@@ -193,6 +193,20 @@ Quando os dois livros tratarem do mesmo assunto de forma diferente, a discrepân
 - [x] Controles densos, encontros salvos e histórico iniciam recolhidos para não alongar a tela no celular.
 - [x] Deploy Preview força o Netlify Drawer oculto em novas abas sem afetar produção.
 
+### Fase 6 — arquivo narrativo e backup do Mestre
+
+- [x] Painel narrativo separado da calculadora e disponível na preparação, durante o combate e após encerrá-lo.
+- [x] Painel e categorias iniciam recolhidos, preservando no aparelho somente o que o Mestre decidiu deixar aberto.
+- [x] Visão geral da campanha com nome, resumo e notas privadas.
+- [x] Registro editável de sessões, NPCs, locais, pistas, profecias, mistérios e missões.
+- [x] Estados próprios para NPCs, locais e fios narrativos, sem confundir conteúdo criado pelo Mestre com regra oficial.
+- [x] Exportação e importação conjunta do painel, encontro atual, histórico e preparações salvas da calculadora.
+- [x] Cópia local manual para recuperação rápida no mesmo navegador.
+- [x] Restauração substitui o conjunto completo do Mestre, evitando misturar duas campanhas silenciosamente.
+- [x] Fichas dos jogadores permanecem fora desse arquivo e continuam com seu backup próprio.
+- [x] Testes automatizados de validação, persistência, interface, backup e restauração.
+- [ ] Deploy Preview e fluxo real no navegador validados.
+
 ### Discrepância oficial registrada
 
 `Mortal com Conhecimento` apresenta no livro apenas as faixas ND 1–4, PV 32–72 e CA 12–16. Como não há distribuição oficial de valores por ND, a entrada é consultável como modelo, mas não pode ser enviada automaticamente à calculadora. O Mestre deve escolher valores concretos no cadastro manual. O aplicativo não interpola nem inventa números.
@@ -205,9 +219,9 @@ Quando os dois livros tratarem do mesmo assunto de forma diferente, a discrepân
 
 ### Próximas fases propostas
 
-1. Painel de campanha: sessões, NPCs, locais, pistas e notas privadas.
-2. Recompensas e entrega controlada de itens aos personagens.
-3. Exportação e importação conjunta dos dados do Mestre para troca de aparelho.
+1. Recompensas e entrega controlada de itens aos personagens, com confirmação antes de alterar uma ficha.
+2. Revisão de clareza do módulo Mestre no celular, incluindo um teste com usuário que não conhece a organização interna.
+3. Preparação de lançamento: migração, recuperação e redução do risco acumulado entre `develop` e `main`.
 
 ## S1 — ficha clara e estável no celular
 
@@ -272,7 +286,7 @@ O app cresceu por extensões sucessivas. Existem vários scripts observando e co
 
 ### 4. As fichas dependem do navegador
 
-Hoje os dados ficam principalmente no armazenamento local. Exportação e backup existem, mas o usuário ainda pode perder fichas ao limpar dados do navegador ou trocar de aparelho sem exportar.
+Hoje os dados ficam principalmente no armazenamento local. A ficha e o módulo Mestre possuem exportação própria, mas o usuário ainda pode perder dados ao limpar o navegador ou trocar de aparelho sem exportar. A cópia local do Mestre ajuda contra alterações acidentais, porém também desaparece se os dados do navegador forem apagados; ela não é sincronização em nuvem.
 
 ### 5. O `develop` está muito distante de `main`
 
@@ -297,6 +311,9 @@ Os testes atuais cobrem regras, DOM, navegação e build, mas não reproduzem pe
 - O cálculo de encontros segue literalmente orçamento, VA e multiplicadores do Livro do Mestre; não mede sozinho composição tática ou sinergia entre criaturas.
 - Modelos com valores variáveis no livro exigem preenchimento manual e não recebem números deduzidos pelo app.
 - Produção não acompanha automaticamente cada commit do `develop`.
+- O backup do Mestre substitui todo o conjunto narrativo e de encontros ao restaurar; mesclar campanhas automaticamente criaria duplicações e relações ambíguas.
+- O backup do Mestre não inclui fichas de jogadores, porque cada ficha já possui ciclo próprio de exportação e importação.
+- Usando somente Netlify e GitHub, dados de campanha continuam locais ao navegador; backup em arquivo protege a troca de aparelho, mas não cria sincronização automática.
 
 ## Definição de pronto para cada item
 
@@ -313,4 +330,4 @@ Um item só recebe `[x]` quando:
 
 ## Próxima ação
 
-Validar no Deploy Preview o catálogo completo, os controles especiais, os encontros salvos, o histórico e a ocultação do Netlify Drawer. Depois, iniciar o painel narrativo da campanha sem misturar regras oficiais com conteúdo criado pelo Mestre.
+Validar no Deploy Preview o arquivo narrativo em preparação e combate, cadastrar um registro de cada categoria e conferir backup/restauração. Depois, iniciar recompensas e entrega controlada de itens sem permitir que o Mestre altere uma ficha silenciosamente.

@@ -49,9 +49,11 @@ function runtimeRules(){
 
 function uiFlow(){
   const {dom,window,store}=environment();window.alert=message=>{throw new Error('Alerta inesperado: '+message);};
-  window.eval(source('rules-bestiary-nd04.js'));window.eval(source('rules-bestiary-nd08.js'));window.eval(source('rules-bestiary-nd12.js'));window.eval(source('rules-bestiary-final.js'));window.eval(source('master-runtime.js'));window.eval(source('encounter-calculator.js'));window.eval(source('bestiary-ui.js'));window.eval(source('master-ui.js'));window.eval(source('app.js'));
+  window.eval(source('rules-bestiary-nd04.js'));window.eval(source('rules-bestiary-nd08.js'));window.eval(source('rules-bestiary-nd12.js'));window.eval(source('rules-bestiary-final.js'));window.eval(source('master-runtime.js'));window.eval(source('encounter-calculator.js'));window.eval(source('master-campaign.js'));window.eval(source('master-backup.js'));window.eval(source('bestiary-ui.js'));window.eval(source('master-campaign-ui.js'));window.eval(source('master-ui.js'));window.eval(source('app.js'));
   window.document.querySelector('[data-go="mestre"]').click();
   assert.equal(window.document.querySelector('.master-intro h2').textContent,'Prepare o encontro sem trocar de tela');
+  assert(window.document.querySelector('[data-master-campaign]'),'A Mesa deve incluir o arquivo narrativo da campanha.');
+  assert.equal(window.document.querySelector('.campaign-shell').open,false,'O arquivo narrativo deve iniciar recolhido.');
   assert(window.document.querySelector('[data-master-bestiary]'),'A preparação deve incluir o Bestiário oficial.');
   assert.equal(window.document.querySelectorAll('[data-bestiary-card]').length,0,'O catálogo recolhido não deve renderizar dezenas de fichas ocultas.');
   const browser=window.document.querySelector('.bestiary-browser');browser.open=true;browser.ontoggle();browser.ontoggle=null;
@@ -83,6 +85,7 @@ function uiFlow(){
   assert.equal(window.document.querySelectorAll('.master-setup-row').length,2);
   window.document.querySelector('[data-master-start]').click();
   assert(window.document.querySelector('.master-turn-bar').textContent.includes('Helena'));
+  assert(window.document.querySelector('[data-master-campaign]'),'O arquivo narrativo deve continuar acessível durante o combate.');
   const helenaCard=window.document.querySelector('[data-master-combatant]');helenaCard.querySelector('.master-pv-controls input').value='4';helenaCard.querySelector('[data-master-pv][data-mode="damage"]').click();
   assert.equal(store.helena.resources.pvCurrent,26);
   const condition=window.document.querySelector('[data-master-add-condition]'),select=condition.closest('.master-conditions').querySelector('select');select.value='Abalado';condition.click();

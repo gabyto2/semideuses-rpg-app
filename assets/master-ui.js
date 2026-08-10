@@ -1,6 +1,6 @@
 (function(global){
   'use strict';
-  var Runtime=global.SemideusesMasterRuntime,Service=global.SemideusesCharacterService,Model=global.SemideusesCharacter,BestiaryUI=global.SemideusesBestiaryUI;
+  var Runtime=global.SemideusesMasterRuntime,Service=global.SemideusesCharacterService,Model=global.SemideusesCharacter,BestiaryUI=global.SemideusesBestiaryUI,CampaignUI=global.SemideusesMasterCampaignUI;
   if(!Runtime||!Service||!Model)return;
   var callbacks={refresh:function(){},notify:function(){}};
   function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(char){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char];});}
@@ -35,9 +35,10 @@
   }
   function ended(state){return '<section class="master-intro ended"><span class="eyebrow">ENCONTRO ENCERRADO</span><h2>'+esc(state.title)+'</h2><p>'+state.round+' rodada(s) registradas. Os PV e condições dos personagens já estão salvos nas próprias fichas.</p></section><section class="panel"><h3>Estado final</h3><div class="master-final-list">'+state.combatants.map(function(item){return '<div><span class="master-kind '+item.kind+'">'+(item.kind==='player'?'PJ':'NPC')+'</span><strong>'+esc(item.name)+'</strong><small>PV '+item.pvCurrent+'/'+item.pvMax+' · '+(item.conditions.length?esc(item.conditions.join(', ')):'sem condições')+'</small></div>';}).join('')+'</div><button class="primary master-new" data-master-new>Novo encontro</button></section>';
   }
-  function view(){var state=Runtime.view();return '<section data-master-session><div class="master-status-line"><span class="status '+(state.status==='active'?'active':'')+'">'+statusLabel(state.status)+'</span><small>Salvo automaticamente neste aparelho</small></div>'+(state.status==='preparing'?setup(state):state.status==='active'?active(state):ended(state))+(state.status==='active'?'':historyPanel())+'</section>';}
+  function view(){var state=Runtime.view();return '<section data-master-session><div class="master-status-line"><span class="status '+(state.status==='active'?'active':'')+'">'+statusLabel(state.status)+'</span><small>Salvo automaticamente neste aparelho</small></div>'+(CampaignUI?CampaignUI.view():'')+(state.status==='preparing'?setup(state):state.status==='active'?active(state):ended(state))+(state.status==='active'?'':historyPanel())+'</section>';}
   function bind(options){callbacks=Object.assign(callbacks,options||{});var root=document.querySelector('[data-master-session]');if(!root)return;
     if(BestiaryUI)BestiaryUI.bind(callbacks);
+    if(CampaignUI)CampaignUI.bind(callbacks);
     var title=root.querySelector('[data-master-save-title]');if(title)title.onclick=function(){run(function(){Runtime.setTitle(root.querySelector('[data-master-title]').value);},'Nome do encontro salvo.');};
     root.querySelectorAll('[data-master-add-character]').forEach(function(button){button.onclick=function(){run(function(){Runtime.addCharacter(button.dataset.masterAddCharacter,null);});};});
     var addEnemy=root.querySelector('[data-master-add-enemy]');if(addEnemy)addEnemy.onclick=function(){var payload={};root.querySelectorAll('[data-master-enemy]').forEach(function(input){payload[input.dataset.masterEnemy]=input.value;});run(function(){Runtime.addEnemy(payload);},'Inimigo adicionado.');};
@@ -54,5 +55,5 @@
     var fresh=root.querySelector('[data-master-new]');if(fresh)fresh.onclick=function(){if(confirm('Criar um novo encontro e apagar esta ordem de iniciativa?'))run(function(){Runtime.reset();},'Novo encontro preparado.');};
     root.querySelectorAll('[data-master-history-delete]').forEach(function(button){button.onclick=function(){if(confirm('Excluir este registro do histórico?'))run(function(){Runtime.deleteHistory(button.dataset.masterHistoryDelete);},'Registro excluído.');};});
   }
-  global.SemideusesMasterUI={version:'master-session-ui-0.3.0',view:view,bind:bind};
+  global.SemideusesMasterUI={version:'master-session-ui-0.3.1',view:view,bind:bind};
 })(window);

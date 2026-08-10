@@ -125,6 +125,12 @@
     update(function(state){var enemy=find(state,id);if(enemy.kind!=='enemy')throw new Error('Controles especiais pertencem às criaturas do Bestiário.');var tracker=enemy.trackers.find(function(item){return item.id===trackerId;});if(!tracker)throw new Error('Controle especial não encontrado.');if(tracker.kind==='segments'){var index=Math.floor(number(segmentIndex,-1));if(index<0||index>=tracker.values.length)throw new Error('Parte da criatura não encontrada.');tracker.values[index]=Math.max(0,Math.min(tracker.segmentMax,tracker.values[index]+delta));}else tracker.current=Math.max(0,Math.min(tracker.max,tracker.current+delta));return state;});return view();
   }
   function deleteHistory(id){return writeHistory(readHistory().filter(function(item){return item.id!==id;}));}
+  function exportData(){return {current:read(),history:readHistory()};}
+  function restoreData(raw){
+    if(!raw||typeof raw!=='object')throw new Error('Dados de encontros inválidos.');
+    var current=write(raw.current||empty()),history=writeHistory(Array.isArray(raw.history)?raw.history:[]);
+    return {current:current,history:history};
+  }
 
-  global.SemideusesMasterRuntime={version:'master-session-0.3.0',storageKey:KEY,historyKey:HISTORY_KEY,read:read,view:view,history:function(){return clone(readHistory());},setTitle:setTitle,addCharacter:addCharacter,addEnemy:addEnemy,remove:remove,setInitiative:setInitiative,start:start,nextTurn:nextTurn,moveTie:moveTie,end:end,reset:reset,adjustPv:adjustPv,toggleCondition:toggleCondition,adjustTracker:adjustTracker,deleteHistory:deleteHistory};
+  global.SemideusesMasterRuntime={version:'master-session-0.3.1',storageKey:KEY,historyKey:HISTORY_KEY,read:read,view:view,history:function(){return clone(readHistory());},exportData:exportData,restoreData:restoreData,setTitle:setTitle,addCharacter:addCharacter,addEnemy:addEnemy,remove:remove,setInitiative:setInitiative,start:start,nextTurn:nextTurn,moveTie:moveTie,end:end,reset:reset,adjustPv:adjustPv,toggleCondition:toggleCondition,adjustTracker:adjustTracker,deleteHistory:deleteHistory};
 })(window);
