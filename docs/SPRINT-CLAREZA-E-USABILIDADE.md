@@ -207,6 +207,18 @@ Quando os dois livros tratarem do mesmo assunto de forma diferente, a discrepân
 - [x] Testes automatizados de validação, persistência, interface, backup e restauração.
 - [x] Deploy Preview validado: quatro categorias cadastradas, preferências de abertura preservadas, cópia local confirmada e painel recolhido conferido visualmente.
 
+### Fase 7 — identidade e instalação
+
+- [x] Nome instalado simplificado para `Semideuses RPG` no manifesto, no iPhone e no título da página.
+- [x] Novo ícone `S3 com louros`, preservando azul, dourado e leitura em tamanho pequeno.
+- [x] Ícones próprios de 180, 192 e 512 px, além do favicon e da fonte em alta resolução.
+- [x] Lembrete não bloqueante de instalação exibido somente fora do modo instalado.
+- [x] Android e navegadores Chromium usam o diálogo nativo de instalação quando disponível.
+- [x] iPhone recebe instruções para `Compartilhar → Adicionar à Tela de Início → Abrir como App`.
+- [x] O lembrete pode ser fechado e não reaparece indefinidamente no mesmo navegador.
+- [x] Testes automatizados cobrem nome, dimensões dos ícones, instalação nativa, instrução do iPhone e modo já instalado.
+- [ ] Deploy Preview e comportamento real validados.
+
 ### Discrepância oficial registrada
 
 `Mortal com Conhecimento` apresenta no livro apenas as faixas ND 1–4, PV 32–72 e CA 12–16. Como não há distribuição oficial de valores por ND, a entrada é consultável como modelo, mas não pode ser enviada automaticamente à calculadora. O Mestre deve escolher valores concretos no cadastro manual. O aplicativo não interpola nem inventa números.
@@ -219,8 +231,8 @@ Quando os dois livros tratarem do mesmo assunto de forma diferente, a discrepân
 
 ### Próximas fases propostas
 
-1. Recompensas e entrega controlada de itens aos personagens, com confirmação antes de alterar uma ficha.
-2. Revisão de clareza do módulo Mestre no celular, incluindo um teste com usuário que não conhece a organização interna.
+1. Revisão de clareza do módulo Mestre no celular, incluindo rolagem, seções recolhíveis e teste com usuário que não conhece a organização interna.
+2. Vinculação local entre sessões narrativas e encontros encerrados do próprio Mestre.
 3. Preparação de lançamento: migração, recuperação e redução do risco acumulado entre `develop` e `main`.
 
 ## S1 — ficha clara e estável no celular
@@ -314,6 +326,8 @@ Os testes atuais cobrem regras, DOM, navegação e build, mas não reproduzem pe
 - O backup do Mestre substitui todo o conjunto narrativo e de encontros ao restaurar; mesclar campanhas automaticamente criaria duplicações e relações ambíguas.
 - O backup do Mestre não inclui fichas de jogadores, porque cada ficha já possui ciclo próprio de exportação e importação.
 - Usando somente Netlify e GitHub, dados de campanha continuam locais ao navegador; backup em arquivo protege a troca de aparelho, mas não cria sincronização automática.
+- O Mestre não consegue entregar itens diretamente a fichas abertas em outros aparelhos. Essa função exigiria contas, campanhas compartilhadas e armazenamento online; um botão local daria uma falsa impressão de conexão.
+- Uma futura transferência sem contas só poderia ser manual, por arquivo ou QR aceito pelo jogador, e não deve ser descrita como entrega direta.
 
 ## Definição de pronto para cada item
 
@@ -330,4 +344,4 @@ Um item só recebe `[x]` quando:
 
 ## Próxima ação
 
-Iniciar recompensas e entrega controlada de itens. O Mestre deve preparar a recompensa, escolher uma ficha disponível e confirmar a entrega; nenhuma ficha pode ser alterada silenciosamente nem receber item duplicado por repetição acidental do comando.
+Validar no Deploy Preview o novo nome, o ícone e o lembrete de instalação. Depois, auditar todo o módulo Mestre no celular antes de acrescentar outra ferramenta.
