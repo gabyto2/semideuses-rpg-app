@@ -13,6 +13,7 @@ window.SemideusesCharacter={clone,uid:prefix=>prefix+'-'+(++sequence),conditions
 window.SemideusesCharacterService={list:()=>[],get:()=>null};
 window.eval(source('rules-bestiary-nd04.js'));
 window.eval(source('rules-bestiary-nd08.js'));
+window.eval(source('rules-bestiary-nd12.js'));
 window.eval(source('master-runtime.js'));
 window.eval(source('encounter-calculator.js'));
 
@@ -23,19 +24,27 @@ const creatures=Bestiary.all();
 
 assert.equal(Calculator.read().catalogOpen,false,'O catálogo extenso deve iniciar recolhido.');
 
-assert.equal(creatures.length,52,'O catálogo deve reunir 27 entradas até ND 4 e 25 entradas no bloco seguinte.');
-assert.equal(creatures.filter(creature=>creature.page>=95&&creature.page<=112).length,25,'O bloco ND 5–8 deve conter as 25 entradas das páginas 95–112.');
-assert(creatures.every(creature=>creature.page>=83&&creature.page<=112),'Toda entrada deve apontar para uma página do trecho oficial catalogado.');
+assert.equal(creatures.length,64,'O catálogo deve reunir 27 entradas até ND 4, 25 até ND 8 e 12 até ND 12.');
+assert.equal(creatures.slice(27,52).length,25,'O bloco ND 5–8 deve manter suas 25 entradas.');
+assert.equal(creatures.slice(52).length,12,'O bloco ND 9–12 deve conter 12 entradas oficiais.');
+assert(creatures.every(creature=>creature.page>=83&&creature.page<=118),'Toda ficha deve apontar para sua página no trecho oficial catalogado.');
 const incomplete=creatures.filter(creature=>creature.pv==null||creature.ca==null);
 assert.deepEqual(incomplete.map(creature=>creature.id),['mortal-conhecimento','basilisco','semideus-veterano'],'Somente as três lacunas explicitamente documentadas podem ficar sem valores exatos.');
 assert.equal(Bestiary.get('estrige').threat,100,'ND 1/2 deve valer 100 VA.');
 assert.equal(Bestiary.get('lestrigao').threat,1100,'ND 4 deve valer 1.100 VA.');
 assert.equal(Bestiary.get('talos').threat,3900,'ND 8 deve valer 3.900 VA.');
+assert.equal(Bestiary.get('drakon').threat,7200,'ND 12 deve valer 7.200 VA.');
 assert.equal(Bestiary.get('basilisco').catalogNd,'5','O Basilisco deve continuar localizável no bloco em que aparece.');
-assert.equal(Bestiary.get('basilisco').threat,null,'A lacuna do cabeçalho oficial não pode ser completada pela calculadora.');
+assert.equal(Bestiary.get('basilisco').threat,1800,'O Apêndice A deve corrigir o ND do Basilisco para 5.');
+assert.equal(Bestiary.get('basilisco').pv,null,'O Apêndice não pode ser usado para inventar PV ausentes.');
 assert.equal(Bestiary.list({nd:'6'}).length,6,'O filtro ND 6 deve devolver o bloco completo.');
 assert.equal(Bestiary.list({nd:'7'}).length,5,'O filtro ND 7 deve devolver o bloco completo.');
 assert.equal(Bestiary.list({nd:'8'}).length,6,'O filtro ND 8 deve incluir as cinco fichas fixas e o Veterano escalável.');
+assert.equal(Bestiary.list({nd:'9'}).length,6,'O filtro ND 9 deve devolver as seis entradas oficiais.');
+assert.equal(Bestiary.list({nd:'10'}).length,2,'O filtro ND 10 deve devolver as duas entradas oficiais.');
+assert.equal(Bestiary.list({nd:'11'}).length,3,'O filtro ND 11 deve devolver as três entradas oficiais.');
+assert.equal(Bestiary.list({nd:'12'}).length,1,'O filtro ND 12 deve devolver o Drakon.');
+assert.equal(Bestiary.list({query:'Mesa'}).filter(creature=>creature.environmental).length,3,'A busca deve encontrar os três encontros ambientais pelas orientações da Mesa.');
 assert.equal(Bestiary.threatFor('30'),155000,'A tabela oficial de VA deve permanecer pronta até ND 30.');
 
 const levelEight=Calculator.budgetFor(8,4);
@@ -71,6 +80,19 @@ result=Calculator.calculate();
 assert.equal(result.adjustedThreat,3900);
 Calculator.commitToEncounter();
 assert(Runtime.read().combatants.some(enemy=>enemy.bestiaryId==='talos'&&enemy.sourcePage===112),'Talos deve entrar na Mesa com a referência oficial.');
+
+Calculator.setConfig({groupLevel:12,partySize:4,ndFilter:'12',catalogPage:4});
+assert.equal(Calculator.read().ndFilter,'12','O filtro deve persistir NDs até 12.');
+assert.equal(Calculator.read().catalogPage,4,'A página do catálogo deve persistir sem afetar o encontro.');
+Calculator.add('drakon');
+assert.equal(Calculator.calculate().rawThreat,7200);
+Calculator.commitToEncounter();
+assert(Runtime.read().combatants.some(enemy=>enemy.bestiaryId==='drakon'&&enemy.pvMax===230&&enemy.ca===18),'O Drakon deve entrar com PV e CA oficiais.');
+
+Calculator.add('cila');
+Calculator.commitToEncounter();
+const cila=Runtime.read().combatants.find(enemy=>enemy.bestiaryId==='cila');
+assert(cila.notes.includes('seis cabeças'),'A Mesa deve preservar a orientação ambiental da Cila.');
 
 dom.window.close();
 console.log('bestiary-calculator.test: OK');

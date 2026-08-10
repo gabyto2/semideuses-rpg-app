@@ -165,15 +165,30 @@ Quando os dois livros tratarem do mesmo assunto de forma diferente, a discrepân
 - [x] Basilisco e Semideus Veterano ficam consultáveis, mas são bloqueados na calculadora por lacunas da fonte.
 - [x] Testes do catálogo, filtros, VA e integração atualizados para as 52 entradas.
 - [x] Deploy Preview e validação real no navegador: 52 entradas, filtro ND 8, Talos na calculadora/Mesa e bloqueio do Basilisco conferidos.
-- [ ] Fase seguinte do catálogo: criaturas de ND 9 em diante.
+- [x] Fase seguinte do catálogo iniciada com as criaturas de ND 9 a 12.
+
+### Fase 4 — ND 9 a 12 e escala do catálogo
+
+- [x] 12 novas entradas das páginas 112–119 catalogadas; o total passa a 64 criaturas e modelos.
+- [x] Filtros ampliados até ND 12, preservando busca por regras, ações, notas de chefe e orientações ambientais.
+- [x] Catálogo recolhido não renderiza fichas ocultas; aberto, mostra no máximo 12 resultados por página.
+- [x] Busca, filtro e paginação atualizam somente a lista, sem recriar a tela inteira ou interromper a digitação.
+- [x] Cila, Caríbdis e Cila das Profundezas aparecem como `CENÁRIO` e explicam como controlar cabeças, sucção e objetivos na Mesa.
+- [x] A calculadora continua usando o VA oficial dos encontros ambientais, mas a nota enviada à Mesa evita tratá-los como inimigos convencionais.
+- [x] Apêndice A conferido e usado para recuperar oficialmente o ND 5 do Basilisco sem inventar os outros valores ausentes.
+- [x] Testes do catálogo, paginação, filtros, VA e integração com a Mesa atualizados para 64 entradas.
+- [ ] Deploy Preview e validação real no navegador.
+- [ ] Fase final do catálogo oficial: ND 13, 14, 15 e 17.
 
 ### Discrepância oficial registrada
 
 `Mortal com Conhecimento` apresenta no livro apenas as faixas ND 1–4, PV 32–72 e CA 12–16. Como não há distribuição oficial de valores por ND, a entrada é consultável como modelo, mas não pode ser enviada automaticamente à calculadora. O Mestre deve escolher valores concretos no cadastro manual. O aplicativo não interpola nem inventa números.
 
-`Basilisco` começa na página 95 já na tabela de atributos. O PDF oficial não apresenta seu cabeçalho com ND, PV, CA e deslocamento. A criatura permanece pesquisável no grupo ND 5 por sua posição no catálogo, mas o app mostra os quatro campos como não informados e bloqueia sua inclusão automática. Estatísticas de outros sistemas não serão usadas como substituição silenciosa.
+`Basilisco` começa na página 95 já na tabela de atributos. O cabeçalho não apresenta PV, CA nem deslocamento, mas o Apêndice A da página 123 confirma que seu ND é 5. O app usa o ND e o VA oficiais, mantém os três campos ausentes como não informados e bloqueia sua inclusão automática. Estatísticas de outros sistemas não serão usadas como substituição silenciosa.
 
 `Semideus Veterano` apresenta apenas as faixas ND 8–12, PV 160–220 e CA 17–19. O livro não relaciona valores específicos a cada ND e ainda exige que o Mestre escolha Filiação, 4–6 habilidades e 3–4 Talentos. A entrada é um modelo manual; o app não interpola números nem escolhe a construção do adversário.
+
+`Cila`, `Caríbdis` e `Cila das Profundezas` são encontros ambientais com partes ou objetivos que a linha comum de PV da Mesa não representa sozinha. Elas entram no orçamento pelo ND oficial e podem ser enviadas à iniciativa, mas recebem identificação de cenário, orientação visível e nota persistida. Durante o combate, o Mestre deve abrir a ficha detalhada para rastrear cabeças, interior, sucção ou travessia; transformar esses elementos em subcontadores próprios fica registrado como evolução futura da Mesa.
 
 ### Próximas fases propostas
 

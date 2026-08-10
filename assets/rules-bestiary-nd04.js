@@ -301,7 +301,7 @@
 
   function clone(value){return JSON.parse(JSON.stringify(value));}
   function plain(value){return String(value==null?'':value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
-  function searchable(creature){return plain([creature.name,creature.type,creature.nd,creature.catalogNd,creature.description,creature.tactics,creature.habitat,creature.lore,creature.gmNote,creature.manualReason,creature.bossNote,(creature.traits||[]).map(function(item){return item.name+' '+item.effect;}).join(' '),(creature.actions||[]).map(function(item){return item.name+' '+item.effect;}).join(' '),(creature.reactions||[]).map(function(item){return item.name+' '+item.effect;}).join(' '),(creature.legendaryActions||[]).map(function(item){return item.name+' '+item.effect;}).join(' ')].join(' '));}
+  function searchable(creature){return plain([creature.name,creature.type,creature.nd,creature.catalogNd,creature.description,creature.tactics,creature.habitat,creature.lore,creature.gmNote,creature.manualReason,creature.bossNote,creature.scenarioNote,(creature.traits||[]).map(function(item){return item.name+' '+item.effect;}).join(' '),(creature.actions||[]).map(function(item){return item.name+' '+item.effect;}).join(' '),(creature.reactions||[]).map(function(item){return item.name+' '+item.effect;}).join(' '),(creature.legendaryActions||[]).map(function(item){return item.name+' '+item.effect;}).join(' ')].join(' '));}
   function threatFor(nd){return THREAT[String(nd)]==null?null:THREAT[String(nd)];}
   function prepare(creature){
     var saved=clone(creature);saved.catalogNd=String(saved.catalogNd||saved.nd||'—');saved.threat=saved.calculator===false?null:threatFor(saved.nd);saved.source='Livro do Mestre 3e';saved.searchText=searchable(saved);return saved;
@@ -310,6 +310,9 @@
     (entries||[]).forEach(function(creature){if(!creature||!creature.id)throw new Error('Entrada inválida no Bestiário.');if(DATA.some(function(item){return item.id===creature.id;}))throw new Error('Entrada duplicada no Bestiário: '+creature.id);DATA.push(prepare(creature));});
     if(options&&options.source)api.source=String(options.source);if(options&&options.version)api.version=String(options.version);return DATA.length;
   }
+  function update(id,changes){
+    var index=DATA.findIndex(function(creature){return creature.id===id;});if(index<0)throw new Error('Entrada não encontrada no Bestiário: '+id);var merged=Object.assign({},DATA[index],clone(changes||{}),{id:id});DATA[index]=prepare(merged);return clone(DATA[index]);
+  }
   var initial=DATA.slice();DATA.length=0;
   function list(filters){
     filters=filters||{};var query=plain(filters.query),nd=String(filters.nd||'all');
@@ -317,7 +320,7 @@
   }
   function get(id){var found=DATA.find(function(creature){return creature.id===id;});return found?clone(found):null;}
 
-  var api={version:'master-bestiary-nd04-0.2.0',source:'Livro do Mestre 3e · p. 83–94',threatTable:clone(THREAT),list:list,get:get,threatFor:threatFor,register:register,all:function(){return DATA.map(clone);}};
+  var api={version:'master-bestiary-nd04-0.3.0',source:'Livro do Mestre 3e · p. 83–94',threatTable:clone(THREAT),list:list,get:get,threatFor:threatFor,register:register,update:update,all:function(){return DATA.map(clone);}};
   register(initial);
   global.SemideusesBestiary=api;
 })(window);

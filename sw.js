@@ -1,4 +1,4 @@
-const CACHE='semideuses-rpg-v08';
+const CACHE='semideuses-rpg-v09';
 const CORE=['/','/index.html','/manifest.webmanifest','/icons/icon-180.png','/icons/icon-192.png','/icons/icon-512.png'];
 
 async function precache(){

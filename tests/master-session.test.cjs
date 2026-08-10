@@ -47,14 +47,26 @@ function runtimeRules(){
 
 function uiFlow(){
   const {dom,window,store}=environment();window.alert=message=>{throw new Error('Alerta inesperado: '+message);};
-  window.eval(source('rules-bestiary-nd04.js'));window.eval(source('rules-bestiary-nd08.js'));window.eval(source('master-runtime.js'));window.eval(source('encounter-calculator.js'));window.eval(source('bestiary-ui.js'));window.eval(source('master-ui.js'));window.eval(source('app.js'));
+  window.eval(source('rules-bestiary-nd04.js'));window.eval(source('rules-bestiary-nd08.js'));window.eval(source('rules-bestiary-nd12.js'));window.eval(source('master-runtime.js'));window.eval(source('encounter-calculator.js'));window.eval(source('bestiary-ui.js'));window.eval(source('master-ui.js'));window.eval(source('app.js'));
   window.document.querySelector('[data-go="mestre"]').click();
   assert.equal(window.document.querySelector('.master-intro h2').textContent,'Prepare o encontro sem trocar de tela');
   assert(window.document.querySelector('[data-master-bestiary]'),'A preparação deve incluir o Bestiário oficial.');
-  assert.equal(window.document.querySelectorAll('[data-bestiary-card]').length,52,'A interface deve renderizar o catálogo oficial até ND 8.');
+  assert.equal(window.document.querySelectorAll('[data-bestiary-card]').length,0,'O catálogo recolhido não deve renderizar dezenas de fichas ocultas.');
+  const browser=window.document.querySelector('.bestiary-browser');browser.open=true;browser.ontoggle();browser.ontoggle=null;
+  assert.equal(window.document.querySelectorAll('[data-bestiary-card]').length,12,'O catálogo aberto deve renderizar somente uma página curta.');
   assert.equal(window.document.querySelector('[data-bestiary-add="estrige"]').closest('[data-bestiary-card]').querySelector('.bestiary-source').textContent,'p. 83');
+  window.document.querySelector('[data-bestiary-page="2"]').click();
+  assert.equal(window.SemideusesEncounterCalculator.read().catalogPage,2,'A paginação deve avançar sem renderizar o catálogo inteiro.');
+  assert.equal(window.document.querySelectorAll('[data-bestiary-card]').length,12);
+  const filter=window.document.querySelector('[data-bestiary-filter]');filter.value='8';filter.onchange();
+  assert.equal(window.document.querySelectorAll('[data-bestiary-card]').length,6,'O filtro ND 8 deve renderizar apenas suas seis entradas.');
   assert(window.document.querySelector('[data-bestiary-add="talos"]'),'Uma criatura ND 8 completa deve entrar na calculadora.');
+  filter.value='5';filter.onchange();
+  assert.equal(window.document.querySelectorAll('[data-bestiary-card]').length,8,'O filtro ND 5 deve renderizar apenas suas oito entradas.');
   assert(window.document.querySelector('[data-bestiary-manual="basilisco"]'),'A ficha incompleta do Basilisco deve exigir preparação manual.');
+  filter.value='12';filter.onchange();
+  assert.equal(window.document.querySelectorAll('[data-bestiary-card]').length,1,'O filtro ND 12 deve mostrar somente o Drakon.');
+  assert(window.document.querySelector('[data-bestiary-add="drakon"]'));
   window.document.querySelector('[data-master-add-character="helena"]').click();
   let initiative=window.document.querySelector('[data-master-initiative]');initiative.value='16';initiative.dispatchEvent(new window.Event('change',{bubbles:true}));
   window.document.querySelector('[data-master-enemy="name"]').value='Empusa';
