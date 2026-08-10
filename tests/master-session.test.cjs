@@ -88,6 +88,14 @@ function uiFlow(){
   const condition=window.document.querySelector('[data-master-add-condition]'),select=condition.closest('.master-conditions').querySelector('select');select.value='Abalado';condition.click();
   assert(store.helena.resources.conditions.includes('Abalado'));
   assert(window.document.querySelector('[data-master-next]'),'O controle de próximo turno deve permanecer visível.');
+  window.SemideusesMasterRuntime.end();window.SemideusesMasterRuntime.reset();window.SemideusesEncounterCalculator.add('cila');window.SemideusesEncounterCalculator.commitToEncounter();
+  const cilaId=window.SemideusesMasterRuntime.read().combatants[0].id;window.SemideusesMasterRuntime.setInitiative(cilaId,10);window.SemideusesMasterRuntime.start();window.document.querySelector('[data-go="mestre"]').click();
+  assert(window.document.querySelector('.master-trackers'),'Criaturas complexas devem exibir controles especiais recolhíveis.');
+  assert.equal(window.document.querySelectorAll('.master-segment').length,6,'A interface deve mostrar as seis cabeças da Cila.');
+  const firstHead=window.document.querySelector('.master-segment');firstHead.querySelector('input').value='7';firstHead.querySelector('[data-mode="damage"]').click();
+  assert.equal(window.SemideusesMasterRuntime.read().combatants[0].trackers[0].values[0],18,'O controle da cabeça deve aplicar o dano informado.');
+  window.SemideusesMasterRuntime.end();window.document.querySelector('[data-go="mestre"]').click();
+  assert(window.document.querySelectorAll('.master-history-list article').length>=1,'Encontros encerrados devem aparecer no histórico da campanha.');
   dom.window.close();
 }
 
