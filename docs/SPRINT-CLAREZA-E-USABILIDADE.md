@@ -164,7 +164,7 @@ Quando os dois livros tratarem do mesmo assunto de forma diferente, a discrepân
 - [x] Fichas detalhadas exibem Reações, Ações Lendárias e regras de chefe sem misturá-las às ações comuns.
 - [x] Basilisco e Semideus Veterano ficam consultáveis, mas são bloqueados na calculadora por lacunas da fonte.
 - [x] Testes do catálogo, filtros, VA e integração atualizados para as 52 entradas.
-- [ ] Deploy Preview e validação real em tela móvel.
+- [x] Deploy Preview e validação real no navegador: 52 entradas, filtro ND 8, Talos na calculadora/Mesa e bloqueio do Basilisco conferidos.
 - [ ] Fase seguinte do catálogo: criaturas de ND 9 em diante.
 
 ### Discrepância oficial registrada
