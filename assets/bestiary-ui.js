@@ -1,0 +1,54 @@
+(function(global){
+  'use strict';
+
+  var Bestiary=global.SemideusesBestiary,Calculator=global.SemideusesEncounterCalculator;
+  if(!Bestiary||!Calculator)return;
+  var callbacks={refresh:function(){},notify:function(){}};
+
+  function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(char){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char];});}
+  function plain(value){return String(value==null?'':value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
+  function format(value){return Number(value||0).toLocaleString('pt-BR');}
+  function run(action,success){try{action();if(success)callbacks.notify(success);callbacks.refresh();}catch(error){alert(error.message);}}
+  function list(items,className){return items&&items.length?'<div class="'+className+'">'+items.map(function(value){return '<span>'+esc(value)+'</span>';}).join('')+'</div>':'';}
+  function namedList(items,title){return items&&items.length?'<div class="bestiary-rule-list"><h5>'+esc(title)+'</h5>'+items.map(function(item){return '<div><strong>'+esc(item.name)+'.</strong> '+esc(item.effect)+'</div>';}).join('')+'</div>':'';}
+  function statBlock(creature){
+    var attributes=creature.attributes&&Object.keys(creature.attributes).length?'<div class="bestiary-attributes">'+Object.keys(creature.attributes).map(function(name){return '<span><b>'+esc(name)+'</b>'+esc(creature.attributes[name])+'</span>';}).join('')+'</div>':'';
+    var defenses=list(creature.resistances,'bestiary-tags resistances')+list(creature.vulnerabilities,'bestiary-tags vulnerabilities')+list(creature.immunities,'bestiary-tags immunities');
+    var senses=list(creature.senses,'bestiary-tags')+list(creature.skills,'bestiary-tags');
+    return (creature.description?'<p class="bestiary-description">'+esc(creature.description)+'</p>':'')+
+      '<div class="bestiary-vitals"><span><b>PV</b>'+esc(creature.pv==null?creature.pvText:creature.pv)+'</span><span><b>CA</b>'+esc(creature.ca==null?creature.caText:creature.ca)+'</span><span><b>Deslocamento</b>'+esc(creature.speed||'—')+'</span></div>'+attributes+defenses+senses+
+      namedList(creature.traits,'Características')+namedList(creature.actions,'Ações')+
+      (creature.tactics?'<div class="bestiary-guidance"><strong>Tática</strong><p>'+esc(creature.tactics)+'</p></div>':'')+
+      (creature.habitat?'<div class="bestiary-guidance"><strong>Habitat e uso</strong><p>'+esc(creature.habitat)+'</p></div>':'')+
+      (creature.lore?'<div class="bestiary-guidance"><strong>Conhecimento</strong><p>'+esc(creature.lore)+'</p></div>':'')+
+      (creature.gmNote?'<div class="bestiary-gm-note"><strong>Nota para o Mestre</strong><p>'+esc(creature.gmNote)+'</p></div>':'');
+  }
+  function creatureCard(creature){
+    var disabled=creature.scalable||creature.pv==null||creature.ca==null||creature.threat==null;
+    return '<article class="bestiary-card" data-bestiary-card data-bestiary-nd="'+esc(creature.nd)+'" data-bestiary-search="'+esc(creature.searchText||'')+'"><details><summary><div><span class="bestiary-nd">ND '+esc(creature.nd)+'</span><span class="bestiary-source">p. '+creature.page+'</span><h4>'+esc(creature.name)+'</h4><small>'+esc(creature.type)+'</small></div><div class="bestiary-summary-stats"><span>PV <b>'+esc(creature.pv==null?creature.pvText:creature.pv)+'</b></span><span>CA <b>'+esc(creature.ca==null?creature.caText:creature.ca)+'</b></span></div></summary><div class="bestiary-card-body">'+statBlock(creature)+'</div></details><div class="bestiary-card-action">'+(disabled?'<button type="button" class="secondary" data-bestiary-manual="'+esc(creature.id)+'">Definir no cadastro manual</button><small>O livro não fixa uma versão única.</small>':'<button type="button" class="primary" data-bestiary-add="'+esc(creature.id)+'">+ Adicionar à calculadora</button><small>'+format(creature.threat)+' VA por criatura</small>')+'</div></article>';
+  }
+  function budgets(result){var rows=[['easy','Fácil'],['medium','Médio'],['hard','Difícil'],['epic','Épico']];return '<div class="encounter-budgets">'+rows.map(function(row){return '<div><span>'+row[1]+'</span><strong>'+format(result.budgets[row[0]])+' VA</strong></div>';}).join('')+'</div>';}
+  function basket(result){
+    if(!result.selected.length)return '<div class="encounter-empty"><strong>A calculadora está vazia.</strong><span>Adicione criaturas do Bestiário para estimar a ameaça.</span></div>';
+    return '<div class="encounter-selection">'+result.selected.map(function(item){return '<div><span><strong>'+esc(item.creature.name)+'</strong><small>ND '+esc(item.creature.nd)+' · '+format(item.creature.threat)+' VA cada</small></span><div class="encounter-quantity"><button type="button" data-bestiary-quantity="'+esc(item.creature.id)+'" data-delta="-1" aria-label="Remover um">−</button><b>'+item.quantity+'</b><button type="button" data-bestiary-quantity="'+esc(item.creature.id)+'" data-delta="1" aria-label="Adicionar um">+</button></div><strong>'+format(item.subtotal)+' VA</strong></div>';}).join('')+'</div>';
+  }
+  function resultPanel(result){return '<aside class="encounter-result '+result.tone+'"><div class="encounter-result-head"><span>AMEAÇA ESTIMADA</span><strong>'+esc(result.difficulty)+'</strong></div>'+basket(result)+'<div class="encounter-math"><span>VA somado <b>'+format(result.rawThreat)+'</b></span><span>'+result.count+' criatura(s) · multiplicador <b>×'+String(result.multiplier).replace('.',',')+'</b></span><span>VA ajustado <b>'+format(result.adjustedThreat)+'</b></span></div><div class="encounter-actions"><button type="button" class="secondary" data-bestiary-clear '+(result.count?'':'disabled')+'>Limpar</button><button type="button" class="primary" data-bestiary-commit '+(result.count?'':'disabled')+'>Adicionar criaturas à Mesa</button></div></aside>';}
+  function view(){
+    var result=Calculator.calculate(),state=result.state,creatures=Bestiary.all();
+    return '<section class="panel master-bestiary" data-master-bestiary><div class="master-section-head"><div><span class="master-step">2</span><div><h3>Bestiário e calculadora</h3><p>Monte a ameaça com as regras oficiais e envie as criaturas direto para a iniciativa.</p></div></div><span class="bestiary-official">Livro do Mestre · p. 27–29 e 83–94</span></div><div class="encounter-config"><label>Nível médio do grupo<input type="number" min="1" max="20" inputmode="numeric" value="'+state.groupLevel+'" data-encounter-config="groupLevel"></label><label>Jogadores<input type="number" min="1" max="12" inputmode="numeric" value="'+state.partySize+'" data-encounter-config="partySize"></label></div>'+budgets(result)+'<p class="encounter-rule-note">Os limites consideram um grupo de 4 personagens, +25% por nível dentro da faixa e ±25% por integrante. A quantidade total de inimigos aplica o multiplicador oficial.</p>'+resultPanel(result)+'<details class="bestiary-browser" open><summary><span><strong>Consultar criaturas</strong><small>'+creatures.length+' entradas oficiais · ND 1/2 a 4</small></span><b>ABRIR / FECHAR</b></summary><div class="bestiary-tools"><label class="bestiary-search">Buscar<input type="search" value="'+esc(state.query)+'" placeholder="Nome, ação, tipo ou característica" data-bestiary-query></label><label>ND<select data-bestiary-filter><option value="all" '+(state.ndFilter==='all'?'selected':'')+'>Todos</option>'+['1/2','1','2','3','4'].map(function(nd){return '<option value="'+nd+'" '+(state.ndFilter===nd?'selected':'')+'>ND '+nd+'</option>';}).join('')+'</select></label></div><div class="bestiary-grid">'+creatures.map(creatureCard).join('')+'</div><div class="bestiary-no-results" hidden data-bestiary-empty>Nenhuma criatura corresponde a esta busca.</div></details></section>';
+  }
+  function applyFilters(root){var query=root.querySelector('[data-bestiary-query]'),filter=root.querySelector('[data-bestiary-filter]'),text=plain(query&&query.value),nd=filter&&filter.value||'all',visible=0;root.querySelectorAll('[data-bestiary-card]').forEach(function(card){var show=(!text||plain(card.dataset.bestiarySearch).indexOf(text)>=0)&&(nd==='all'||card.dataset.bestiaryNd===nd);card.hidden=!show;if(show)visible+=1;});var empty=root.querySelector('[data-bestiary-empty]');if(empty)empty.hidden=visible!==0;Calculator.setConfig({query:query&&query.value||'',ndFilter:nd});}
+  function bind(options){
+    callbacks=Object.assign(callbacks,options||{});var root=document.querySelector('[data-master-bestiary]');if(!root)return;
+    root.querySelectorAll('[data-encounter-config]').forEach(function(input){input.onchange=function(){var patch={};patch[input.dataset.encounterConfig]=input.value;Calculator.setConfig(patch);callbacks.refresh();};});
+    var query=root.querySelector('[data-bestiary-query]'),filter=root.querySelector('[data-bestiary-filter]');if(query)query.oninput=function(){applyFilters(root);};if(filter)filter.onchange=function(){applyFilters(root);};applyFilters(root);
+    root.querySelectorAll('[data-bestiary-add]').forEach(function(button){button.onclick=function(){run(function(){Calculator.add(button.dataset.bestiaryAdd);},'Criatura adicionada à calculadora.');};});
+    root.querySelectorAll('[data-bestiary-quantity]').forEach(function(button){button.onclick=function(){run(function(){Calculator.adjust(button.dataset.bestiaryQuantity,Number(button.dataset.delta));});};});
+    var clear=root.querySelector('[data-bestiary-clear]');if(clear)clear.onclick=function(){Calculator.clear();callbacks.refresh();};
+    var commit=root.querySelector('[data-bestiary-commit]');if(commit)commit.onclick=function(){run(function(){Calculator.commitToEncounter();},'Criaturas adicionadas à Mesa. Preencha as iniciativas.');};
+    root.querySelectorAll('[data-bestiary-manual]').forEach(function(button){button.onclick=function(){var creature=Bestiary.get(button.dataset.bestiaryManual),name=document.querySelector('[data-master-enemy="name"]'),notes=document.querySelector('[data-master-enemy="notes"]');if(name)name.value=creature.name;if(notes)notes.value='Modelo oficial ND '+creature.nd+' · Bestiário p. '+creature.page+'; defina PV e CA.';var builder=document.querySelector('.master-enemy-builder');if(builder){builder.open=true;builder.scrollIntoView({block:'start',behavior:'auto'});}callbacks.notify('Modelo enviado ao cadastro manual. Defina ND, PV e CA.');};});
+  }
+  function reference(id){var creature=Bestiary.get(id);if(!creature)return '';return '<details class="master-bestiary-reference"><summary><span>Consultar ficha do Bestiário</span><b>ND '+esc(creature.nd)+' · p. '+creature.page+'</b></summary><div>'+statBlock(creature)+'</div></details>';}
+
+  global.SemideusesBestiaryUI={version:'bestiary-ui-0.1.0',view:view,bind:bind,reference:reference};
+})(window);

@@ -132,7 +132,7 @@ async function sheetQuickNavigationFindsMajorSections(){
   window.eval(source('sheet-polish-v3.js'));
   await wait(30);
   const labels=[...window.document.querySelectorAll('[data-sheet-jump]')].map(button=>button.textContent.trim());
-  ['⌂Resumo','⚔Combate','✦Habilidades','◈Itens','●Estados','↑Progressão'].forEach(label=>assert(labels.includes(label),'A navegação rápida deve incluir '+label+'.'));
+  ['⌂Resumo','⚔Combate','✦Habilidades','◈Itens','●Estados','✎Anotações','↑Progressão'].forEach(label=>assert(labels.includes(label),'A navegação rápida deve incluir '+label+'.'));
   const items=window.document.querySelector('[data-sheet-jump="items"]');
   items.click();
   assert.equal(destination,window.document.querySelector('[data-items-hub]'),'O atalho Itens deve levar à Central de Itens.');

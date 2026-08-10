@@ -19,7 +19,8 @@
       name:String(raw.name||'Participante'),initiative:raw.initiative==null||raw.initiative===''?null:number(raw.initiative,0),
       pvCurrent:Math.max(0,Math.min(maximum,number(raw.pvCurrent,maximum))),pvMax:maximum,ca:Math.max(0,number(raw.ca,0)),
       conditions:Array.isArray(raw.conditions)?raw.conditions.filter(function(value,pos,list){return typeof value==='string'&&list.indexOf(value)===pos;}):[],
-      notes:String(raw.notes||''),order:number(raw.order,index)
+      notes:String(raw.notes||''),order:number(raw.order,index),
+      bestiaryId:kind==='enemy'?String(raw.bestiaryId||''):'',nd:kind==='enemy'?String(raw.nd||''):'',sourcePage:kind==='enemy'&&raw.sourcePage!=null?Math.max(0,Math.floor(number(raw.sourcePage,0))):null
     };
   }
   function normalize(raw){
@@ -66,7 +67,7 @@
     if(!name)throw new Error('Informe o nome do inimigo.');if(!number(payload.pvMax,0))throw new Error('Informe os PV máximos do inimigo.');
     return update(function(state){
       if(state.status!=='preparing')throw new Error('Adicione inimigos antes de iniciar o encontro.');
-      state.combatants.push(normalizeCombatant({id:uid('enemy'),kind:'enemy',name:name,initiative:payload.initiative,pvCurrent:maximum,pvMax:maximum,ca:armor,notes:payload.notes,order:state.combatants.length},state.combatants.length));return state;
+      state.combatants.push(normalizeCombatant({id:uid('enemy'),kind:'enemy',name:name,initiative:payload.initiative,pvCurrent:maximum,pvMax:maximum,ca:armor,notes:payload.notes,bestiaryId:payload.bestiaryId,nd:payload.nd,sourcePage:payload.sourcePage,order:state.combatants.length},state.combatants.length));return state;
     });
   }
   function remove(id){return update(function(state){if(state.status==='active')throw new Error('Encerre o encontro antes de remover participantes.');state.combatants=state.combatants.filter(function(item){return item.id!==id;});if(state.currentTurnId===id)state.currentTurnId='';return state;});}
@@ -103,5 +104,5 @@
     update(function(draft){var enemy=find(draft,id),index=enemy.conditions.indexOf(condition);if(index>=0)enemy.conditions.splice(index,1);else enemy.conditions.push(condition);return draft;});return view();
   }
 
-  global.SemideusesMasterRuntime={version:'master-session-0.1.0',storageKey:KEY,read:read,view:view,setTitle:setTitle,addCharacter:addCharacter,addEnemy:addEnemy,remove:remove,setInitiative:setInitiative,start:start,nextTurn:nextTurn,moveTie:moveTie,end:end,reset:reset,adjustPv:adjustPv,toggleCondition:toggleCondition};
+  global.SemideusesMasterRuntime={version:'master-session-0.2.0',storageKey:KEY,read:read,view:view,setTitle:setTitle,addCharacter:addCharacter,addEnemy:addEnemy,remove:remove,setInitiative:setInitiative,start:start,nextTurn:nextTurn,moveTie:moveTie,end:end,reset:reset,adjustPv:adjustPv,toggleCondition:toggleCondition};
 })(window);

@@ -142,6 +142,25 @@ O cânone mecânico do aplicativo é formado exclusivamente pelo **Livro do Joga
 
 Quando os dois livros tratarem do mesmo assunto de forma diferente, a discrepância deve ser registrada e apresentada antes de escolher qual comportamento implementar. Conteúdo criado para uma campanha pode existir, mas precisa aparecer claramente como `Personalizado`, nunca como regra oficial.
 
+## S3 — Bestiário e preparação de encontros
+
+### Fase 2 — ND 1/2 a 4
+
+- [x] 27 entradas das páginas 83–94 do Livro do Mestre catalogadas com PV, CA, deslocamento, atributos declarados, características, ações e orientações disponíveis.
+- [x] Busca por nome, tipo, ação e característica, com filtro por ND.
+- [x] Orçamentos oficiais de encontro das páginas 27–29 por nível médio e quantidade de jogadores.
+- [x] VA de cada ND e multiplicador oficial pela quantidade total de criaturas.
+- [x] Classificação automática em Fácil, Médio, Difícil, Épico ou Acima do Épico.
+- [x] Envio das criaturas selecionadas direto para a Mesa, preservando ND e página da fonte.
+- [x] Ficha oficial da criatura consultável durante o combate.
+- [x] Testes automatizados do catálogo, dos cálculos e da integração com a Mesa.
+- [ ] Deploy Preview e validação real em tela móvel.
+- [ ] Fase seguinte do catálogo: criaturas de ND 5 em diante.
+
+### Discrepância oficial registrada
+
+`Mortal com Conhecimento` apresenta no livro apenas as faixas ND 1–4, PV 32–72 e CA 12–16. Como não há distribuição oficial de valores por ND, a entrada é consultável como modelo, mas não pode ser enviada automaticamente à calculadora. O Mestre deve escolher valores concretos no cadastro manual. O aplicativo não interpola nem inventa números.
+
 ### Próximas fases propostas
 
 1. Bestiário pesquisável e fichas de criaturas, condicionado à fonte oficial validada.
@@ -164,7 +183,8 @@ Um jogador novo deve conseguir abrir uma ficha, entender onde estão as funçõe
 - [x] Revisão final da criação permanece visível antes de salvar.
 - [x] Descrições dos Caminhos não aparecem duplicadas.
 - [x] Habilidades, Skills e Perícias não repetem bloqueio de rolagem.
-- [x] Navegação rápida entre Resumo, Combate, Habilidades, Itens, Estados e Progressão.
+- [x] Navegação rápida entre Resumo, Combate, Habilidades, Itens, Estados, Anotações e Progressão.
+- [x] Seções densas recolhíveis, com preferência salva por personagem e abertura automática pelo atalho.
 - [ ] Teste manual do fluxo principal em Android e iPhone.
 
 ### P1 — Clareza para usuário novo
@@ -199,7 +219,7 @@ Um jogador novo deve conseguir abrir uma ficha, entender onde estão as funçõe
 
 ### 1. A ficha é completa, mas longa
 
-O problema principal não é quantidade de regra, e sim falta de orientação entre blocos. A decisão atual é preservar o conteúdo e criar navegação rápida antes de considerar esconder ou remover seções.
+O conteúdo oficial foi preservado, mas os blocos densos agora iniciam recolhidos: Habilidades, Itens, Estados, Anotações e Progressão. Resumo, PV e controles de sessão continuam abertos. A preferência é salva por personagem e os atalhos abrem a seção de destino automaticamente.
 
 ### 2. Termos próximos podem confundir
 
@@ -232,6 +252,9 @@ Os testes atuais cobrem regras, DOM, navegação e build, mas não reproduzem pe
 - Heróis Além do Sangue disponíveis: Sátiro/Fauno, Ciclope, Mortal Vidente e Legado.
 - Livro do Jogador 3e e Livro do Mestre 3e são as únicas fontes oficiais de regras e Bestiário.
 - Informações secundárias podem iniciar recolhidas, mas funções de sessão devem permanecer fáceis de encontrar.
+- Habilidades, Itens, Estados, Anotações e Progressão iniciam recolhidos; Resumo, PV e sessão permanecem abertos.
+- O cálculo de encontros segue literalmente orçamento, VA e multiplicadores do Livro do Mestre; não mede sozinho composição tática ou sinergia entre criaturas.
+- Modelos com valores variáveis no livro exigem preenchimento manual e não recebem números deduzidos pelo app.
 - Produção não acompanha automaticamente cada commit do `develop`.
 
 ## Definição de pronto para cada item
@@ -249,4 +272,4 @@ Um item só recebe `[x]` quando:
 
 ## Próxima ação
 
-Validar a Mesa de Sessão e o Diário da ficha no Deploy Preview. Depois, catalogar o Bestiário diretamente do Livro do Mestre e cruzar cada criatura com qualquer regra complementar do Livro do Jogador.
+Publicar Bestiário, calculadora e ficha recolhível no `develop`, validar o Deploy Preview em tela móvel e então iniciar a catalogação de ND 5 em diante.

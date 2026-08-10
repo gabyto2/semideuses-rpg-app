@@ -157,8 +157,10 @@
   }
   function enhanceQuickNavigation(){
     var track=document.querySelector('.sheet-quick-nav-track');
-    if(!track||track.querySelector('[data-player-notes-jump]'))return;
-    var button='<button type="button" data-player-notes-jump aria-label="Ir para Anotações"><b aria-hidden="true">✎</b><span>Anotações</span></button>';
+    if(!track)return;
+    var existing=track.querySelector('[data-sheet-jump="notes"]');
+    if(existing){existing.setAttribute('data-player-notes-jump','');return;}
+    var button='<button type="button" data-player-notes-jump data-sheet-jump="notes" aria-label="Ir para Anotações"><b aria-hidden="true">✎</b><span>Anotações</span></button>';
     var progress=track.querySelector('[data-sheet-jump="progress"]');
     if(progress)progress.insertAdjacentHTML('beforebegin',button);else track.insertAdjacentHTML('beforeend',button);
   }
@@ -178,17 +180,6 @@
 
   document.addEventListener('click',function(event){
     var current=character();
-    var jump=event.target.closest('[data-player-notes-jump]');
-    if(jump){
-      event.preventDefault();
-      var target=document.querySelector('[data-player-notes]');
-      if(!target)return;
-      document.querySelectorAll('.sheet-quick-nav button').forEach(function(button){button.classList.toggle('active',button===jump);button.setAttribute('aria-current',button===jump?'location':'false');});
-      target.scrollIntoView({block:'start',behavior:'auto'});
-      target.classList.add('sheet-jump-highlight');
-      setTimeout(function(){target.classList.remove('sheet-jump-highlight');},480);
-      return;
-    }
     if(!current)return;
     if(event.target.closest('[data-journal-new]')){formOpen=true;editingId='';render();focusForm();return;}
     if(event.target.closest('[data-journal-cancel]')){formOpen=false;editingId='';render();return;}
@@ -221,5 +212,5 @@
   global.addEventListener('load',schedule);
   schedule();
 
-  global.SemideusesPlayerNotes={version:'player-notes-0.1.0',types:clone(TYPES),render:render,list:listEntries};
+  global.SemideusesPlayerNotes={version:'player-notes-0.2.0',types:clone(TYPES),render:render,list:listEntries};
 })(window);
