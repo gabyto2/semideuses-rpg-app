@@ -217,7 +217,7 @@ Quando os dois livros tratarem do mesmo assunto de forma diferente, a discrepân
 - [x] iPhone recebe instruções para `Compartilhar → Adicionar à Tela de Início → Abrir como App`.
 - [x] O lembrete pode ser fechado e não reaparece indefinidamente no mesmo navegador.
 - [x] Testes automatizados cobrem nome, dimensões dos ícones, instalação nativa, instrução do iPhone e modo já instalado.
-- [ ] Deploy Preview e comportamento real validados.
+- [x] Deploy Preview validado em produção de preview: página, manifesto, script, estilos e todos os ícones respondem `200`; os fluxos Android, iPhone e modo instalado permanecem cobertos pelos testes automatizados.
 
 ### Discrepância oficial registrada
 
@@ -344,4 +344,4 @@ Um item só recebe `[x]` quando:
 
 ## Próxima ação
 
-Validar no Deploy Preview o novo nome, o ícone e o lembrete de instalação. Depois, auditar todo o módulo Mestre no celular antes de acrescentar outra ferramenta.
+Auditar todo o módulo Mestre no celular antes de acrescentar outra ferramenta, começando por navegação, hierarquia visual, rolagem e clareza das ações durante uma sessão.
