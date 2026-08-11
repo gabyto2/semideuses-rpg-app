@@ -4,6 +4,8 @@
 var CURRENT_KEY='semideuses.characters.v4';
 var LEGACY_KEYS=['semideuses.characters.v3','semideuses.characters.v2','semideuses.characters.v1'];
 var BACKUP_KEY='semideuses.characters.backup.v1';
+var CORRUPT_KEY='semideuses.characters.corrupt.v1';
+var RECOVERY_META_KEY='semideuses.characters.recovery.v1';
 var originalGet=Storage.prototype.getItem;
 var originalSet=Storage.prototype.setItem;
 var originalRemove=Storage.prototype.removeItem;
@@ -18,6 +20,20 @@ function parseArray(raw){
 function rawGet(key){return originalGet.call(localStorage,key);}
 function rawSet(key,value){return originalSet.call(localStorage,key,value);}
 function rawRemove(key){return originalRemove.call(localStorage,key);}
+function rememberRecovery(reason){
+  try{rawSet(RECOVERY_META_KEY,JSON.stringify({at:new Date().toISOString(),reason:String(reason&&reason.message||reason||'Falha de leitura')}));}catch(error){}
+}
+function recoverCurrent(reason){
+  var backup=rawGet(BACKUP_KEY);
+  if(!backup)return false;
+  parseArray(backup);
+  var current=rawGet(CURRENT_KEY);
+  if(current){try{rawSet(CORRUPT_KEY,current);}catch(error){}}
+  rawSet(CURRENT_KEY,backup);
+  rememberRecovery(reason);
+  try{window.dispatchEvent(new CustomEvent('semideuses:storage-recovered',{detail:{key:CURRENT_KEY}}));}catch(error){}
+  return true;
+}
 function findExistingRaw(){
   var current=rawGet(CURRENT_KEY);
   if(current)return current;
@@ -37,13 +53,21 @@ function migrate(){
   return true;
 }
 function readCharacters(){
-  migrate();
-  return clone(parseArray(rawGet(CURRENT_KEY)||'[]'));
+  try{
+    migrate();
+    return clone(parseArray(rawGet(CURRENT_KEY)||'[]'));
+  }catch(error){
+    if(recoverCurrent(error))return clone(parseArray(rawGet(CURRENT_KEY)||'[]'));
+    throw error;
+  }
 }
 function writeCharacters(characters){
   if(!Array.isArray(characters))throw new Error('Tentativa de salvar personagens em formato inválido.');
   var previous=rawGet(CURRENT_KEY);
-  if(previous)rawSet(BACKUP_KEY,previous);
+  if(previous){
+    try{parseArray(previous);rawSet(BACKUP_KEY,previous);}
+    catch(error){try{rawSet(CORRUPT_KEY,previous);}catch(ignore){}}
+  }
   rawSet(CURRENT_KEY,JSON.stringify(characters));
   window.dispatchEvent(new CustomEvent('semideuses:characters-saved',{detail:{count:characters.length}}));
   return true;
@@ -79,8 +103,8 @@ function removeById(id){
 }
 
 window.SemideusesStorage={
-  version:1,
-  keys:{current:CURRENT_KEY,backup:BACKUP_KEY,legacy:LEGACY_KEYS.slice()},
+  version:2,
+  keys:{current:CURRENT_KEY,backup:BACKUP_KEY,corrupt:CORRUPT_KEY,recoveryMeta:RECOVERY_META_KEY,legacy:LEGACY_KEYS.slice()},
   readCharacters:readCharacters,
   writeCharacters:writeCharacters,
   getById:getById,
@@ -88,6 +112,7 @@ window.SemideusesStorage={
   removeById:removeById,
   transaction:transaction,
   restoreBackup:restoreBackup,
+  recoverCurrent:recoverCurrent,
   migrate:migrate
 };
 

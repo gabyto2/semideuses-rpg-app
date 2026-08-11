@@ -221,17 +221,17 @@ Quando os dois livros tratarem do mesmo assunto de forma diferente, a discrepân
 
 ### Fase 8 — Mesa independente das fichas dos jogadores
 
-- [ ] `Grupo da campanha` torna-se o caminho principal para incluir heróis na Mesa.
-- [ ] O Mestre cadastra o grupo uma vez e o adiciona inteiro a novos encontros com uma ação.
-- [ ] Somente o nome é obrigatório; PV e CA são opcionais e nunca recebem valores aparentes inventados.
-- [ ] Heróis sem PV e CA entram apenas na ordem de turnos, com essa limitação comunicada na preparação, no combate e no estado final.
-- [ ] Fichas salvas no aparelho continuam disponíveis em uma área secundária e explicitamente opcional.
-- [ ] Herói do grupo, ficha local, inimigo, NPC e cenário recebem identificação própria.
-- [ ] Combatentes fora do turno iniciam compactos; o turno atual abre automaticamente.
-- [ ] Condições exibem o efeito oficial antes de aplicar e Exaustão usa níveis cumulativos de 0 a 6.
-- [ ] Controles especiais e referências preservam o estado aberto após uma ação.
-- [ ] Rascunhos narrativos sobrevivem a outras ações da Mesa e a visão geral salva durante a digitação.
-- [ ] Alvos de toque essenciais têm ao menos 44 px e a barra fixa respeita a área segura do celular.
+- [x] `Grupo da campanha` torna-se o caminho principal para incluir heróis na Mesa.
+- [x] O Mestre cadastra o grupo uma vez e o adiciona inteiro a novos encontros com uma ação.
+- [x] Somente o nome é obrigatório; PV e CA são opcionais e nunca recebem valores aparentes inventados.
+- [x] Heróis sem PV e CA entram apenas na ordem de turnos, com essa limitação comunicada na preparação, no combate e no estado final.
+- [x] Fichas salvas no aparelho continuam disponíveis em uma área secundária e explicitamente opcional.
+- [x] Herói do grupo, ficha local, inimigo, NPC e cenário recebem identificação própria.
+- [x] Combatentes fora do turno iniciam compactos; o turno atual abre automaticamente.
+- [x] Condições exibem o efeito oficial antes de aplicar e Exaustão usa níveis cumulativos de 0 a 6.
+- [x] Controles especiais e referências preservam o estado aberto após uma ação.
+- [x] Rascunhos narrativos sobrevivem a outras ações da Mesa e a visão geral salva durante a digitação.
+- [x] Alvos de toque essenciais têm ao menos 44 px e a barra fixa respeita a área segura do celular.
 - [ ] Testes automatizados, build, Deploy Preview e conferência real concluídos.
 
 ### Discrepância oficial registrada
@@ -271,20 +271,20 @@ Um jogador novo deve conseguir abrir uma ficha, entender onde estão as funçõe
 
 ### P1 — Clareza para usuário novo
 
-- [ ] Explicar na própria ficha a diferença entre Habilidades, Skills, Talentos e Perícias.
-- [ ] Revisar nomes dos botões para usar verbos e resultados claros.
-- [ ] Reduzir listas longas da criação com busca, agrupamento ou resumo progressivo.
-- [ ] Revisar estados vazios: sempre informar o que falta e qual é a próxima ação.
-- [ ] Garantir que todo item adicionado mostre claramente onde foi parar e como equipar/usar.
-- [ ] Criar um teste guiado de primeira ficha, primeiro item e primeiro combate.
+- [x] Não explicar Habilidades, Skills, Talentos e Perícias: o público já conhece os termos e a explicação aumentaria a densidade da ficha.
+- [x] Revisar nomes dos botões para usar verbos e resultados claros.
+- [x] Reduzir listas longas da criação com busca, agrupamento ou resumo progressivo.
+- [x] Revisar estados vazios: sempre informar o que falta e qual é a próxima ação.
+- [x] Garantir que todo item adicionado mostre claramente onde foi parar e como equipar/usar.
+- [x] Criar um teste guiado de primeira ficha, primeiro item e primeiro combate.
 
 ### P2 — Segurança e manutenção
 
-- [ ] Tornar o aviso de backup mais contextual depois de criar ou importar fichas.
-- [ ] Definir uma estratégia de versão e migração dos dados salvos no navegador.
+- [x] Tornar o aviso de backup mais contextual depois de criar ou importar fichas.
+- [x] Definir uma estratégia de versão e migração dos dados salvos no navegador.
 - [ ] Reduzir scripts que alteram a mesma tela por `MutationObserver`.
 - [ ] Criar teste automatizado real em viewport móvel, além dos testes de DOM.
-- [ ] Preparar estratégia para dividir ou encerrar a PR extensa de `develop` antes do lançamento.
+- [x] Preparar estratégia para encerrar a PR extensa com versão candidata, portão de produção e plano de recuperação.
 
 ## Critérios de aceite do S1
 
@@ -303,9 +303,9 @@ Um jogador novo deve conseguir abrir uma ficha, entender onde estão as funçõe
 
 O conteúdo oficial foi preservado, mas os blocos densos agora iniciam recolhidos: Habilidades, Itens, Estados, Anotações e Progressão. Resumo, PV e controles de sessão continuam abertos. A preferência é salva por personagem e os atalhos abrem a seção de destino automaticamente.
 
-### 2. Termos próximos podem confundir
+### 2. Termos próximos são conhecimento esperado do público
 
-`Habilidades`, `Skills`, `Talentos` e `Perícias` têm funções diferentes, mas essa diferença depende de o usuário já conhecer o sistema. A interface precisa explicar isso em uma frase curta e consistente.
+`Habilidades`, `Skills`, `Talentos` e `Perícias` continuam nomeados conforme o sistema. Por decisão de produto, a ficha não recebe um bloco explicativo: quem vai jogar já conhece a diferença e repetir isso aumentaria a densidade sem melhorar a ação durante a sessão.
 
 ### 3. Muitas camadas alteram o mesmo HTML
 
@@ -362,4 +362,4 @@ Um item só recebe `[x]` quando:
 
 ## Próxima ação
 
-Concluir a Fase 8 no Deploy Preview e validar o fluxo `cadastrar grupo → adicionar grupo → completar inimigos → iniciar encontro` em viewport móvel antes de criar outra ferramenta do Mestre.
+Validar a versão `1.0.0-rc.1` em Android e iPhone usando o checklist de release. Produção permanece bloqueada até essa aprovação.

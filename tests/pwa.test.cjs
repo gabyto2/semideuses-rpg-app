@@ -49,13 +49,19 @@ function installDom(options){
 
 async function run(){
   const dom=new JSDOM('<!doctype html>',{url:'https://example.test/',runScripts:'outside-only'});
-  let registrationArgs=null,updates=0;
-  Object.defineProperty(dom.window.navigator,'serviceWorker',{configurable:true,value:{register:async function(url,options){registrationArgs={url,options};return {update:async function(){updates+=1;}};}}});
+  let registrationArgs=null,updates=0,controllerChange=null;
+  Object.defineProperty(dom.window.navigator,'serviceWorker',{configurable:true,value:{controller:{},addEventListener:function(type,handler){if(type==='controllerchange')controllerChange=handler;},register:async function(url,options){registrationArgs={url,options};return {waiting:null,update:async function(){updates+=1;}};}}});
   dom.window.eval(read('assets/pwa.js'));
   dom.window.dispatchEvent(new dom.window.Event('load'));
   await new Promise(resolve=>setTimeout(resolve,20));
   assert.deepEqual(registrationArgs,{url:'/sw.js',options:{scope:'/',updateViaCache:'none'}});
   assert.equal(updates,1,'O aplicativo deve procurar uma versão nova do service worker ao abrir.');
+  assert(controllerChange,'O aplicativo deve perceber quando uma atualização assume o controle.');
+  controllerChange();
+  const updateCard=dom.window.document.querySelector('[data-pwa-update-ready]');
+  assert(updateCard&&updateCard.textContent.includes('Atualização pronta'),'Uma nova versão deve aparecer sem recarregar durante uma edição.');
+  updateCard.querySelector('[data-pwa-update-later]').click();
+  assert.equal(dom.window.document.querySelector('[data-pwa-update-ready]'),null);
   dom.window.close();
 
   const native=installDom(),event=new native.window.Event('beforeinstallprompt');let prompts=0;
