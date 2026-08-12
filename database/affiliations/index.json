@@ -1,0 +1,32 @@
+{
+  "edition": 3,
+  "count": 26,
+  "affiliations": [
+    {"id":"zeus","name":"Zeus","symbol":"⚡","domain":"Céu, raios, autoridade","profile":"Dano bruto, corpo a corpo e à distância"},
+    {"id":"poseidon","name":"Poseidon","symbol":"🔱","domain":"Mar, terremotos, cavalos","profile":"Controle de campo e mobilidade"},
+    {"id":"hades","name":"Hades","symbol":"⛑","domain":"Morte, sombras, riquezas","profile":"Atrito, invocação e dreno"},
+    {"id":"atena","name":"Atena","symbol":"🦉","domain":"Sabedoria, estratégia","profile":"Comando e suporte tático"},
+    {"id":"ares","name":"Ares","symbol":"🪖","domain":"Guerra, violência","profile":"Duelista bruto e resistente"},
+    {"id":"apolo","name":"Apolo","symbol":"☀","domain":"Sol, música, profecia, cura","profile":"Curandeiro-arqueiro à distância"},
+    {"id":"hefesto","name":"Hefesto","symbol":"⚒","domain":"Fogo, forja, invenção","profile":"Fortaleza, CA, constructos e fogo"},
+    {"id":"hermes","name":"Hermes","symbol":"☤","domain":"Viagem, ladinagem, comércio","profile":"Velocista furtivo e versátil"},
+    {"id":"afrodite","name":"Afrodite","symbol":"🕊","domain":"Amor, beleza, manipulação","profile":"Controlador social"},
+    {"id":"demeter","name":"Deméter","symbol":"🌾","domain":"Colheita, natureza","profile":"Controle de terreno e cura"},
+    {"id":"dionisio","name":"Dionísio","symbol":"🍇","domain":"Vinho, loucura, êxtase","profile":"Caos, debuff em área e frenesi"},
+    {"id":"artemis","name":"Ártemis (Voto)","symbol":"🏹","domain":"Devoção, caça, lua","profile":"Arqueira de matilha, regras especiais"},
+    {"id":"hecate","name":"Hécate","symbol":"☾◯☽","domain":"Magia, Névoa, encruzilhadas","profile":"Conjuradora flexível"},
+    {"id":"iris","name":"Íris","symbol":"🌈","domain":"Luz, arco-íris, mensagens","profile":"Suporte modal de luz"},
+    {"id":"nemesis","name":"Nêmesis","symbol":"⚖","domain":"Vingança, equilíbrio","profile":"Vingadora de atrito"},
+    {"id":"hipnos","name":"Hipnos","symbol":"🪽","domain":"Sono, torpor","profile":"Controle por sono"},
+    {"id":"morfeu","name":"Morfeu","symbol":"☁","domain":"Sonhos, ilusões","profile":"Controle ilusório"},
+    {"id":"nike","name":"Nike","symbol":"🏆","domain":"Vitória, ímpeto","profile":"Suporte de momentum"},
+    {"id":"tique","name":"Tique","symbol":"🎲","domain":"Sorte, acaso","profile":"Sorte coletiva"},
+    {"id":"tanatos","name":"Tânatos","symbol":"🗡","domain":"Morte gentil","profile":"Executor"},
+    {"id":"eolo","name":"Éolo","symbol":"🌀","domain":"Ventos, ar","profile":"Controle de zona com vento"},
+    {"id":"circe","name":"Circe","symbol":"🏺","domain":"Feitiço, transformação","profile":"Transmutadora com reagentes"},
+    {"id":"persefone","name":"Perséfone","symbol":"🌸","domain":"Primavera e Submundo","profile":"Híbrido de cura e morte"},
+    {"id":"hebe","name":"Hebe","symbol":"🏺","domain":"Juventude, vigor","profile":"Sustentação pura"},
+    {"id":"eros","name":"Eros","symbol":"🏹♥","domain":"Desejo, vínculos","profile":"Manipulador de laços"},
+    {"id":"nyx","name":"Nyx","symbol":"✦","domain":"Noite, trevas, medo","profile":"Controladora das trevas"}
+  ]
+}

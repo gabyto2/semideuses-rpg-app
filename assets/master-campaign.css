@@ -1,0 +1,254 @@
+.master-campaign {
+  padding: 0;
+  overflow: hidden;
+}
+
+.campaign-shell > summary,
+.campaign-group > summary,
+.campaign-entry > summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  cursor: pointer;
+  list-style: none;
+}
+
+.campaign-shell > summary::-webkit-details-marker,
+.campaign-group > summary::-webkit-details-marker,
+.campaign-entry > summary::-webkit-details-marker {
+  display: none;
+}
+
+.campaign-shell > summary {
+  padding: 16px 18px;
+}
+
+.campaign-shell > summary > span,
+.campaign-group > summary > span,
+.campaign-entry > summary > span {
+  display: grid;
+  gap: 2px;
+}
+
+.campaign-shell > summary strong {
+  color: var(--blue);
+  font-size: 1.08rem;
+}
+
+.campaign-shell > summary small,
+.campaign-group > summary small,
+.campaign-entry > summary small,
+.campaign-backup > small,
+.campaign-privacy {
+  color: var(--muted);
+}
+
+.campaign-shell > summary > b,
+.campaign-group > summary > b,
+.campaign-entry > summary > b {
+  color: var(--muted);
+  font-size: .62rem;
+}
+
+.campaign-shell[open] > summary {
+  border-bottom: 1px solid var(--line);
+  background: rgba(18, 61, 90, .03);
+}
+
+.campaign-body {
+  display: grid;
+  gap: 14px;
+  padding: 16px 18px 18px;
+}
+
+.campaign-overview,
+.campaign-backup {
+  display: grid;
+  gap: 12px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #fff;
+}
+
+.campaign-section-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.campaign-section-title h3,
+.campaign-backup h3 {
+  margin: 0 0 3px;
+}
+
+.campaign-section-title p,
+.campaign-backup p {
+  margin: 0;
+  font-size: .78rem;
+}
+
+.campaign-overview-grid,
+.campaign-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.campaign-form label {
+  display: grid;
+  gap: 5px;
+  color: var(--blue);
+  font-size: .75rem;
+  font-weight: 900;
+}
+
+.campaign-form label.full {
+  grid-column: 1 / -1;
+}
+
+.campaign-form input,
+.campaign-form select,
+.campaign-form textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px;
+  color: #21313c;
+  background: #fff;
+  font-size: 16px;
+}
+
+.campaign-form textarea {
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.campaign-privacy {
+  font-size: .7rem;
+}
+
+.campaign-groups {
+  display: grid;
+  gap: 8px;
+}
+
+.campaign-group {
+  border: 1px solid rgba(18, 61, 90, .16);
+  border-radius: 12px;
+  background: rgba(18, 61, 90, .025);
+  overflow: hidden;
+}
+
+.campaign-group > summary {
+  padding: 11px 12px;
+}
+
+.campaign-group[open] > summary {
+  border-bottom: 1px solid rgba(18, 61, 90, .12);
+}
+
+.campaign-group-body {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+}
+
+.campaign-new {
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.campaign-new > summary {
+  padding: 10px;
+  color: var(--blue);
+  cursor: pointer;
+  font-size: .78rem;
+  font-weight: 900;
+}
+
+.campaign-new .campaign-form {
+  padding: 0 10px 10px;
+}
+
+.campaign-new .primary {
+  grid-column: 1 / -1;
+}
+
+.campaign-entry-list {
+  display: grid;
+  gap: 7px;
+}
+
+.campaign-entry {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.campaign-entry > summary {
+  padding: 10px;
+}
+
+.campaign-entry[open] > summary {
+  border-bottom: 1px solid var(--line);
+  background: rgba(18, 61, 90, .025);
+}
+
+.campaign-entry-body {
+  padding: 10px;
+}
+
+.campaign-entry-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.campaign-entry-actions .danger-link {
+  border: 0;
+  color: var(--danger);
+  background: transparent;
+  font-weight: 900;
+}
+
+.campaign-backup-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 620px) {
+  .campaign-body {
+    padding: 12px;
+  }
+
+  .campaign-section-title,
+  .campaign-entry-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .campaign-section-title button,
+  .campaign-entry-actions button {
+    width: 100%;
+  }
+
+  .campaign-overview-grid,
+  .campaign-form,
+  .campaign-backup-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .campaign-form label.full,
+  .campaign-new .primary,
+  .campaign-entry-actions {
+    grid-column: 1;
+  }
+}

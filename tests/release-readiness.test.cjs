@@ -1,0 +1,42 @@
+const fs=require('fs');
+const path=require('path');
+const assert=require('assert');
+const {JSDOM}=require('jsdom');
+
+const root=path.resolve(__dirname,'..');
+const read=file=>fs.readFileSync(path.join(root,file),'utf8');
+const app=read('assets/app.js'),portability=read('assets/portability.js'),index=read('index.html'),css=read('assets/release-readiness.css');
+
+assert(/primeiros passos/i.test(app),'A tela inicial deve orientar a primeira ação sem explicar regras conhecidas.');
+assert(app.includes('Continuar para '));
+assert(app.includes('Salvar ficha e montar nível '));
+assert(app.includes("choiceSearch('affiliation'"));
+assert(app.includes("choiceSearch('background'"));
+assert(portability.includes('Importar sem apagar'));
+assert(portability.includes('Substituir por backup'));
+assert(!portability.includes('Cancelar: substituir'),'Cancelar nunca pode significar substituir fichas.');
+assert(index.includes('href="/assets/release-readiness.css"'));
+assert(index.includes('src="/assets/release-safety.js"'));
+assert(css.includes('min-height: 44px'),'As ações móveis importantes devem ter alvo de toque adequado.');
+assert(css.includes('safe-area-inset-bottom'));
+assert(read('assets/compendium.js').includes('Nenhuma Natureza ou Filiação encontrada'));
+assert(read('assets/item-compendium.js').includes('Nenhum item encontrado'));
+
+const dom=new JSDOM('<!doctype html><body><section class="section-heading"><h2>Personagens</h2></section></body>',{url:'https://example.test/',runScripts:'outside-only'}),window=dom.window;
+let written=[],snapshots=0,uid=0;
+window.SemideusesCharacter={schemaVersion:5,normalize:value=>Object.assign({},value),uid:()=>`novo-${++uid}`};
+window.SemideusesCharacterService={list:()=>[{id:'a',name:'Atual'}],get:()=>null};
+window.SemideusesStorage={writeCharacters:list=>{written=list;}};
+window.SemideusesReleaseSafety={snapshot:()=>{snapshots+=1;},status:()=>({})};
+window.eval(portability);
+const file={format:'semideuses-rpg-3e',edition:'3e',characters:[{id:'a',name:'Importada'}]};
+assert.equal(window.SemideusesPortability.importData(file,'merge'),1);
+assert.equal(written.length,2,'Mesclar deve preservar a ficha atual e adicionar a importada.');
+assert(written.some(character=>character.name.includes('importado')));
+assert.equal(window.SemideusesPortability.importData(file,'replace'),1);
+assert.deepEqual(written,[{id:'a',name:'Importada'}],'Substituir deve usar somente as fichas do arquivo escolhido.');
+assert.equal(snapshots,2,'Toda importação deve criar uma recuperação antes de gravar.');
+assert.throws(()=>window.SemideusesPortability.importData(file,'cancel'),/Escolha se deseja/);
+assert(window.document.querySelector('[data-portability-list]'),'A lista de fichas deve exibir as ações de backup.');
+dom.window.close();
+console.log('release-readiness.test: OK');

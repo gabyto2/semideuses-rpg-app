@@ -1,0 +1,1 @@
+.portability-panel{display:grid;gap:14px}.portability-actions{display:flex;gap:8px;flex-wrap:wrap}@media(max-width:640px){.portability-actions{display:grid;grid-template-columns:1fr 1fr}.portability-actions button{width:100%}}

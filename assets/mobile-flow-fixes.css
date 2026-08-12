@@ -1,0 +1,24 @@
+.wizard-actions{
+  position:static!important;
+  inset:auto!important;
+  margin-top:20px!important;
+  padding:0 0 calc(96px + env(safe-area-inset-bottom))!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+
+@media (max-width:720px){
+  .wizard-actions{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:12px!important;
+  }
+
+  .wizard-actions>span:only-child{
+    display:none!important;
+  }
+
+  .wizard-card{
+    overflow:visible!important;
+  }
+}

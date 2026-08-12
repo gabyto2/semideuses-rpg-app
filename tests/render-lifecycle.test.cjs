@@ -1,0 +1,152 @@
+const fs=require('fs');
+const path=require('path');
+const assert=require('assert');
+const {JSDOM}=require('jsdom');
+
+const root=path.resolve(__dirname,'..');
+const source=name=>fs.readFileSync(path.join(root,'assets',name),'utf8');
+const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+
+function appLifecycle(){
+  const dom=new JSDOM('<!doctype html><div id="app"></div>',{url:'https://example.test/',runScripts:'outside-only',pretendToBeVisual:true});
+  const window=dom.window;
+  window.scrollTo=()=>{};
+  window.SemideusesCharacterService={list:()=>[],get:()=>null};
+  window.SemideusesCharacter={attributes:['FOR','DES','CON','INT','SAB','CAR'],conditions:[],clone:value=>JSON.parse(JSON.stringify(value)),calculate:value=>value};
+  window.SemideusesRules={modifier:()=>0};
+  window.SemideusesRulesDatabase={listCompleteAffiliations:()=>[],listBackgrounds:()=>[],heroMarks:[],getAffiliation:()=>null,getBackground:()=>null};
+  let rendered=0;
+  window.addEventListener('semideuses:rendered',()=>{rendered+=1;});
+  window.eval(source('app.js'));
+  assert.equal(rendered,1,'A inicialização deve anunciar o primeiro desenho da tela.');
+  window.SemideusesApp.refresh();
+  assert.equal(rendered,2,'Uma atualização do aplicativo deve anunciar o novo desenho da tela.');
+  dom.window.close();
+}
+
+function sheetHtml(){
+  return '<section class="section-heading"><span class="eyebrow">FICHA PRONTA</span><h2>Helena Demétrio</h2></section>'+ 
+    '<div class="sheet-identity-meta"></div><div class="sheet-badges"><span class="sheet-badge identity">Idade 17</span><span class="sheet-badge path">Caminho das Estações</span></div>'+ 
+    '<section class="panel"><h3>Testes de Resistência</h3></section>'+ 
+    '<section data-mythic-center><button class="active" data-mythic-tab="panoply">Panóplia</button><div class="mythic-body"></div></section>';
+}
+
+async function enhancementLifecycle(){
+  const character={id:'helena',name:'Helena Demétrio',affiliation:'Deméter',divinePath:'Caminho das Estações',mythic:{}};
+  const affiliation={name:'Deméter',profile:'Natureza e colheita',icon:'🌾',casting:'SAB',hitDie:8,savingThrows:['CON','SAB'],skillProficiencies:['Natureza'],weaponProficiencies:['Foice'],armorProficiencies:['Leves'],paths:[{name:'Caminho das Estações'}]};
+  const dom=new JSDOM('<!doctype html><div id="app">'+sheetHtml()+'</div>',{url:'https://example.test/',runScripts:'outside-only',pretendToBeVisual:true});
+  const window=dom.window;
+  window.SemideusesApp={getEditing:()=>character};
+  window.SemideusesCharacterService={get:id=>id===character.id?character:null,list:()=>[character],saveCustomPanoply:()=>{},removeCustomPanoply:()=>{}};
+  window.SemideusesCharacter={};
+  window.SemideusesRules={rankCost:()=>4};
+  window.SemideusesRulesDatabase={getAffiliation:name=>name===affiliation.name?affiliation:null};
+
+  window.eval(source('official-rules-ui.js'));
+  window.eval(source('compendium-integration.js'));
+  window.eval(source('panoply-builder-ui.js'));
+  await wait(20);
+
+  const assertMounted=message=>{
+    assert.equal(window.document.querySelectorAll('.official-affiliation-panel').length,1,'As regras oficiais devem '+message+'.');
+    assert.equal(window.document.querySelectorAll('[data-compendium-sheet]').length,1,'O atalho do Compêndio deve '+message+'.');
+    assert.equal(window.document.querySelectorAll('[data-panoply-builder]').length,1,'O construtor de Panóplia deve '+message+'.');
+    const labels=[...window.document.querySelectorAll('[data-compendium-sheet] button')].map(button=>button.textContent.trim());
+    assert(labels.includes('📖 Consultar Caminho das Estações'),'O atalho deve consultar o Caminho selecionado.');
+    assert(!labels.some(label=>label.includes('Idade 17')),'A idade nunca pode ser tratada como Caminho.');
+  };
+  assertMounted('aparecer na ficha');
+
+  window.document.getElementById('app').innerHTML=sheetHtml();
+  window.dispatchEvent(new window.CustomEvent('semideuses:rendered',{detail:{screen:'sheet',section:'jogador'}}));
+  await wait(20);
+  assertMounted('voltar uma única vez após o redesenho');
+  dom.window.close();
+}
+
+async function unsupportedOriginHasNoDeadLinks(){
+  const satyr={id:'satyr',name:'Lino',heroType:'Sátiro / Fauno',affiliation:'',divinePath:'Caminho da Natureza Selvagem'};
+  const html='<section><span class="eyebrow">FICHA PRONTA</span></section><section class="sheet-identity-hero"><span class="sheet-affiliation-label">Sátiro / Fauno</span><span class="sheet-badge path">Caminho da Natureza Selvagem</span></section>';
+  const dom=new JSDOM('<!doctype html><div id="app">'+html+'</div>',{url:'https://example.test/',runScripts:'outside-only',pretendToBeVisual:true});
+  const window=dom.window;
+  window.SemideusesApp={getEditing:()=>satyr};
+  window.SemideusesRulesDatabase={getCatalogAffiliation:()=>null};
+  window.eval(source('compendium-integration.js'));
+  await wait(20);
+  assert.equal(window.document.querySelector('[data-compendium-sheet]'),null,'Origens sem entrada no Compêndio não devem exibir botões de regras que não abrem nada.');
+  dom.window.close();
+}
+
+async function pathSummaryIsNotDuplicated(){
+  const character={id:'helena',affiliation:'Deméter',divinePath:'',rules:{paths:[{name:'Caminho das Estações',summary:'O ciclo eterno alterna cura, dano e controle.'}]}};
+  const html='<section class="wizard-head"><h2>Caminho</h2></section><section class="wizard-card"><button data-path="Caminho das Estações"><strong>Caminho das Estações</strong><small>O ciclo eterno alterna cura, dano e controle.</small></button></section>';
+  const dom=new JSDOM('<!doctype html><div id="app">'+html+'</div>',{url:'https://example.test/',runScripts:'outside-only',pretendToBeVisual:true});
+  const window=dom.window;
+  window.SemideusesApp={getEditing:()=>character};
+  window.SemideusesCharacterService={get:()=>character,list:()=>[character]};
+  window.SemideusesRulesDatabase={getAffiliation:()=>({paths:character.rules.paths})};
+  window.eval(source('official-rules-ui.js'));
+  await wait(20);
+  const summaries=window.document.querySelectorAll('[data-path] small');
+  assert.equal(summaries.length,1,'O resumo do Caminho deve aparecer uma única vez na criação.');
+  assert(summaries[0].classList.contains('official-path-summary'),'O resumo já renderizado deve ser reconhecido pela melhoria oficial.');
+  dom.window.close();
+}
+
+async function commandCenterDoesNotLockScrolling(){
+  const character={id:'helena',resources:{pvCurrent:20,primaryCurrent:8},rules:{pvMax:20,primaryMax:10}};
+  const center='<section data-command-center><details open><summary><strong>Espinho</strong></summary><button data-command-use-ability="base:espinho">Usar</button></details></section><span data-resource-display="pv"></span><span data-resource-display="mp"></span>';
+  const dom=new JSDOM('<!doctype html><div id="app">'+center+'</div>',{url:'https://example.test/',runScripts:'outside-only',pretendToBeVisual:true});
+  const window=dom.window;
+  let changed=false,scrollByCalls=0,scrollToCalls=0;
+  window.scrollBy=()=>{scrollByCalls++;};window.scrollTo=()=>{scrollToCalls++;};
+  window.HTMLElement.prototype.getBoundingClientRect=function(){if(this.matches&&this.matches('[data-command-center] details'))return {top:changed?120:220};return {top:0};};
+  window.SemideusesApp={getEditing:()=>character};
+  window.SemideusesCharacterService={get:()=>character};
+  window.SemideusesCharacter={};
+  window.SemideusesRulesDatabase={listTalents:()=>[]};
+  window.SemideusesSessionRuntime={useOfficialAbility:()=>{changed=true;window.document.querySelector('[data-command-center]').innerHTML='<details><summary><strong>Espinho</strong></summary><button data-command-use-ability="base:espinho">Usar</button></details>';}};
+  window.eval(source('command-center-stability-v2.js'));
+  window.document.querySelector('[data-command-use-ability]').click();
+  await wait(30);
+  assert.equal(scrollByCalls,1,'Usar uma habilidade deve corrigir a posição do cartão uma única vez.');
+  assert.equal(scrollToCalls,0,'A Central de Habilidades não pode prender a tela em uma coordenada absoluta.');
+  assert(window.document.querySelector('[data-command-center] details').open,'O cartão que estava aberto deve continuar aberto.');
+  window.dispatchEvent(new window.CustomEvent('semideuses:character-updated'));
+  await wait(20);
+  assert.equal(scrollByCalls,1,'Atualizações posteriores não podem repetir a correção de rolagem.');
+  dom.window.close();
+}
+
+async function sheetQuickNavigationFindsMajorSections(){
+  const character={id:'helena',resources:{pvCurrent:20,primaryCurrent:8,tempHp:0,hitDiceCurrent:3,hitDiceMax:3,exhaustionLevel:0},rules:{pvMax:20,primaryMax:10,hitDie:8,pericias:[],exhaustion:{}}};
+  const html='<section class="sheet-identity-hero"></section><section data-core-stats></section><section data-session-tools></section><section class="resource-grid"></section><section data-command-center></section><section data-items-hub></section><section data-multi-conditions><select data-condition-picker></select></section><section class="panel"><h3>Progressão</h3></section>';
+  const dom=new JSDOM('<!doctype html><div id="app"><main>'+html+'</main></div>',{url:'https://example.test/',runScripts:'outside-only',pretendToBeVisual:true});
+  const window=dom.window;
+  let destination=null,scrollToCalls=0;
+  window.scrollTo=()=>{scrollToCalls++;};
+  window.HTMLElement.prototype.scrollIntoView=function(){destination=this;};
+  window.SemideusesApp={getEditing:()=>character};
+  window.SemideusesCharacterService={get:()=>character};
+  window.SemideusesCharacter={};
+  window.eval(source('sheet-polish-v3.js'));
+  await wait(30);
+  const labels=[...window.document.querySelectorAll('[data-sheet-jump]')].map(button=>button.textContent.trim());
+  ['⌂Resumo','⚔Combate','✦Habilidades','◈Itens','●Estados','✎Anotações','↑Progressão'].forEach(label=>assert(labels.includes(label),'A navegação rápida deve incluir '+label+'.'));
+  const items=window.document.querySelector('[data-sheet-jump="items"]');
+  items.click();
+  assert.equal(destination,window.document.querySelector('[data-items-hub]'),'O atalho Itens deve levar à Central de Itens.');
+  assert(items.classList.contains('active'),'O atalho usado deve ficar visualmente ativo.');
+  assert.equal(scrollToCalls,0,'Os atalhos não devem criar um novo bloqueio absoluto de rolagem.');
+  dom.window.close();
+}
+
+(async()=>{
+  appLifecycle();
+  await enhancementLifecycle();
+  await unsupportedOriginHasNoDeadLinks();
+  await pathSummaryIsNotDuplicated();
+  await commandCenterDoesNotLockScrolling();
+  await sheetQuickNavigationFindsMajorSections();
+  console.log('render-lifecycle.test: OK');
+})().catch(error=>{console.error(error);process.exitCode=1;});

@@ -1,0 +1,56 @@
+{
+  "edition": 3,
+  "source": "Livro do Jogador - Semideuses RPG 3e",
+  "attributes": ["FOR", "DES", "CON", "INT", "SAB", "CAR"],
+  "standardArray": [15, 14, 13, 12, 10, 8],
+  "modifierFormula": "floor((value - 10) / 2)",
+  "proficiencyByLevel": [
+    {"min": 1, "max": 4, "bonus": 2},
+    {"min": 5, "max": 8, "bonus": 3},
+    {"min": 9, "max": 12, "bonus": 4},
+    {"min": 13, "max": 16, "bonus": 5},
+    {"min": 17, "max": 20, "bonus": 6}
+  ],
+  "hitPointRules": {
+    "level1": "hitDieMaximum + CON modifier",
+    "laterLevels": "hitDieAverageRoundedUp + CON modifier",
+    "averages": {"d6": 4, "d8": 5, "d10": 6, "d12": 7}
+  },
+  "manaRules": {
+    "level1": "6 + casting modifier",
+    "laterLevels": "2 + casting modifier"
+  },
+  "unlocks": {
+    "divinePath": 3,
+    "heroMark": 5,
+    "pathFeatures": [7, 12, 17],
+    "amplification": 13
+  },
+  "heroMarks": [
+    {
+      "id": "extra_attack",
+      "name": "Ataque Extra",
+      "description": "Ao usar a ação Atacar no seu turno, realiza dois ataques com arma em vez de um."
+    },
+    {
+      "id": "casting_bonus",
+      "name": "Bônus de Conjuração",
+      "description": "Habilidades de Rank C custam 1 MP a menos e, uma vez por turno, uma habilidade de Rank E pode ser conjurada junto da Ação, pagando seu custo."
+    }
+  ],
+  "rest": {
+    "short": {
+      "minimumHours": 1,
+      "manaRecovery": "floor(maxMP / 4), minimum 1",
+      "hitPointRecovery": "spend Hit Dice and add CON modifier to each die"
+    },
+    "long": {
+      "minimumHours": 8,
+      "minimumSleepHours": 6,
+      "recoverAllHP": true,
+      "recoverAllMP": true,
+      "recoverHitDice": "half total, rounded up",
+      "limitPer24Hours": 1
+    }
+  }
+}

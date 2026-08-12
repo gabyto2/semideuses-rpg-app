@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "edition": "3e",
+  "id": "demeter",
+  "name": "Deméter",
+  "symbol": "🌾",
+  "domain": "Colheita, natureza",
+  "gameProfile": "Controle de terreno e cura",
+  "castingAttribute": "SAB",
+  "hitDie": 8,
+  "savingThrows": ["CON", "SAB"],
+  "skillProficiencies": {
+    "status": "pending_exact_3e_transcription",
+    "choices": []
+  },
+  "weaponProficiencies": {
+    "status": "pending_exact_3e_transcription",
+    "items": []
+  },
+  "armorProficiencies": {
+    "status": "pending_exact_3e_transcription",
+    "items": []
+  },
+  "overview": "Filiação voltada a sustentação, cura e manipulação do terreno natural.",
+  "progression": [
+    {"level": 1, "unlocks": ["Dom", "Assinatura", "Habilidade base de nível 1"]},
+    {"level": 2, "unlocks": ["Habilidade base de nível 2"]},
+    {"level": 3, "unlocks": ["Escolha do Caminho Divino", "Habilidade de Caminho"]},
+    {"level": 5, "unlocks": ["Habilidade base de nível 5", "Marca do Herói"]},
+    {"level": 7, "unlocks": ["Habilidade de Caminho"]},
+    {"level": 10, "unlocks": ["Habilidade base de nível 10"]},
+    {"level": 12, "unlocks": ["Habilidade de Caminho"]},
+    {"level": 15, "unlocks": ["Habilidade base de nível 15"]},
+    {"level": 17, "unlocks": ["Habilidade de Caminho"]},
+    {"level": 20, "unlocks": ["Poder Supremo"]}
+  ],
+  "paths": [],
+  "features": [],
+  "catalogStatus": {
+    "core": "confirmed",
+    "progressionStructure": "confirmed",
+    "features": "pending_exact_3e_transcription",
+    "paths": "pending_exact_3e_transcription"
+  },
+  "source": {
+    "book": "Livro do Jogador - Semideuses RPG 3e",
+    "chapter": "As Filiações — os 26 Deuses"
+  }
+}
